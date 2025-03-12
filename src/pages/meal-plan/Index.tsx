@@ -1,12 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { Calendar, Plus, X } from "lucide-react";
+import { Calendar, Plus, X, Sparkles, Loader2 } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
 import useRecipes from "@/hooks/useRecipes";
 import useMealPlans from "@/hooks/useMealPlans";
+import useAiRecipes from "@/hooks/useAiRecipes"; 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -15,6 +18,12 @@ const MealPlan = () => {
   const [addMealOpen, setAddMealOpen] = useState(false);
   const [currentDay, setCurrentDay] = useState<Date | null>(null);
   const [currentMealType, setCurrentMealType] = useState<"breakfast" | "lunch" | "dinner" | null>(null);
+  
+  // AI suggestions dialog state
+  const [aiSuggestionsOpen, setAiSuggestionsOpen] = useState(false);
+  const [preferences, setPreferences] = useState("");
+  const [dietaryRestrictions, setDietaryRestrictions] = useState("");
+  const [suggestions, setSuggestions] = useState<string | null>(null);
 
   // Get the start of the current week
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -37,6 +46,9 @@ const MealPlan = () => {
   
   const { mutateAsync: createMealPlan } = useCreateMealPlan();
   const { mutateAsync: deleteMealPlan } = useDeleteMealPlan();
+  
+  // AI recipe suggestions hook
+  const { suggestRecipes, analyzeMealPlan, loading: aiLoading } = useAiRecipes();
   
   // Generate an array of 7 days starting from weekStart
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -93,6 +105,23 @@ const MealPlan = () => {
       toast.error("Failed to remove recipe from meal plan");
     }
   };
+
+  const handleGetAiSuggestions = async () => {
+    setSuggestions(null);
+    
+    try {
+      const result = await suggestRecipes({
+        preferences,
+        dietaryRestrictions
+      });
+      
+      if (result) {
+        setSuggestions(result);
+      }
+    } catch (error) {
+      console.error("Error getting AI suggestions:", error);
+    }
+  };
   
   const isLoading = recipesLoading || mealPlansLoading;
   
@@ -100,8 +129,12 @@ const MealPlan = () => {
     <MainLayout 
       title="Meal Plan" 
       action={
-        <Button variant="ghost" size="icon">
-          <Calendar className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => setAiSuggestionsOpen(true)}
+        >
+          <Sparkles className="h-5 w-5" />
         </Button>
       }
     >
@@ -310,6 +343,66 @@ const MealPlan = () => {
               </div>
             )}
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Recipe Suggestions Dialog */}
+      <Dialog open={aiSuggestionsOpen} onOpenChange={setAiSuggestionsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              AI Recipe Suggestions
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="preferences">Your Preferences</Label>
+              <Input
+                id="preferences"
+                placeholder="e.g., quick meals, Italian cuisine, low carb"
+                value={preferences}
+                onChange={(e) => setPreferences(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="restrictions">Dietary Restrictions</Label>
+              <Input
+                id="restrictions"
+                placeholder="e.g., vegetarian, gluten-free, no nuts"
+                value={dietaryRestrictions}
+                onChange={(e) => setDietaryRestrictions(e.target.value)}
+              />
+            </div>
+            
+            <Button 
+              onClick={handleGetAiSuggestions} 
+              disabled={aiLoading}
+              className="w-full"
+            >
+              {aiLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Getting Suggestions...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Get AI Suggestions
+                </>
+              )}
+            </Button>
+            
+            {suggestions && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <h3 className="font-medium mb-2">Suggested Recipes:</h3>
+                <div className="text-sm whitespace-pre-line">
+                  {suggestions}
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </MainLayout>
