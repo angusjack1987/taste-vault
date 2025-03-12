@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,48 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for our recipe app
+				sage: {
+					100: '#EDF2ED',
+					200: '#D1E0D1',
+					300: '#A7C4A0',
+					400: '#8BAB82',
+					500: '#6B8E6B',
+					600: '#5A7859',
+					700: '#4A624A',
+				},
+				terracotta: {
+					100: '#FBEAE5',
+					200: '#F7D4CC',
+					300: '#F0A999',
+					400: '#EB8B73',
+					500: '#E76F51',
+					600: '#D35B3D',
+					700: '#B94A2F',
+				},
+				orange: {
+					100: '#FDF1E7',
+					200: '#FCE3CF',
+					300: '#F9C79F',
+					400: '#F6B07F',
+					500: '#F4A261',
+					600: '#E68D4D',
+					700: '#D9783C',
+				},
+				cream: {
+					50: '#FDFBF7',
+					100: '#FAF6EF',
+					200: '#F5EEDF',
+					300: '#EFE4CE',
+					400: '#E5D7B7',
+				},
+				charcoal: {
+					500: '#2D3436',
+					600: '#242A2C',
+					700: '#1B2022',
+					800: '#121617',
+					900: '#090C0D',
 				}
 			},
 			borderRadius: {
