@@ -32,7 +32,14 @@ export const useDietaryPreferences = () => {
       throw error;
     }
 
-    return data || null;
+    if (!data) return null;
+
+    // Transform the data to match our DietaryPreference type
+    return {
+      ...data,
+      preferences: typeof data.preferences === 'object' ? data.preferences : {},
+      restrictions: Array.isArray(data.restrictions) ? data.restrictions : []
+    };
   };
 
   const updateDietaryPreferences = async (preferences: {
@@ -84,7 +91,13 @@ export const useDietaryPreferences = () => {
     }
 
     toast.success("Dietary preferences saved");
-    return result;
+    
+    // Transform the returned data to match our DietaryPreference type
+    return {
+      ...result,
+      preferences: typeof result.preferences === 'object' ? result.preferences : {},
+      restrictions: Array.isArray(result.restrictions) ? result.restrictions : []
+    };
   };
 
   const useDietaryPreferencesQuery = () => {

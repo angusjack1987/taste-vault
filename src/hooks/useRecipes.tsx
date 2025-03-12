@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import useAuth from "./useAuth";
+import { Json } from "@/integrations/supabase/types";
 
 export type Recipe = {
   id: string;
@@ -39,7 +39,12 @@ export const useRecipes = () => {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map((item) => ({
+      ...item,
+      ingredients: Array.isArray(item.ingredients) ? item.ingredients : [],
+      instructions: Array.isArray(item.instructions) ? item.instructions : [],
+      tags: Array.isArray(item.tags) ? item.tags : [],
+    }));
   };
 
   const fetchRecipeById = async (id: string): Promise<Recipe | null> => {
@@ -57,7 +62,14 @@ export const useRecipes = () => {
       throw error;
     }
 
-    return data;
+    if (!data) return null;
+
+    return {
+      ...data,
+      ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+      instructions: Array.isArray(data.instructions) ? data.instructions : [],
+      tags: Array.isArray(data.tags) ? data.tags : [],
+    };
   };
 
   const createRecipe = async (recipeData: RecipeFormData): Promise<Recipe> => {
@@ -81,7 +93,13 @@ export const useRecipes = () => {
     }
 
     toast.success("Recipe created successfully");
-    return data;
+
+    return {
+      ...data,
+      ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+      instructions: Array.isArray(data.instructions) ? data.instructions : [],
+      tags: Array.isArray(data.tags) ? data.tags : [],
+    };
   };
 
   const updateRecipe = async ({
@@ -104,7 +122,13 @@ export const useRecipes = () => {
     }
 
     toast.success("Recipe updated successfully");
-    return data;
+
+    return {
+      ...data,
+      ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+      instructions: Array.isArray(data.instructions) ? data.instructions : [],
+      tags: Array.isArray(data.tags) ? data.tags : [],
+    };
   };
 
   const deleteRecipe = async (id: string): Promise<void> => {

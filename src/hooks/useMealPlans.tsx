@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import useAuth from "./useAuth";
 import { format, parseISO } from "date-fns";
 
+export type MealType = "breakfast" | "lunch" | "dinner";
+
 export type MealPlan = {
   id: string;
   user_id: string;
   date: string;
-  meal_type: "breakfast" | "lunch" | "dinner";
+  meal_type: MealType;
   recipe_id: string | null;
   created_at: string;
   updated_at: string;
@@ -58,12 +60,17 @@ export const useMealPlans = () => {
       throw error;
     }
 
-    return data || [];
+    // Transform the data to match our MealPlanWithRecipe type
+    return (data || []).map(item => ({
+      ...item,
+      meal_type: item.meal_type as MealType,
+      recipe: item.recipe || null
+    }));
   };
 
   const createMealPlan = async (mealPlan: {
     date: Date;
-    meal_type: "breakfast" | "lunch" | "dinner";
+    meal_type: MealType;
     recipe_id: string | null;
   }): Promise<MealPlan> => {
     if (!user) throw new Error("User not authenticated");
@@ -93,7 +100,12 @@ export const useMealPlans = () => {
     }
 
     toast.success("Meal plan updated");
-    return data;
+    
+    // Transform the data to match our MealPlan type
+    return {
+      ...data,
+      meal_type: data.meal_type as MealType
+    };
   };
 
   const deleteMealPlan = async (id: string): Promise<void> => {

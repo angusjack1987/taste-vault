@@ -22,7 +22,9 @@ const RecipesList = () => {
   // Filter recipes based on search query
   const filteredRecipes = recipes?.filter(recipe => 
     recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recipe.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    (recipe.tags && recipe.tags.some(tag => 
+      typeof tag === 'string' && tag.toLowerCase().includes(searchQuery.toLowerCase())
+    ))
   );
   
   // Format recipes for the RecipeGrid component
