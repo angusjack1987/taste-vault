@@ -1,72 +1,100 @@
 
-import { useState } from "react";
-import { Calendar, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, Plus, X } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
-
-// Mock data for our wireframe
-const mockMeals = [
-  {
-    date: new Date(),
-    meals: {
-      breakfast: {
-        id: "2",
-        title: "Avocado Toast with Poached Egg",
-        image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=300",
-      },
-      lunch: null,
-      dinner: {
-        id: "1",
-        title: "Classic Spaghetti Carbonara",
-        image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&q=80&w=300",
-      },
-    },
-  },
-  {
-    date: addDays(new Date(), 1),
-    meals: {
-      breakfast: null,
-      lunch: {
-        id: "3",
-        title: "Grilled Salmon with Asparagus",
-        image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=300",
-      },
-      dinner: {
-        id: "5",
-        title: "Homemade Margherita Pizza",
-        image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80&w=300",
-      },
-    },
-  },
-];
+import useRecipes from "@/hooks/useRecipes";
+import useMealPlans from "@/hooks/useMealPlans";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const MealPlan = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+  const [addMealOpen, setAddMealOpen] = useState(false);
+  const [currentDay, setCurrentDay] = useState<Date | null>(null);
+  const [currentMealType, setCurrentMealType] = useState<"breakfast" | "lunch" | "dinner" | null>(null);
+
   // Get the start of the current week
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 6);
+  
+  // Fetch recipes and meal plans
+  const { useAllRecipes } = useRecipes();
+  const { data: recipes, isLoading: recipesLoading } = useAllRecipes();
+  
+  const { 
+    useMealPlansForRange, 
+    useCreateMealPlan, 
+    useDeleteMealPlan 
+  } = useMealPlans();
+  
+  const { 
+    data: mealPlans, 
+    isLoading: mealPlansLoading 
+  } = useMealPlansForRange(weekStart, weekEnd);
+  
+  const { mutateAsync: createMealPlan } = useCreateMealPlan();
+  const { mutateAsync: deleteMealPlan } = useDeleteMealPlan();
   
   // Generate an array of 7 days starting from weekStart
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
-    const mealPlan = mockMeals.find(
-      (meal) => format(meal.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-    );
+    
+    // Find meal plans for this day
+    const dayMealPlans = mealPlans?.filter(
+      meal => format(new Date(meal.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    ) || [];
+    
+    // Group meal plans by meal type
+    const meals = {
+      breakfast: dayMealPlans.find(m => m.meal_type === "breakfast"),
+      lunch: dayMealPlans.find(m => m.meal_type === "lunch"),
+      dinner: dayMealPlans.find(m => m.meal_type === "dinner"),
+    };
+    
     return {
       date,
-      meals: mealPlan?.meals || {
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-      },
+      meals,
     };
   });
   
-  const handleAddMeal = (date: Date, mealType: string) => {
-    // This would open a meal selection dialog in a real implementation
-    console.log(`Add ${mealType} for ${format(date, 'MMM d, yyyy')}`);
+  const handleAddMeal = (date: Date, mealType: "breakfast" | "lunch" | "dinner") => {
+    setCurrentDay(date);
+    setCurrentMealType(mealType);
+    setAddMealOpen(true);
   };
+  
+  const handleSelectRecipe = async (recipeId: string) => {
+    if (!currentDay || !currentMealType) return;
+    
+    try {
+      await createMealPlan({
+        date: currentDay,
+        meal_type: currentMealType,
+        recipe_id: recipeId,
+      });
+      
+      setAddMealOpen(false);
+      toast.success("Recipe added to meal plan");
+    } catch (error) {
+      console.error("Error adding recipe to meal plan:", error);
+      toast.error("Failed to add recipe to meal plan");
+    }
+  };
+  
+  const handleRemoveMeal = async (mealPlanId: string) => {
+    try {
+      await deleteMealPlan(mealPlanId);
+      toast.success("Recipe removed from meal plan");
+    } catch (error) {
+      console.error("Error removing meal from plan:", error);
+      toast.error("Failed to remove recipe from meal plan");
+    }
+  };
+  
+  const isLoading = recipesLoading || mealPlansLoading;
   
   return (
     <MainLayout 
@@ -99,28 +127,38 @@ const MealPlan = () => {
               </div>
               
               <div className="space-y-2">
-                {Object.entries(day.meals).map(([mealType, meal]) => (
+                {Object.entries(day.meals).map(([mealType, mealPlan]) => (
                   <div key={mealType} className="text-left">
                     <div className="text-xs text-muted-foreground capitalize mb-1">
                       {mealType}
                     </div>
-                    {meal ? (
-                      <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
-                        <img
-                          src={meal.image}
-                          alt={meal.title}
-                          className="w-8 h-8 rounded object-cover"
-                        />
-                        <span className="text-xs line-clamp-2">
-                          {meal.title}
+                    {mealPlan ? (
+                      <div className="flex items-center gap-2 bg-muted rounded-lg p-1 group">
+                        {mealPlan.recipe?.image && (
+                          <img
+                            src={mealPlan.recipe.image}
+                            alt={mealPlan.recipe.title}
+                            className="w-8 h-8 rounded object-cover"
+                          />
+                        )}
+                        <span className="text-xs line-clamp-2 flex-1">
+                          {mealPlan.recipe?.title}
                         </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemoveMeal(mealPlan.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     ) : (
                       <Button
                         variant="ghost"
                         size="sm"
                         className="w-full h-8 text-xs"
-                        onClick={() => handleAddMeal(day.date, mealType)}
+                        onClick={() => handleAddMeal(day.date, mealType as "breakfast" | "lunch" | "dinner")}
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         Add
@@ -145,32 +183,42 @@ const MealPlan = () => {
               </div>
               
               <div className="space-y-3">
-                {Object.entries(day.meals).map(([mealType, meal]) => (
+                {Object.entries(day.meals).map(([mealType, mealPlan]) => (
                   <div key={mealType} className="text-left">
                     <div className="text-sm text-muted-foreground capitalize mb-1 flex justify-between items-center">
                       <span>{mealType}</span>
-                      {!meal && (
+                      {!mealPlan && (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-6 text-xs px-2"
-                          onClick={() => handleAddMeal(day.date, mealType)}
+                          onClick={() => handleAddMeal(day.date, mealType as "breakfast" | "lunch" | "dinner")}
                         >
                           <Plus className="h-3 w-3 mr-1" />
                           Add
                         </Button>
                       )}
                     </div>
-                    {meal && (
-                      <div className="flex items-center gap-3 bg-muted rounded-lg p-2">
-                        <img
-                          src={meal.image}
-                          alt={meal.title}
-                          className="w-12 h-12 rounded object-cover"
-                        />
-                        <span className="text-sm">
-                          {meal.title}
+                    {mealPlan && (
+                      <div className="flex items-center gap-3 bg-muted rounded-lg p-2 relative group">
+                        {mealPlan.recipe?.image && (
+                          <img
+                            src={mealPlan.recipe.image}
+                            alt={mealPlan.recipe.title}
+                            className="w-12 h-12 rounded object-cover"
+                          />
+                        )}
+                        <span className="text-sm flex-1">
+                          {mealPlan.recipe?.title}
                         </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 p-0 absolute right-1 top-1"
+                          onClick={() => handleRemoveMeal(mealPlan.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -209,6 +257,61 @@ const MealPlan = () => {
           </div>
         </div>
       </div>
+      
+      {/* Recipe Selection Dialog */}
+      <Dialog open={addMealOpen} onOpenChange={setAddMealOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Select Recipe for {currentMealType ? currentMealType.charAt(0).toUpperCase() + currentMealType.slice(1) : ''} 
+              {currentDay ? ` - ${format(currentDay, 'MMM d, yyyy')}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <ScrollArea className="h-[400px] pr-4">
+            {recipes && recipes.length > 0 ? (
+              <div className="space-y-2">
+                {recipes.map((recipe) => (
+                  <div 
+                    key={recipe.id}
+                    className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleSelectRecipe(recipe.id)}
+                  >
+                    {recipe.image ? (
+                      <img 
+                        src={recipe.image} 
+                        alt={recipe.title}
+                        className="w-16 h-16 rounded-md object-cover" 
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center text-muted-foreground">
+                        No image
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <h3 className="font-medium">{recipe.title}</h3>
+                      {recipe.time && (
+                        <p className="text-sm text-muted-foreground">{recipe.time} min</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>You haven't created any recipes yet.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-2"
+                  asChild
+                >
+                  <a href="/recipes/new">Create Recipe</a>
+                </Button>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

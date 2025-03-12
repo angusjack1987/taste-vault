@@ -50,6 +50,7 @@ export const useMealPlans = () => {
         )
       `
       )
+      .eq("user_id", user.id)
       .gte("date", startStr)
       .lte("date", endStr)
       .order("date", { ascending: true });
@@ -84,42 +85,71 @@ export const useMealPlans = () => {
       recipe_id: mealPlan.recipe_id,
     };
 
-    const { data, error } = await supabase
+    // First try to find an existing meal plan for this day and meal type
+    const { data: existingMeal } = await supabase
       .from("meal_plans")
-      .upsert([newMealPlan], {
-        onConflict: "user_id,date,meal_type",
-        ignoreDuplicates: false,
-      })
-      .select()
-      .single();
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("date", formattedDate)
+      .eq("meal_type", mealPlan.meal_type)
+      .maybeSingle();
 
-    if (error) {
-      console.error("Error creating meal plan:", error);
-      toast.error("Failed to update meal plan");
-      throw error;
+    let result;
+
+    if (existingMeal) {
+      // Update the existing meal plan
+      const { data, error } = await supabase
+        .from("meal_plans")
+        .update({ recipe_id: mealPlan.recipe_id })
+        .eq("id", existingMeal.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating meal plan:", error);
+        toast.error("Failed to update meal plan");
+        throw error;
+      }
+
+      result = data;
+    } else {
+      // Create a new meal plan
+      const { data, error } = await supabase
+        .from("meal_plans")
+        .insert([newMealPlan])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating meal plan:", error);
+        toast.error("Failed to create meal plan");
+        throw error;
+      }
+
+      result = data;
     }
 
-    toast.success("Meal plan updated");
-    
     // Transform the data to match our MealPlan type
     return {
-      ...data,
-      meal_type: data.meal_type as MealType
+      ...result,
+      meal_type: result.meal_type as MealType
     };
   };
 
   const deleteMealPlan = async (id: string): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
 
-    const { error } = await supabase.from("meal_plans").delete().eq("id", id);
+    const { error } = await supabase
+      .from("meal_plans")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id); // Ensure we only delete meal plans owned by the current user
 
     if (error) {
       console.error("Error deleting meal plan:", error);
       toast.error("Failed to remove meal from plan");
       throw error;
     }
-
-    toast.success("Meal removed from plan");
   };
 
   const useMealPlansForRange = (startDate: Date, endDate: Date) => {
@@ -133,11 +163,8 @@ export const useMealPlans = () => {
   const useCreateMealPlan = () => {
     return useMutation({
       mutationFn: createMealPlan,
-      onSuccess: (data) => {
-        // Parse the date from the response
-        const date = parseISO(data.date);
-        
-        // Invalidate the range that includes this date
+      onSuccess: () => {
+        // Invalidate all meal plan queries
         queryClient.invalidateQueries({
           queryKey: ["meal-plans"],
         });
