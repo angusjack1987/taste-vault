@@ -1,14 +1,34 @@
-
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
+import useAuth from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [mealRemindersEnabled, setMealRemindersEnabled] = useState(true);
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+  
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account"
+      });
+    } catch (error) {
+      toast({
+        title: "Error logging out",
+        description: "There was a problem logging you out. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
   
   return (
     <MainLayout title="Settings">
@@ -154,12 +174,13 @@ const Settings = () => {
           </div>
           
           <div className="border-t pt-6">
-            <button 
+            <Button 
               className="w-full text-left text-red-500 p-3 rounded-lg hover:bg-red-50"
-              onClick={() => console.log("Log out")}
+              variant="ghost"
+              onClick={handleLogout}
             >
               Log Out
-            </button>
+            </Button>
           </div>
         </div>
       </div>
