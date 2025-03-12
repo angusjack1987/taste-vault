@@ -78,7 +78,8 @@ const MealPlan = () => {
       }
     >
       <div className="page-container">
-        <div className="grid grid-cols-7 gap-2 text-center text-sm mb-2">
+        {/* Days of the week - Hidden on mobile */}
+        <div className="hidden md:grid md:grid-cols-7 gap-2 text-center text-sm mb-2">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
             <div key={day} className="font-medium text-muted-foreground">
               {day}
@@ -86,7 +87,8 @@ const MealPlan = () => {
           ))}
         </div>
         
-        <div className="grid grid-cols-7 gap-2">
+        {/* Desktop View - Grid layout */}
+        <div className="hidden md:grid md:grid-cols-7 gap-2">
           {weekDays.map((day) => (
             <div
               key={format(day.date, 'yyyy-MM-dd')}
@@ -123,6 +125,53 @@ const MealPlan = () => {
                         <Plus className="h-3 w-3 mr-1" />
                         Add
                       </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Mobile View - List layout */}
+        <div className="md:hidden space-y-4">
+          {weekDays.map((day) => (
+            <div
+              key={format(day.date, 'yyyy-MM-dd')}
+              className="border border-border rounded-lg p-3"
+            >
+              <div className="text-base font-medium mb-3 pb-2 border-b">
+                {format(day.date, 'EEEE, MMM d')}
+              </div>
+              
+              <div className="space-y-3">
+                {Object.entries(day.meals).map(([mealType, meal]) => (
+                  <div key={mealType} className="text-left">
+                    <div className="text-sm text-muted-foreground capitalize mb-1 flex justify-between items-center">
+                      <span>{mealType}</span>
+                      {!meal && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={() => handleAddMeal(day.date, mealType)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add
+                        </Button>
+                      )}
+                    </div>
+                    {meal && (
+                      <div className="flex items-center gap-3 bg-muted rounded-lg p-2">
+                        <img
+                          src={meal.image}
+                          alt={meal.title}
+                          className="w-12 h-12 rounded object-cover"
+                        />
+                        <span className="text-sm">
+                          {meal.title}
+                        </span>
+                      </div>
                     )}
                   </div>
                 ))}

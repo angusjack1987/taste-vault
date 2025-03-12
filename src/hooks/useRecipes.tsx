@@ -32,6 +32,7 @@ export const useRecipes = () => {
     const { data, error } = await supabase
       .from("recipes")
       .select("*")
+      .eq("user_id", user.id) // Only fetch recipes assigned to the current user
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -159,7 +160,11 @@ export const useRecipes = () => {
   const deleteRecipe = async (id: string): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
 
-    const { error } = await supabase.from("recipes").delete().eq("id", id);
+    const { error } = await supabase
+      .from("recipes")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id); // Ensure we only delete recipes owned by the current user
 
     if (error) {
       console.error("Error deleting recipe:", error);
