@@ -29,9 +29,21 @@ const AuthGuard = ({ children, requireAuth = true }: AuthGuardProps) => {
     }
   }, [user, isLoading, navigate, requireAuth, location.pathname]);
 
-  // Show nothing while checking authentication
+  // Show loading state while checking authentication
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  // Only render children if:
+  // 1. We require auth and user is authenticated, OR
+  // 2. We don't require auth and user is not authenticated
+  const shouldRender = 
+    (requireAuth && !!user) || 
+    (!requireAuth && !user);
+
+  // If conditions aren't met, render nothing (navigation will happen via useEffect)
+  if (!shouldRender && !isLoading) {
+    return <div className="flex items-center justify-center h-screen">Redirecting...</div>;
   }
 
   // If we're still here, we're good to go
