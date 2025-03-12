@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,7 +37,9 @@ export const useDietaryPreferences = () => {
     return {
       ...data,
       preferences: typeof data.preferences === 'object' ? data.preferences : {},
-      restrictions: Array.isArray(data.restrictions) ? data.restrictions : []
+      restrictions: Array.isArray(data.restrictions) 
+        ? data.restrictions.map(r => String(r))
+        : []
     };
   };
 
@@ -96,7 +97,9 @@ export const useDietaryPreferences = () => {
     return {
       ...result,
       preferences: typeof result.preferences === 'object' ? result.preferences : {},
-      restrictions: Array.isArray(result.restrictions) ? result.restrictions : []
+      restrictions: Array.isArray(result.restrictions) 
+        ? result.restrictions.map(r => String(r))
+        : []
     };
   };
 
