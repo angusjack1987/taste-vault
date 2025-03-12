@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      meal_plans: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          meal_type: string
+          recipe_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          meal_type: string
+          recipe_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          meal_type?: string
+          recipe_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -30,6 +68,54 @@ export type Database = {
           first_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      recipes: {
+        Row: {
+          created_at: string
+          description: string | null
+          difficulty: string | null
+          id: string
+          image: string | null
+          ingredients: Json
+          instructions: Json
+          servings: number | null
+          tags: Json
+          time: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          image?: string | null
+          ingredients?: Json
+          instructions?: Json
+          servings?: number | null
+          tags?: Json
+          time?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          image?: string | null
+          ingredients?: Json
+          instructions?: Json
+          servings?: number | null
+          tags?: Json
+          time?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -56,6 +142,33 @@ export type Database = {
           id?: string
           updated_at?: string
           use_backend_key?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_dietary_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          preferences: Json
+          restrictions: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preferences?: Json
+          restrictions?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preferences?: Json
+          restrictions?: Json
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

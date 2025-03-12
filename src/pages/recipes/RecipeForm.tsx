@@ -1,62 +1,58 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Minus, UploadCloud } from "lucide-react";
+import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import MainLayout from "@/components/layout/MainLayout";
-
-// For our wireframe, we'll use some mock data for editing
-const mockRecipe = {
-  id: "1",
-  title: "Classic Spaghetti Carbonara",
-  image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&q=80&w=1200",
-  time: 25,
-  servings: 4,
-  difficulty: "Medium",
-  description: "A traditional Italian pasta dish made with eggs, cheese, pancetta, and black pepper.",
-  ingredients: [
-    "350g spaghetti",
-    "150g pancetta or guanciale, diced",
-    "3 large eggs",
-    "50g pecorino romano, grated (plus extra for serving)",
-    "50g parmesan, grated",
-    "Freshly ground black pepper",
-    "Salt, to taste",
-  ],
-  instructions: [
-    "Bring a large pot of salted water to a boil and cook the spaghetti according to package instructions until al dente.",
-    "Meanwhile, in a large skillet, cook the pancetta over medium heat until crispy, about 5-7 minutes.",
-    "In a bowl, whisk together the eggs, grated cheeses, and a generous amount of black pepper.",
-  ],
-  tags: ["Italian", "Pasta", "Quick", "Dinner"]
-};
+import { useToast } from "@/hooks/use-toast";
+import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
 
 const RecipeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const isEditing = !!id;
   
+  const { useRecipe, useCreateRecipe, useUpdateRecipe } = useRecipes();
+  const { data: existingRecipe, isLoading: isLoadingRecipe } = useRecipe(id);
+  const { mutate: createRecipe, isPending: isCreating } = useCreateRecipe();
+  const { mutate: updateRecipe, isPending: isUpdating } = useUpdateRecipe();
+  
   // Initialize form with empty values or existing recipe data if editing
-  const [formData, setFormData] = useState(
-    isEditing 
-      ? mockRecipe 
-      : {
-          title: "",
-          image: "",
-          time: 30,
-          servings: 2,
-          difficulty: "Easy",
-          description: "",
-          ingredients: [""],
-          instructions: [""],
-          tags: []
-        }
-  );
+  const [formData, setFormData] = useState<RecipeFormData>({
+    title: "",
+    image: "",
+    time: 30,
+    servings: 2,
+    difficulty: "Easy",
+    description: "",
+    ingredients: [""],
+    instructions: [""],
+    tags: []
+  });
   
   const [newTag, setNewTag] = useState("");
+  const isSubmitting = isCreating || isUpdating;
+  
+  // Load existing recipe data when editing
+  useEffect(() => {
+    if (isEditing && existingRecipe) {
+      setFormData({
+        title: existingRecipe.title,
+        image: existingRecipe.image || "",
+        time: existingRecipe.time || 30,
+        servings: existingRecipe.servings || 2,
+        difficulty: existingRecipe.difficulty || "Easy",
+        description: existingRecipe.description || "",
+        ingredients: existingRecipe.ingredients.length > 0 ? existingRecipe.ingredients : [""],
+        instructions: existingRecipe.instructions.length > 0 ? existingRecipe.instructions : [""],
+        tags: existingRecipe.tags
+      });
+    }
+  }, [isEditing, existingRecipe]);
   
   const handleAddIngredient = () => {
     setFormData({
@@ -109,11 +105,44 @@ const RecipeForm = () => {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would save the recipe
-    console.log("Recipe data:", formData);
-    // Navigate back to recipes list
-    navigate("/recipes");
+    
+    // Filter out empty ingredients and instructions
+    const cleanedData = {
+      ...formData,
+      ingredients: formData.ingredients.filter(i => i.trim() !== ""),
+      instructions: formData.instructions.filter(i => i.trim() !== "")
+    };
+    
+    if (isEditing && id) {
+      updateRecipe(
+        { id, ...cleanedData },
+        {
+          onSuccess: () => {
+            navigate(`/recipes/${id}`);
+          }
+        }
+      );
+    } else {
+      createRecipe(
+        cleanedData, 
+        {
+          onSuccess: (data) => {
+            navigate(`/recipes/${data.id}`);
+          }
+        }
+      );
+    }
   };
+  
+  if (isEditing && isLoadingRecipe) {
+    return (
+      <MainLayout title="Loading Recipe" showBackButton={true}>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
   
   return (
     <MainLayout 
@@ -299,6 +328,12 @@ const RecipeForm = () => {
                 placeholder="Add a tag (e.g., Vegetarian, Italian)"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
               />
               <Button
                 type="button"
@@ -332,11 +367,19 @@ const RecipeForm = () => {
               type="button"
               variant="outline"
               onClick={() => navigate(-1)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit">
-              {isEditing ? "Update Recipe" : "Create Recipe"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isEditing ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                isEditing ? "Update Recipe" : "Create Recipe"
+              )}
             </Button>
           </div>
         </form>
