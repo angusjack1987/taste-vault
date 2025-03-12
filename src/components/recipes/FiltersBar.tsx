@@ -31,7 +31,7 @@ const FiltersBar = ({ onFilterClick }: FiltersBarProps) => {
         className="flex items-center whitespace-nowrap"
       >
         <Clock className="h-4 w-4 mr-1" />
-        Quick (< 30min)
+        Quick (&lt; 30min)
       </Button>
     </div>
   );
