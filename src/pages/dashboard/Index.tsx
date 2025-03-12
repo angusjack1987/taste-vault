@@ -1,43 +1,34 @@
 
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
 import CategorySection from "@/components/recipes/CategorySection";
-
-// Mock data for our wireframe
-const mockRecipes = [
-  {
-    id: "1",
-    title: "Classic Spaghetti Carbonara",
-    image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&q=80&w=600",
-    time: 25,
-    rating: 4.8,
-  },
-  {
-    id: "2",
-    title: "Avocado Toast with Poached Egg",
-    image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=600",
-    time: 15,
-    rating: 4.5,
-  },
-  {
-    id: "3",
-    title: "Grilled Salmon with Asparagus",
-    image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=600",
-    time: 30,
-    rating: 4.7,
-  },
-  {
-    id: "4",
-    title: "Vegetable Stir Fry",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600",
-    time: 20,
-    rating: 4.3,
-  },
-];
+import useRecipes from "@/hooks/useRecipes";
 
 const Dashboard = () => {
+  const { useAllRecipes } = useRecipes();
+  const { data: recipes, isLoading } = useAllRecipes();
+  
+  // Format recipes for grid display
+  const formattedRecipes = recipes?.map(recipe => ({
+    id: recipe.id,
+    title: recipe.title,
+    image: recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600",
+    time: recipe.time || undefined,
+    rating: undefined, // No ratings yet
+  })) || [];
+  
+  // Get the latest recipes for the "Recently Added" section
+  const recentlyAdded = [...(formattedRecipes || [])].slice(0, 3);
+  
+  // For now, favorites and popular are the same as all recipes
+  // In the future, these could be filtered based on actual favorites/popularity
+  const favorites = formattedRecipes.slice(0, 3);
+  const popular = formattedRecipes.slice(0, 4);
+  
+  const emptyStateMessage = "You haven't created any recipes yet. Click the + button to add your first recipe!";
+  
   return (
     <MainLayout title="Flavor Librarian">
       <div className="page-container">
@@ -48,14 +39,14 @@ const Dashboard = () => {
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium text-sm text-muted-foreground">Breakfast</h3>
-                <div className="flex items-center mt-1 rounded-lg p-2 bg-background">
-                  <img 
-                    src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=300" 
-                    alt="Avocado Toast" 
-                    className="w-12 h-12 rounded object-cover"
-                  />
-                  <span className="ml-3 text-sm">Avocado Toast with Poached Egg</span>
-                </div>
+                <Link to="/meal-plan" className="block">
+                  <div className="rounded-lg p-3 border border-dashed border-border flex items-center justify-center">
+                    <Button variant="ghost" size="sm">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Breakfast
+                    </Button>
+                  </div>
+                </Link>
               </div>
               
               <div>
@@ -72,14 +63,14 @@ const Dashboard = () => {
               
               <div>
                 <h3 className="font-medium text-sm text-muted-foreground">Dinner</h3>
-                <div className="flex items-center mt-1 rounded-lg p-2 bg-background">
-                  <img 
-                    src="https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&q=80&w=300" 
-                    alt="Spaghetti Carbonara" 
-                    className="w-12 h-12 rounded object-cover"
-                  />
-                  <span className="ml-3 text-sm">Classic Spaghetti Carbonara</span>
-                </div>
+                <Link to="/meal-plan" className="block">
+                  <div className="rounded-lg p-3 border border-dashed border-border flex items-center justify-center">
+                    <Button variant="ghost" size="sm">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Dinner
+                    </Button>
+                  </div>
+                </Link>
               </div>
             </div>
             
@@ -91,23 +82,47 @@ const Dashboard = () => {
           </div>
         </section>
         
-        <CategorySection 
-          title="Favorites" 
-          recipes={mockRecipes.slice(0, 3)} 
-          viewAllLink="/recipes?filter=favorites"
-        />
-        
-        <CategorySection 
-          title="Recently Added" 
-          recipes={mockRecipes.slice(1, 4)} 
-          viewAllLink="/recipes?sort=newest"
-        />
-        
-        <CategorySection 
-          title="Popular Recipes" 
-          recipes={mockRecipes} 
-          viewAllLink="/recipes?sort=popular"
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : recipes?.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>{emptyStateMessage}</p>
+            <Link to="/recipes/new" className="mt-4 inline-block">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Recipe
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <>
+            {recentlyAdded.length > 0 && (
+              <CategorySection 
+                title="Recently Added" 
+                recipes={recentlyAdded} 
+                viewAllLink="/recipes?sort=newest"
+              />
+            )}
+            
+            {favorites.length > 0 && (
+              <CategorySection 
+                title="Favorites" 
+                recipes={favorites} 
+                viewAllLink="/recipes?filter=favorites"
+              />
+            )}
+            
+            {popular.length > 0 && (
+              <CategorySection 
+                title="Popular Recipes" 
+                recipes={popular} 
+                viewAllLink="/recipes?sort=popular"
+              />
+            )}
+          </>
+        )}
         
         <div className="fixed bottom-24 right-6 z-20">
           <Link to="/recipes/new">
