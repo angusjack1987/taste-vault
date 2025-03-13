@@ -37,12 +37,11 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences - the error was happening here
       const itemsWithPrefs = validItems.map(item => {
-        // Explicit null check to satisfy TypeScript
-        if (item === null) {
-          return null; // This will be filtered out in the next step
-        }
+        // At this point, we know item is not null because of our filter
+        // But TypeScript still sees it as possibly null, so we need a non-null assertion
+        // or a more explicit check
         
-        // Type assertion since we've verified item is not null and has 'id'
+        // Type assertion with a defensive check
         const itemObject = item as Record<string, any>;
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
@@ -53,7 +52,7 @@ export const useFridgeItems = (user: User | null) => {
           ? (prefsObj as Record<string, any>).fridge_items || {} 
           : {};
           
-        // We already checked that the item has an id property
+        // We already checked that the item has an id property in our filter
         const itemId = itemObject.id || '';
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
@@ -68,7 +67,7 @@ export const useFridgeItems = (user: User | null) => {
             itemPrefs.always_available
           )
         } as FridgeItem;
-      }).filter((item): item is FridgeItem => item !== null); // Type guard to ensure non-null items
+      });
       
       return itemsWithPrefs;
     },
