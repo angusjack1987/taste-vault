@@ -84,36 +84,42 @@ export const useFridge = () => {
           console.error("Error fetching user preferences:", prefsError);
         }
         
+        // Ensure fridgeItems is an array and not an error object
         const items = Array.isArray(fridgeItems) ? fridgeItems : [];
         
-        const itemsWithPrefs = items
-          .filter(item => item !== null && typeof item === 'object')
-          .map(item => {
-            // At this point item is guaranteed to be a non-null object
-            const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
-              ? userPrefs.preferences 
-              : {};
+        // First filter out any null or non-object items
+        const validItems = items.filter(item => 
+          item !== null && typeof item === 'object' && 'id' in item);
+        
+        // Now map the valid items with preferences
+        const itemsWithPrefs = validItems.map(item => {
+          // We've confirmed item is an object with an id
+          const itemObject = item as Record<string, any>;
+          
+          const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
+            ? userPrefs.preferences 
+            : {};
               
-            const fridgeItemPrefs = typeof prefsObj === 'object' 
-              ? (prefsObj as Record<string, any>).fridge_items || {} 
-              : {};
+          const fridgeItemPrefs = typeof prefsObj === 'object' 
+            ? (prefsObj as Record<string, any>).fridge_items || {} 
+            : {};
             
-            // Now we know item is an object so we can safely access its properties
-            const itemId = item.id || '';
+          // We already checked that the item has an id property
+          const itemId = itemObject.id || '';
             
-            const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
-              ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
-              : {};
+          const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
+            ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
+            : {};
               
-            return {
-              ...item,
-              always_available: Boolean(
-                itemPrefs && 
-                typeof itemPrefs === 'object' && 
-                itemPrefs.always_available
-              )
-            } as FridgeItem;
-          });
+          return {
+            ...itemObject,
+            always_available: Boolean(
+              itemPrefs && 
+              typeof itemPrefs === 'object' && 
+              itemPrefs.always_available
+            )
+          } as FridgeItem;
+        });
         
         return itemsWithPrefs;
       },
