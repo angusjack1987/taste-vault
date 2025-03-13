@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Trash2, 
@@ -164,28 +163,39 @@ const ShoppingListPage = () => {
   const categorizeItems = () => {
     if (!shoppingItems) return {};
     
-    // First sort items to move checked items to the bottom within each category
-    const sortedItems = [...shoppingItems].sort((a, b) => {
-      // If one is checked and the other isn't, put the checked one last
-      if (a.is_checked !== b.is_checked) {
-        return a.is_checked ? 1 : -1;
+    const uncheckedItems = shoppingItems.filter(item => !item.is_checked);
+    const checkedItems = shoppingItems.filter(item => item.is_checked);
+    
+    const categories: Record<string, ShoppingListItem[]> = {};
+    
+    uncheckedItems.forEach(item => {
+      const category = item.category || "OTHER";
+      if (!categories[category]) {
+        categories[category] = [];
       }
-      // If both checked or both unchecked, maintain original order
-      return 0;
+      categories[category].push(item);
     });
     
-    return sortedItems.reduce((acc, item) => {
-      const category = item.category || "OTHER";
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(item);
-      return acc;
-    }, {} as Record<string, ShoppingListItem[]>);
+    if (checkedItems.length > 0) {
+      categories["CHECKED_ITEMS"] = checkedItems;
+    }
+    
+    return categories;
   };
   
   const categorizedItems = categorizeItems();
-  const sortedCategories = Object.keys(categorizedItems).sort();
+  
+  const regularCategories = Object.keys(categorizedItems)
+    .filter(category => category !== "CHECKED_ITEMS")
+    .sort();
+    
+  const hasCheckedItems = "CHECKED_ITEMS" in categorizedItems;
+  
+  const sortedCategories = [...regularCategories];
+  if (hasCheckedItems) {
+    sortedCategories.push("CHECKED_ITEMS");
+  }
+  
   const totalItems = shoppingItems?.length || 0;
   const checkedItems = shoppingItems?.filter(item => item.is_checked).length || 0;
   
@@ -290,17 +300,23 @@ const ShoppingListPage = () => {
                   
                   return (
                     <div key={category} className="mb-4">
-                      <h3 className="font-medium mb-1 text-sm text-muted-foreground flex items-center gap-2">
-                        {categoryIcons[category]} {category}
-                      </h3>
-                      <ul className="space-y-1" style={{ transition: "all 0.3s ease" }}>
+                      {category === "CHECKED_ITEMS" ? (
+                        <h3 className="font-medium mb-1 text-sm text-muted-foreground flex items-center gap-2 border-t pt-2 mt-2">
+                          <Check size={16} className="text-green-500" /> Checked Items
+                        </h3>
+                      ) : (
+                        <h3 className="font-medium mb-1 text-sm text-muted-foreground flex items-center gap-2">
+                          {categoryIcons[category]} {category}
+                        </h3>
+                      )}
+                      <ul className="space-y-1 transition-all duration-300">
                         {items.map(item => {
                           const { name } = parseIngredientAmount(item.ingredient);
                           
                           return (
                             <li 
                               key={item.id} 
-                              className="flex items-start justify-between gap-2 py-1 px-2 rounded-md hover:bg-muted/50 transition-all duration-300"
+                              className="flex items-start justify-between gap-2 py-1 px-2 rounded-md hover:bg-muted/50 transition-all duration-300 shopping-list-item"
                             >
                               <div className="flex items-start gap-2 flex-1">
                                 <Checkbox 
@@ -310,7 +326,9 @@ const ShoppingListPage = () => {
                                   className="mt-0.5"
                                 />
                                 <div className="flex items-center gap-1">
-                                  <span className="flex-shrink-0">{getItemIcon(item)}</span>
+                                  {category !== "CHECKED_ITEMS" && (
+                                    <span className="flex-shrink-0">{getItemIcon(item)}</span>
+                                  )}
                                   <label 
                                     htmlFor={`item-${item.id}`}
                                     className={`flex-1 cursor-pointer text-sm ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
