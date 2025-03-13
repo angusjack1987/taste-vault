@@ -29,8 +29,9 @@ export const useFridge = () => {
       queryFn: async () => {
         if (!user) return [];
         
+        // Using .from('fridge_items') directly, not using .from<FridgeItem>('fridge_items')
         const { data, error } = await supabase
-          .from("fridge_items")
+          .from('fridge_items')
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
@@ -48,7 +49,7 @@ export const useFridge = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { data, error } = await supabase
-        .from("fridge_items")
+        .from('fridge_items')
         .insert([
           {
             ...item,
@@ -76,7 +77,7 @@ export const useFridge = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { data, error } = await supabase
-        .from("fridge_items")
+        .from('fridge_items')
         .update(item)
         .eq("id", item.id)
         .eq("user_id", user.id)
@@ -101,7 +102,7 @@ export const useFridge = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { error } = await supabase
-        .from("fridge_items")
+        .from('fridge_items')
         .delete()
         .eq("id", id)
         .eq("user_id", user.id);
@@ -136,7 +137,7 @@ export const useFridge = () => {
       }));
       
       const { data, error } = await supabase
-        .from("fridge_items")
+        .from('fridge_items')
         .insert(items)
         .select();
       
@@ -182,15 +183,15 @@ export const useFridge = () => {
               });
               
               if (response.error) {
-                throw new Error(response.error);
+                throw new Error(response.error.message);
               }
               
               if (response.data.text) {
                 batchAddItems.mutate(response.data.text);
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error("Transcription error:", error);
-              toast.error("Failed to transcribe your voice note");
+              toast.error(`Failed to transcribe your voice note: ${error.message}`);
             }
           }
         };
@@ -202,9 +203,9 @@ export const useFridge = () => {
       
       recorder.start();
       setIsVoiceRecording(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting voice recording:", error);
-      toast.error("Failed to access microphone");
+      toast.error(`Failed to access microphone: ${error.message}`);
     }
   };
 
