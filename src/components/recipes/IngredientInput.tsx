@@ -29,7 +29,8 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     
     for (const separator of separators) {
       if (ingredient.includes(separator)) {
-        const parts = ingredient.split(new RegExp(`(${separator})`, 2));
+        // Fix: Remove the limit parameter (2) from RegExp constructor
+        const parts = ingredient.split(new RegExp(`(${separator})`));
         if (parts.length >= 3) {
           mainText = parts[0];
           preparation = parts.slice(2).join('');
