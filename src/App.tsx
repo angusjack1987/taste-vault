@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,7 @@ import RecipesList from "./pages/recipes/RecipesList";
 import RecipeDetail from "./pages/recipes/RecipeDetail";
 import RecipeForm from "./pages/recipes/RecipeForm";
 import MealPlan from "./pages/meal-plan/Index";
+import ShoppingListPage from "./pages/shopping/Index";
 import Settings from "./pages/settings/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
@@ -69,6 +71,11 @@ const App = () => (
             <Route path="/meal-plan" element={
               <AuthGuard>
                 <MealPlan />
+              </AuthGuard>
+            } />
+            <Route path="/shopping" element={
+              <AuthGuard>
+                <ShoppingListPage />
               </AuthGuard>
             } />
             <Route path="/settings" element={<Settings />} />
