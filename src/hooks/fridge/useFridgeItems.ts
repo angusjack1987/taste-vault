@@ -4,15 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { FridgeItem } from "./types";
 
-// Define a more specific type for Supabase items
-type SupabaseItem = {
+// Define a concrete type for our database rows
+type FridgeItemRow = {
   id: string;
-  [key: string]: any;
-};
-
-// Define a type for the database row type
-type DatabaseItem = {
-  id: string;
+  name: string;
+  quantity?: string;
+  category?: string;
+  expiry_date?: string;
+  user_id: string;
+  created_at: string;
   [key: string]: any;
 };
 
@@ -23,7 +23,7 @@ export const useFridgeItems = (user: User | null) => {
       if (!user) return [];
       
       const { data: fridgeItems, error } = await supabase
-        .from('fridge_items' as any)
+        .from('fridge_items')
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -40,13 +40,19 @@ export const useFridgeItems = (user: User | null) => {
         console.error("Error fetching user preferences:", prefsError);
       }
       
-      // Ensure fridgeItems is an array
+      // Ensure fridgeItems is an array and handle null/undefined
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
-      // Filter out null or invalid items - using a proper type guard
-      const validItems = items.filter((item): item is DatabaseItem => 
-        item !== null && typeof item === 'object' && 'id' in item
-      );
+      // Type guard function to check if item is a valid FridgeItemRow
+      const isValidFridgeItem = (item: any): item is FridgeItemRow => {
+        return item !== null && 
+               typeof item === 'object' && 
+               'id' in item && 
+               typeof item.id === 'string';
+      };
+      
+      // Filter out null or invalid items using the type guard
+      const validItems = items.filter(isValidFridgeItem);
       
       // Map items with preferences
       const itemsWithPrefs = validItems.map((item) => {
