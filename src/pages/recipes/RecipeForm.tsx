@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
+import { supabase } from "@/integrations/supabase/client";
 
 const RecipeForm = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +36,8 @@ const RecipeForm = () => {
   });
   
   const [newTag, setNewTag] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isSubmitting = isCreating || isUpdating;
   
   useEffect(() => {
@@ -125,6 +129,53 @@ const RecipeForm = () => {
     });
   };
   
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+  
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    
+    try {
+      // Generate a unique file name using timestamp and random string
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `recipe-images/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('recipes')
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      const { data } = supabase.storage.from('recipes').getPublicUrl(filePath);
+      
+      setFormData({
+        ...formData,
+        image: data.publicUrl
+      });
+      
+      toast({
+        title: "Image uploaded",
+        description: "Your recipe image has been uploaded successfully.",
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -185,8 +236,24 @@ const RecipeForm = () => {
           
           <div className="space-y-3">
             <Label>Recipe Image</Label>
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-              {formData.image ? (
+            <div 
+              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer"
+              onClick={handleImageClick}
+            >
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+              />
+              
+              {isUploading ? (
+                <div className="space-y-2">
+                  <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Uploading image...</p>
+                </div>
+              ) : formData.image ? (
                 <div className="space-y-2">
                   <img 
                     src={formData.image} 
@@ -197,7 +264,10 @@ const RecipeForm = () => {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setFormData({...formData, image: ""})}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFormData({...formData, image: ""});
+                    }}
                   >
                     Remove Image
                   </Button>
@@ -206,9 +276,14 @@ const RecipeForm = () => {
                 <div className="space-y-2">
                   <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    Drag and drop an image or click to upload
+                    Click to upload an image for your recipe
                   </p>
-                  <Button type="button" variant="outline" size="sm">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     Choose Image
                   </Button>
                 </div>
@@ -406,7 +481,7 @@ const RecipeForm = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || isUploading}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
