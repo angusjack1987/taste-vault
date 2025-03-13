@@ -29,9 +29,9 @@ export const useFridge = () => {
       queryFn: async () => {
         if (!user) return [];
         
-        // Using .from('fridge_items') directly, not using .from<FridgeItem>('fridge_items')
+        // Using type assertion to fix TypeScript error
         const { data, error } = await supabase
-          .from('fridge_items')
+          .from('fridge_items' as any)
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
@@ -49,7 +49,7 @@ export const useFridge = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { data, error } = await supabase
-        .from('fridge_items')
+        .from('fridge_items' as any)
         .insert([
           {
             ...item,
@@ -60,7 +60,7 @@ export const useFridge = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as FridgeItem;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
@@ -77,7 +77,7 @@ export const useFridge = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { data, error } = await supabase
-        .from('fridge_items')
+        .from('fridge_items' as any)
         .update(item)
         .eq("id", item.id)
         .eq("user_id", user.id)
@@ -85,7 +85,7 @@ export const useFridge = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as FridgeItem;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
@@ -102,7 +102,7 @@ export const useFridge = () => {
       if (!user) throw new Error("User not authenticated");
       
       const { error } = await supabase
-        .from('fridge_items')
+        .from('fridge_items' as any)
         .delete()
         .eq("id", id)
         .eq("user_id", user.id);
@@ -137,12 +137,12 @@ export const useFridge = () => {
       }));
       
       const { data, error } = await supabase
-        .from('fridge_items')
+        .from('fridge_items' as any)
         .insert(items)
         .select();
       
       if (error) throw error;
-      return data;
+      return data as FridgeItem[];
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
