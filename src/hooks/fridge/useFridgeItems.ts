@@ -38,9 +38,9 @@ export const useFridgeItems = (user: User | null) => {
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
       // Filter out null or invalid items - using a proper type guard
-      const validItems = items.filter((item): item is SupabaseItem => 
+      const validItems = items.filter((item): item is any => 
         item !== null && typeof item === 'object' && 'id' in item
-      );
+      ) as SupabaseItem[];
       
       // Map items with preferences
       const itemsWithPrefs = validItems.map((item) => {
