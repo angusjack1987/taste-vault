@@ -14,7 +14,7 @@ import {
   Pizza,
   Candy,
   Coffee,
-  Pepper
+  Flame
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useShoppingList from '@/hooks/useShoppingList';
@@ -31,7 +31,7 @@ const getCategoryIcon = (category: string | null) => {
     case 'CANNED': return <Package size={14} className="text-gray-400" />;
     case 'BAKING': return <Egg size={14} className="text-yellow-200" />;
     case 'CONDIMENTS': return <Droplet size={14} className="text-yellow-500" />;
-    case 'SPICES': return <Pepper size={14} className="text-rose-300" />;
+    case 'SPICES': return <Flame size={14} className="text-rose-300" />;
     case 'FROZEN': return <Pizza size={14} className="text-blue-300" />;
     case 'SNACKS': return <Candy size={14} className="text-pink-300" />;
     case 'BEVERAGES': return <Coffee size={14} className="text-brown-400" />;
