@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -80,14 +81,23 @@ export const useFridge = () => {
           .maybeSingle();
           
         const itemsWithPrefs = (fridgeItems || []).map(item => {
-          const prefs = userPrefs?.preferences?.fridge_items?.[item.id];
+          // Safely access nested properties with optional chaining and type checking
+          const fridgeItemPrefs = userPrefs?.preferences && 
+                                typeof userPrefs.preferences === 'object' ? 
+                                (userPrefs.preferences as any).fridge_items : 
+                                {};
+          
+          const itemPrefs = fridgeItemPrefs && typeof fridgeItemPrefs === 'object' ? 
+                           fridgeItemPrefs[item.id] : 
+                           null;
+            
           return {
             ...item,
-            always_available: prefs?.always_available || false
+            always_available: itemPrefs?.always_available || false
           };
         });
         
-        return itemsWithPrefs as unknown as FridgeItem[];
+        return itemsWithPrefs as FridgeItem[];
       },
       enabled: !!user,
     });
@@ -97,11 +107,14 @@ export const useFridge = () => {
     mutationFn: async (item: Omit<FridgeItem, "id" | "user_id" | "created_at">) => {
       if (!user) throw new Error("User not authenticated");
       
+      // Remove the always_available property as it's not in the database table
+      const { always_available, ...dbItem } = item;
+      
       const { data, error } = await supabase
         .from('fridge_items' as any)
         .insert([
           {
-            ...item,
+            ...dbItem,
             user_id: user.id,
           },
         ])
@@ -124,9 +137,12 @@ export const useFridge = () => {
     mutationFn: async (item: Partial<FridgeItem> & { id: string }) => {
       if (!user) throw new Error("User not authenticated");
       
+      // Remove the always_available property as it's not in the database table
+      const { always_available, ...dbItem } = item;
+      
       const { data, error } = await supabase
         .from('fridge_items' as any)
-        .update(item)
+        .update(dbItem)
         .eq("id", item.id)
         .eq("user_id", user.id)
         .select()
@@ -150,10 +166,6 @@ export const useFridge = () => {
       
       console.log(`Toggling item ${id} always_available to: ${always_available}`);
       
-      const updateData = { 
-        id: id
-      };
-      
       try {
         const { data: existingPrefs, error: prefsError } = await supabase
           .from('user_preferences')
@@ -166,13 +178,20 @@ export const useFridge = () => {
           throw prefsError;
         }
         
-        let fridgeItemPrefs = existingPrefs?.preferences?.fridge_items || {};
-        fridgeItemPrefs[id] = { ...fridgeItemPrefs[id], always_available };
+        // Safely handle the preferences object
+        const existingPreferences = existingPrefs?.preferences || {};
+        const fridgeItemPrefs = (existingPreferences as any).fridge_items || {};
+        
+        // Update the preference for this specific item
+        fridgeItemPrefs[id] = { 
+          ...(fridgeItemPrefs[id] || {}), 
+          always_available 
+        };
         
         const prefsToUpsert = {
           user_id: user.id,
           preferences: {
-            ...(existingPrefs?.preferences || {}),
+            ...existingPreferences,
             fridge_items: fridgeItemPrefs
           }
         };
