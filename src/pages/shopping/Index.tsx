@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Trash2, 
@@ -7,7 +6,6 @@ import {
   Plus, 
   Check, 
   X,
-  Search,
   Apple,
   Banana,
   Cherry,
@@ -36,7 +34,6 @@ import useShoppingList, { ShoppingListItem, ShoppingListItemInput } from "@/hook
 import useAuth from "@/hooks/useAuth";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
 
-// Enhanced category icons with better visual representation
 const categoryIcons: Record<string, React.ReactNode> = {
   "PRODUCE": <Apple size={16} className="text-green-500" />,
   "DAIRY": <Milk size={16} className="text-blue-100" />,
@@ -53,21 +50,17 @@ const categoryIcons: Record<string, React.ReactNode> = {
   "OTHER": <Package size={16} className="text-gray-400" />
 };
 
-// Get more specific icon for each item based on its name
 const getItemIcon = (item: ShoppingListItem) => {
   const category = item.category || "OTHER";
   const lowerName = item.ingredient.toLowerCase();
   
-  // Fruit-specific icons
   if (lowerName.includes("banana")) return <Banana size={16} className="text-yellow-400" />;
   if (lowerName.includes("strawberry") || lowerName.includes("strawberries")) 
     return <Cherry size={16} className="text-red-500" />;
   if (lowerName.includes("grape")) return <Grape size={16} className="text-purple-500" />;
   
-  // Vegetable-specific icon
   if (lowerName.includes("carrot")) return <Carrot size={16} className="text-orange-500" />;
   
-  // Default to category icon
   return categoryIcons[category] || categoryIcons["OTHER"];
 };
 
@@ -83,7 +76,6 @@ const ShoppingListPage = () => {
   } = useShoppingList();
   
   const [newItem, setNewItem] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   
   const { data: shoppingItems, isLoading } = useShoppingListItems();
@@ -171,12 +163,7 @@ const ShoppingListPage = () => {
   const categorizeItems = () => {
     if (!shoppingItems) return {};
     
-    const filtered = searchTerm
-      ? shoppingItems.filter(item => 
-          item.ingredient.toLowerCase().includes(searchTerm.toLowerCase()))
-      : shoppingItems;
-    
-    return filtered.reduce((acc, item) => {
+    return shoppingItems.reduce((acc, item) => {
       const category = item.category || "OTHER";
       if (!acc[category]) {
         acc[category] = [];
@@ -222,7 +209,7 @@ const ShoppingListPage = () => {
       }
     >
       <div className="page-container">
-        <div className="mb-6">
+        <div className="mb-4">
           <form onSubmit={handleAddItem} className="flex gap-2">
             <Input
               value={newItem}
@@ -242,30 +229,32 @@ const ShoppingListPage = () => {
           </form>
         </div>
         
-        <div className="mb-4 relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search items..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-3">
           <div className="text-sm text-muted-foreground">
             {totalItems} items ({checkedItems} checked)
           </div>
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleClearChecked}
-            disabled={checkedItems === 0}
-          >
-            <Check className="h-4 w-4 mr-2" />
-            Clear checked
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleClearChecked}
+              disabled={checkedItems === 0}
+            >
+              <Check className="h-4 w-4 mr-1" />
+              Clear checked
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleClearAll}
+              disabled={totalItems === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear all
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
@@ -283,37 +272,37 @@ const ShoppingListPage = () => {
                 </p>
               </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-280px)]">
+              <ScrollArea className="h-[calc(100vh-230px)]">
                 {sortedCategories.map(category => {
                   const items = categorizedItems[category];
                   if (items.length === 0) return null;
                   
                   return (
-                    <div key={category} className="mb-6">
-                      <h3 className="font-medium mb-2 text-sm text-muted-foreground flex items-center gap-2">
+                    <div key={category} className="mb-4">
+                      <h3 className="font-medium mb-1 text-sm text-muted-foreground flex items-center gap-2">
                         {categoryIcons[category]} {category}
                       </h3>
-                      <ul className="space-y-2">
+                      <ul className="space-y-1">
                         {items.map(item => {
                           const { name } = parseIngredientAmount(item.ingredient);
                           
                           return (
                             <li 
                               key={item.id} 
-                              className="flex items-start justify-between gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
+                              className="flex items-start justify-between gap-2 py-1 px-2 rounded-md hover:bg-muted/50 transition-colors"
                             >
-                              <div className="flex items-start gap-3 flex-1">
+                              <div className="flex items-start gap-2 flex-1">
                                 <Checkbox 
                                   checked={item.is_checked}
                                   onCheckedChange={() => handleToggleItem(item.id, item.is_checked)}
                                   id={`item-${item.id}`}
-                                  className="mt-1"
+                                  className="mt-0.5"
                                 />
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
                                   <span className="flex-shrink-0">{getItemIcon(item)}</span>
                                   <label 
                                     htmlFor={`item-${item.id}`}
-                                    className={`flex-1 cursor-pointer ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
+                                    className={`flex-1 cursor-pointer text-sm ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
                                   >
                                     {name}
                                   </label>
@@ -322,10 +311,10 @@ const ShoppingListPage = () => {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
                                 onClick={() => handleDeleteItem(item.id)}
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3 w-3" />
                               </Button>
                             </li>
                           );
