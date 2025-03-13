@@ -89,7 +89,7 @@ const RecipeForm = () => {
   };
   
   const handleIngredientKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleAddIngredient();
       setTimeout(() => {
@@ -101,7 +101,7 @@ const RecipeForm = () => {
   };
   
   const handleInstructionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, index: number) => {
-    if (e.key === 'Enter' && !e.shiftKey && e.currentTarget.selectionStart === e.currentTarget.value.length) {
+    if (e.key === 'Enter' && e.currentTarget.selectionStart === e.currentTarget.value.length) {
       e.preventDefault();
       handleAddInstruction();
       setTimeout(() => {
@@ -142,7 +142,8 @@ const RecipeForm = () => {
     try {
       // Generate a unique file name using timestamp and random string
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const fileName = `${Date.now()}-${randomId}.${fileExt}`;
       const filePath = `recipe-images/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
@@ -237,7 +238,7 @@ const RecipeForm = () => {
           <div className="space-y-3">
             <Label>Recipe Image</Label>
             <div 
-              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer"
+              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={handleImageClick}
             >
               <input 
