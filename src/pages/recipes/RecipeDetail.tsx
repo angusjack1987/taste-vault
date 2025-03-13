@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -37,6 +38,7 @@ import SuggestMealDialog from "@/components/meal-plan/dialogs/SuggestMealDialog"
 import useAiRecipes from "@/hooks/useAiRecipes";
 import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
+import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +47,7 @@ const RecipeDetail = () => {
   const [addingToShoppingList, setAddingToShoppingList] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
+  const [variationsDialogOpen, setVariationsDialogOpen] = useState(false);
   const [suggestedMeal, setSuggestedMeal] = useState<any>(null);
   const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
   const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
@@ -101,6 +104,56 @@ const RecipeDetail = () => {
 
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
+  };
+  
+  const handleOpenVariationsDialog = () => {
+    setVariationsDialogOpen(true);
+  };
+
+  const handleGenerateVariation = async (type: string, preferences?: string) => {
+    if (!recipe) return;
+    
+    setParsingMealSuggestion(true);
+    
+    try {
+      let promptPrefix = "";
+      switch (type) {
+        case "variation":
+          promptPrefix = `Create a variation of "${recipe.title}" that maintains its essence but offers a new experience.`;
+          break;
+        case "remix":
+          promptPrefix = `Reimagine "${recipe.title}" with creative twists, unexpected ingredients, or transformative techniques.`;
+          break;
+        case "substitution":
+          promptPrefix = `Adapt "${recipe.title}" with ingredient substitutions${preferences ? ` for ${preferences}` : ""} while maintaining flavor and texture.`;
+          break;
+      }
+      
+      setAdditionalPreferences(promptPrefix);
+      
+      const result = await suggestMealForPlan({
+        mealType: suggestMealType,
+        additionalPreferences: promptPrefix
+      });
+      
+      try {
+        const parsedResult = JSON.parse(result);
+        setSuggestedMeal(parsedResult);
+        // Close variations dialog and open suggest meal dialog to show the results
+        setVariationsDialogOpen(false);
+        setSuggestDialogOpen(true);
+      } catch (e) {
+        setSuggestedMeal({ rawResponse: result });
+        setVariationsDialogOpen(false);
+        setSuggestDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Error suggesting variations:", error);
+      toast.error("Failed to generate variation");
+      setSuggestedMeal(null);
+    } finally {
+      setParsingMealSuggestion(false);
+    }
   };
 
   const handleSuggestMeal = async () => {
@@ -279,7 +332,7 @@ const RecipeDetail = () => {
 
           <div className="mb-6">
             <AiSuggestionButton 
-              onClick={handleOpenSuggestDialog} 
+              onClick={handleOpenVariationsDialog} 
               label="Get AI Recipe Variations"
               className="w-full md:w-auto"
             />
@@ -388,6 +441,14 @@ const RecipeDetail = () => {
         onSuggestMeal={handleSuggestMeal}
         onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
         onResetSuggestedMeal={handleResetSuggestedMeal}
+      />
+
+      <RecipeVariationsDialog
+        open={variationsDialogOpen}
+        onOpenChange={setVariationsDialogOpen}
+        recipeName={recipe.title}
+        onGenerateVariation={handleGenerateVariation}
+        isLoading={parsingMealSuggestion}
       />
     </MainLayout>
   );
