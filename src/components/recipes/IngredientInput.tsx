@@ -48,36 +48,67 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
         const { mainText, preparation } = parsePreparation(ingredient);
         const { name, amount } = parseIngredientAmount(mainText);
         
+        // Check if it's the last item (current input)
         const isLastItem = index === ingredients.length - 1;
         
-        // Only show the ingredient input and the parsed details for the last row
-        // This saves space and only shows the active row
         return (
           <div key={index} className="space-y-1">
-            <div className="flex gap-2">
-              <Input
-                placeholder={`Ingredient ${index + 1} (e.g., 500g Chicken Breast, diced)`}
-                value={ingredient}
-                onChange={(e) => {
-                  const newIngredients = [...ingredients];
-                  newIngredients[index] = e.target.value;
-                  onChange(newIngredients);
-                }}
-                onKeyDown={(e) => onKeyDown(e, index)}
-                className="flex-grow"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => onRemove(index)}
-                disabled={ingredients.length <= 1}
-              >
-                <Scissors className="h-4 w-4" />
-              </Button>
-            </div>
+            {isLastItem ? (
+              // Show input field for the current/last ingredient
+              <div className="flex gap-2">
+                <Input
+                  placeholder={`Ingredient ${index + 1} (e.g., 500g Chicken Breast, diced)`}
+                  value={ingredient}
+                  onChange={(e) => {
+                    const newIngredients = [...ingredients];
+                    newIngredients[index] = e.target.value;
+                    onChange(newIngredients);
+                  }}
+                  onKeyDown={(e) => onKeyDown(e, index)}
+                  className="flex-grow"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onRemove(index)}
+                  disabled={ingredients.length <= 1}
+                >
+                  <Scissors className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              // Show parsed details for previous ingredients
+              <div className="flex items-center gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
+                <div className="flex-1 flex items-center gap-2">
+                  {amount && (
+                    <span className="font-mono text-sm">{amount}</span>
+                  )}
+                  
+                  <div className="flex items-center gap-1">
+                    <Carrot className="h-4 w-4 text-sage-500" />
+                    <span className="text-sm">{name}</span>
+                  </div>
+                  
+                  {preparation && (
+                    <span className="italic text-sm text-sage-700">{preparation}</span>
+                  )}
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemove(index)}
+                  className="h-6 w-6 text-muted-foreground"
+                >
+                  <Scissors className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
             
-            {ingredient && isLastItem && (
+            {/* Show parsed details for the current/last ingredient */}
+            {isLastItem && ingredient && (
               <div className="grid grid-cols-3 gap-2 px-2 mt-1">
                 {amount && (
                   <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center border border-sage-200">
