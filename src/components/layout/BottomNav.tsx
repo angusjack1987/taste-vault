@@ -46,12 +46,14 @@ const BottomNav = () => {
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
-              <item.icon
-                className={cn(
-                  "w-5 h-5 mb-1 transition-all",
-                  isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
-                )}
-              />
+              <div className="flex justify-center w-full">
+                <item.icon
+                  className={cn(
+                    "w-5 h-5 mb-1 transition-all",
+                    isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
+                  )}
+                />
+              </div>
               <span className="text-xs font-medium text-center w-full">{item.label}</span>
             </Link>
           );
@@ -101,12 +103,14 @@ const BottomNav = () => {
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
-              <item.icon
-                className={cn(
-                  "w-5 h-5 mb-1 transition-all",
-                  isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
-                )}
-              />
+              <div className="flex justify-center w-full">
+                <item.icon
+                  className={cn(
+                    "w-5 h-5 mb-1 transition-all",
+                    isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
+                  )}
+                />
+              </div>
               <span className="text-xs font-medium text-center w-full">{item.label}</span>
             </Link>
           );
