@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Sparkles, Lightbulb } from "lucide-react";
@@ -148,8 +147,6 @@ const MealPlan = () => {
         } catch (parseError) {
           console.error("Error parsing suggestion:", parseError);
           setSuggestedMeal({ 
-            title: "Parsing Error", 
-            description: "Could not parse the suggestion properly. Here's the raw response:", 
             rawResponse: result 
           });
         }
@@ -161,17 +158,19 @@ const MealPlan = () => {
     }
   };
   
-  const handleSaveSuggestedRecipe = async () => {
-    if (!suggestedMeal) return;
+  const handleSaveSuggestedRecipe = async (optionIndex: number) => {
+    if (!suggestedMeal || !suggestedMeal.options || !suggestedMeal.options[optionIndex]) return;
     
     try {
+      const selectedOption = suggestedMeal.options[optionIndex];
+      
       const newRecipe = await createRecipe({
-        title: suggestedMeal.title,
-        description: suggestedMeal.description,
-        ingredients: suggestedMeal.ingredients || [],
-        instructions: suggestedMeal.instructions || [],
-        time: suggestedMeal.time || null,
-        servings: suggestedMeal.servings || null,
+        title: selectedOption.title,
+        description: selectedOption.description,
+        ingredients: selectedOption.ingredients || [],
+        instructions: selectedOption.instructions || [],
+        time: selectedOption.time || null,
+        servings: selectedOption.servings || null,
         image: null,
         difficulty: null,
         tags: []

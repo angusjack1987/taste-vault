@@ -1,6 +1,6 @@
 
 import { format } from 'date-fns';
-import { Plus, Lightbulb, X } from 'lucide-react';
+import { Plus, Lightbulb, X, Utensils } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
@@ -34,12 +34,12 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
   const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
     if (!meal) {
       return (
-        <div className="border border-dashed border-border rounded p-2 flex justify-center items-center gap-1.5 min-h-[60px]">
+        <div className="border border-dashed border-border rounded p-2 flex justify-center items-center gap-1.5 min-h-[60px] bg-background/50 hover:bg-background transition-colors">
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onAddMeal(date, mealType)}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             Add
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onSuggestMeal(date, mealType)}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50" onClick={() => onSuggestMeal(date, mealType)}>
             <Lightbulb className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -47,8 +47,14 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
     }
     
     return (
-      <div className="border rounded p-2 bg-card min-h-[60px] relative">
-        <div className="text-xs font-medium line-clamp-2 pr-6">{meal.recipe?.title || 'No recipe selected'}</div>
+      <div className="border rounded p-2 bg-card min-h-[60px] relative hover:shadow-sm transition-shadow">
+        <div className="text-xs font-medium line-clamp-2 pr-6">
+          {meal.recipe?.title || (
+            <span className="flex items-center text-muted-foreground">
+              <Utensils className="h-3 w-3 mr-1" /> No recipe selected
+            </span>
+          )}
+        </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
@@ -83,10 +89,13 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
   
   return (
     <div className={cn(
-      "border rounded p-2 space-y-1",
-      isToday && "border-primary bg-primary/5"
+      "border rounded p-2 space-y-1 transition-all",
+      isToday ? "border-primary bg-primary/5 shadow-sm" : "hover:border-muted-foreground/30"
     )}>
-      <div className="text-center mb-2 font-medium text-sm">
+      <div className={cn(
+        "text-center mb-2 font-medium text-sm",
+        isToday && "text-primary"
+      )}>
         {format(date, 'd')}
       </div>
       
