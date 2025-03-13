@@ -4,8 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { FridgeItem } from "./types";
 
-// Helper type for Supabase items
-type SupabaseItem = Record<string, any>;
+// Define a more specific type for Supabase items
+type SupabaseItem = {
+  id: string;
+  [key: string]: any;
+};
 
 export const useFridgeItems = (user: User | null) => {
   return useQuery({
@@ -31,15 +34,15 @@ export const useFridgeItems = (user: User | null) => {
         console.error("Error fetching user preferences:", prefsError);
       }
       
-      // Ensure fridgeItems is an array and not an error object
+      // Ensure fridgeItems is an array
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
-      // Filter out any null or non-object items
+      // Filter out null or invalid items - using a proper type guard
       const validItems = items.filter((item): item is SupabaseItem => 
         item !== null && typeof item === 'object' && 'id' in item
       );
       
-      // Now map the valid items with preferences
+      // Map items with preferences
       const itemsWithPrefs = validItems.map((item) => {
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
           ? userPrefs.preferences 
@@ -55,8 +58,9 @@ export const useFridgeItems = (user: User | null) => {
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
         
+        // Convert to FridgeItem type with proper object spreading
         return {
-          ...item,
+          ...item as unknown as Record<string, any>,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 

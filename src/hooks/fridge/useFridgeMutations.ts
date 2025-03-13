@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -246,12 +247,14 @@ export const useFridgeMutations = (user: User | null) => {
         const itemsToDelete: string[] = [];
         
         for (const itemData of fridgeItems) {
+          // Fix: Check if itemData is valid before accessing it
           if (itemData === null || typeof itemData !== 'object') {
             continue;
           }
           
           const item = itemData as Record<string, any>;
           
+          // Fix: Additional check to ensure item and item.id are valid
           if (!item || typeof item.id !== 'string') {
             continue;
           }
