@@ -38,10 +38,13 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
-        // Add an additional null check for TypeScript
-        if (item === null || typeof item !== 'object' || !('id' in item)) {
+        // We've already filtered out nulls, but TypeScript needs another check
+        if (item === null || typeof item !== 'object') {
           return null;
         }
+        
+        // Now we know for sure item is an object
+        const itemObj = item as Record<string, any>;
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
           ? userPrefs.preferences 
@@ -51,21 +54,19 @@ export const useFridgeItems = (user: User | null) => {
           ? (prefsObj as Record<string, any>).fridge_items || {} 
           : {};
         
-        if (!item || !item.id) {
+        // Double check that we have an id before proceeding
+        if (!itemObj || typeof itemObj.id !== 'string') {
           return null;
         }
         
-        const itemId = item.id as string;
+        const itemId = itemObj.id;
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
         
-        // Use explicit type assertion for item
-        const safeItem = item as Record<string, any>;
-        
         return {
-          ...safeItem,
+          ...itemObj,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 
