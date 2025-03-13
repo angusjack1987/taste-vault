@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import MainLayout from "@/components/layout/MainLayout";
 import useShoppingList, { ShoppingListItem, ShoppingListItemInput } from "@/hooks/useShoppingList";
 import useAuth from "@/hooks/useAuth";
+import { parseIngredientAmount } from "@/lib/ingredient-parser";
 
 const ShoppingListPage = () => {
   const { user } = useAuth();
@@ -231,34 +232,46 @@ const ShoppingListPage = () => {
                         {category}
                       </h3>
                       <ul className="space-y-2">
-                        {items.map(item => (
-                          <li 
-                            key={item.id} 
-                            className="flex items-center justify-between gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3 flex-1">
-                              <Checkbox 
-                                checked={item.is_checked}
-                                onCheckedChange={() => handleToggleItem(item.id, item.is_checked)}
-                                id={`item-${item.id}`}
-                              />
-                              <label 
-                                htmlFor={`item-${item.id}`}
-                                className={`flex-1 cursor-pointer ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
-                              >
-                                {item.ingredient}
-                              </label>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              onClick={() => handleDeleteItem(item.id)}
+                        {items.map(item => {
+                          const { name, amount } = parseIngredientAmount(item.ingredient);
+                          
+                          return (
+                            <li 
+                              key={item.id} 
+                              className="flex items-start justify-between gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
                             >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </li>
-                        ))}
+                              <div className="flex items-start gap-3 flex-1">
+                                <Checkbox 
+                                  checked={item.is_checked}
+                                  onCheckedChange={() => handleToggleItem(item.id, item.is_checked)}
+                                  id={`item-${item.id}`}
+                                  className="mt-1"
+                                />
+                                <div>
+                                  <label 
+                                    htmlFor={`item-${item.id}`}
+                                    className={`flex-1 cursor-pointer ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
+                                  >
+                                    {name}
+                                  </label>
+                                  {amount && (
+                                    <div className={`text-xs ${item.is_checked ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                      {amount}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteItem(item.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   );

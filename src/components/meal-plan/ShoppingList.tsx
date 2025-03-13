@@ -5,6 +5,7 @@ import { Loader2, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useShoppingList from '@/hooks/useShoppingList';
 import useAuth from '@/hooks/useAuth';
+import { parseIngredientAmount } from '@/lib/ingredient-parser';
 
 const ShoppingList = () => {
   const navigate = useNavigate();
@@ -12,15 +13,18 @@ const ShoppingList = () => {
   const { useShoppingListItems } = useShoppingList();
   const { data: shoppingItems, isLoading } = useShoppingListItems();
   
-  const [previewItems, setPreviewItems] = useState<string[]>([]);
+  const [previewItems, setPreviewItems] = useState<Array<{name: string, amount: string | null}>>([]);
   
   useEffect(() => {
     if (shoppingItems && shoppingItems.length > 0) {
       // Get a preview of up to 5 unchecked items
       const uncheckedItems = shoppingItems
         .filter(item => !item.is_checked)
-        .map(item => item.ingredient)
-        .slice(0, 5);
+        .slice(0, 5)
+        .map(item => {
+          const { name, amount } = parseIngredientAmount(item.ingredient);
+          return { name, amount };
+        });
       
       setPreviewItems(uncheckedItems);
     } else {
@@ -72,9 +76,14 @@ const ShoppingList = () => {
         </p>
         <ul className="space-y-2">
           {previewItems.map((item, index) => (
-            <li key={index} className="flex items-center gap-2 text-sm">
-              <span className="w-2 h-2 rounded-full bg-sage-500"></span>
-              <span>{item}</span>
+            <li key={index} className="flex items-start gap-2 text-sm">
+              <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5"></span>
+              <div>
+                <div>{item.name}</div>
+                {item.amount && (
+                  <div className="text-xs text-muted-foreground">{item.amount}</div>
+                )}
+              </div>
             </li>
           ))}
           {uncheckedItems > 5 && (

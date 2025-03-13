@@ -42,7 +42,7 @@ const RecipeDetail = () => {
       // Transform the ingredients into shopping list items
       const shoppingItems: ShoppingListItemInput[] = recipe.ingredients.map(ingredient => ({
         recipe_id: recipe.id,
-        ingredient,
+        ingredient, // Keep the original ingredient format with amounts
         category: categorizeIngredient(ingredient),
         is_checked: false,
         quantity: null,
