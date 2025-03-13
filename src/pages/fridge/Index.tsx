@@ -242,8 +242,38 @@ const FridgePage = () => {
   return (
     <MainLayout title="My Fridge" showBackButton>
       <div className="page-container max-w-2xl mx-auto px-4 pb-20">
+        {/* Add Item Form - Always visible at top */}
+        <div className="mb-6 mt-4">
+          <FridgeAddItemForm 
+            newItemName={newItemName}
+            onNewItemNameChange={setNewItemName}
+            onAddItem={handleAddItem}
+            isVoiceRecording={isVoiceRecording}
+            isProcessingVoice={isProcessingVoice}
+            onVoiceButtonClick={handleVoiceButton}
+          />
+          
+          <VoiceInputSection 
+            isVoiceRecording={isVoiceRecording}
+            isProcessingVoice={isProcessingVoice}
+            audioLevel={audioLevel}
+            processingProgress={processingProgress}
+            stopVoiceRecording={stopVoiceRecording}
+          />
+          
+          <div className="flex justify-center mt-4">
+            <AiSuggestionButton
+              onClick={generateRecipeFromFridge}
+              label="Generate Recipe from Fridge"
+              className="w-full max-w-sm"
+              isLoading={isGeneratingRecipe}
+            />
+          </div>
+        </div>
+        
+        {/* Categories and Item List */}
         <Tabs defaultValue="All" className="w-full">
-          <div className="sticky top-[73px] z-10 bg-background pt-4 pb-2">
+          <div className="sticky top-[73px] z-10 bg-background pt-2 pb-2">
             <TabsList className="w-full rounded-full bg-muted">
               {categories.map((category) => (
                 <TabsTrigger 
@@ -266,44 +296,14 @@ const FridgePage = () => {
           
           {categories.map((category) => (
             <TabsContent key={category} value={category} className="mt-4">
-              <div className="space-y-6">
-                {category !== "Always Available" && (
-                  <FridgeAddItemForm 
-                    newItemName={newItemName}
-                    onNewItemNameChange={setNewItemName}
-                    onAddItem={handleAddItem}
-                    isVoiceRecording={isVoiceRecording}
-                    isProcessingVoice={isProcessingVoice}
-                    onVoiceButtonClick={handleVoiceButton}
-                  />
-                )}
-                
-                <VoiceInputSection 
-                  isVoiceRecording={isVoiceRecording}
-                  isProcessingVoice={isProcessingVoice}
-                  audioLevel={audioLevel}
-                  processingProgress={processingProgress}
-                  stopVoiceRecording={stopVoiceRecording}
-                />
-                
-                <div className="flex justify-center mt-4">
-                  <AiSuggestionButton
-                    onClick={generateRecipeFromFridge}
-                    label="Generate Recipe from Fridge"
-                    className="w-full max-w-sm"
-                    isLoading={isGeneratingRecipe}
-                  />
-                </div>
-                
-                <FridgeItemsList 
-                  category={category}
-                  filteredItems={getFilteredItems(category)}
-                  isLoading={isLoading}
-                  onDeleteItem={(id) => deleteItem.mutate(id)}
-                  onToggleAlwaysAvailable={(id, value) => toggleAlwaysAvailable.mutate({ id, always_available: value })}
-                  onClearNonSavedItems={handleClearAllItems}
-                />
-              </div>
+              <FridgeItemsList 
+                category={category}
+                filteredItems={getFilteredItems(category)}
+                isLoading={isLoading}
+                onDeleteItem={(id) => deleteItem.mutate(id)}
+                onToggleAlwaysAvailable={(id, value) => toggleAlwaysAvailable.mutate({ id, always_available: value })}
+                onClearNonSavedItems={handleClearAllItems}
+              />
             </TabsContent>
           ))}
         </Tabs>

@@ -48,7 +48,7 @@ const MainLayout = ({
         action={action}
       />
       
-      <main className="flex-1 pb-28 px-4 relative overflow-hidden">
+      <main className="flex-1 pb-32 relative overflow-x-hidden overflow-y-auto">
         {/* Enhanced decorative background elements with consistent animations */}
         <div className="absolute top-10 left-5 w-40 h-40 bg-sunshine-400/30 rounded-full blur-3xl -z-10 animate-float"></div>
         <div className="absolute bottom-40 right-10 w-56 h-56 bg-seafoam-500/20 rounded-full blur-3xl -z-10 animate-float delay-700"></div>

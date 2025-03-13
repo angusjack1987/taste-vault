@@ -31,7 +31,7 @@ const BottomNav = () => {
   const pathname = location.pathname;
 
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
+    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
       <div className="flex items-center justify-between bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-8 py-3 shadow-vibrant relative w-fit mx-auto">
         {navItems.slice(0, 2).map((item) => {
           const isActive = pathname === item.to || 
