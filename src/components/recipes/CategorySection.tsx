@@ -2,9 +2,10 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import RecipeCard, { RecipeCardProps } from "./RecipeCard";
+import { ReactNode } from "react";
 
 interface CategorySectionProps {
-  title: string;
+  title: ReactNode;
   recipes: RecipeCardProps[];
   viewAllLink?: string;
   emptyMessage?: string;
