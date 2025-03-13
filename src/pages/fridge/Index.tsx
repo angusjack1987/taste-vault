@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Mic, Plus, Trash2, X, Star, Utensils } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -12,6 +13,7 @@ import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import useAiRecipes from "@/hooks/useAiRecipes";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FridgePage = () => {
   const {
@@ -22,6 +24,7 @@ const FridgePage = () => {
     isVoiceRecording,
     startVoiceRecording,
     stopVoiceRecording,
+    isProcessingVoice,
   } = useFridge();
   
   const { data: fridgeItems, isLoading } = useFridgeItems();
@@ -122,8 +125,9 @@ const FridgePage = () => {
                     variant={isVoiceRecording ? "destructive" : "outline"}
                     size="icon"
                     className="relative rounded-full h-10 w-10"
+                    disabled={isProcessingVoice && !isVoiceRecording}
                   >
-                    <Mic className="h-5 w-5" />
+                    <Mic className={`h-5 w-5 ${isVoiceRecording ? 'animate-pulse' : ''}`} />
                     {isVoiceRecording && (
                       <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
                     )}
@@ -133,6 +137,11 @@ const FridgePage = () => {
                 {isVoiceRecording && (
                   <div className="bg-secondary/20 p-4 rounded-xl text-center">
                     <p className="mb-2 text-sm">Recording... Speak clearly to add items</p>
+                    <div className="flex items-center justify-center space-x-1 my-2">
+                      <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
                     <Button 
                       variant="destructive" 
                       size="sm" 
@@ -141,6 +150,17 @@ const FridgePage = () => {
                     >
                       <X className="h-4 w-4" /> Stop Recording
                     </Button>
+                  </div>
+                )}
+
+                {isProcessingVoice && !isVoiceRecording && (
+                  <div className="bg-secondary/20 p-4 rounded-xl text-center">
+                    <p className="mb-2 text-sm">Processing your voice input...</p>
+                    <div className="flex items-center justify-center space-x-2 my-2">
+                      <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
+                      <Skeleton className="h-4 w-16 animate-pulse" />
+                      <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
+                    </div>
                   </div>
                 )}
                 

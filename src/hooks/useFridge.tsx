@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +20,7 @@ export const useFridge = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
@@ -245,10 +245,10 @@ export const useFridge = () => {
   // Voice recording functions
   const startVoiceRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // Reset audio chunks state
       setAudioChunks([]);
+      setIsVoiceRecording(true);
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
       const recorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm',
@@ -265,22 +265,28 @@ export const useFridge = () => {
       
       recorder.addEventListener("stop", async () => {
         try {
-          // Verify we have audio data
-          if (audioChunks.length === 0) {
+          setIsVoiceRecording(false);
+          setIsProcessingVoice(true);
+          
+          // Ensure we received audio chunks
+          const chunks = audioChunks;
+          console.log(`Processing ${chunks.length} audio chunks`);
+          
+          if (chunks.length === 0) {
             console.error("No audio chunks recorded");
             toast.error("No audio recorded. Please try again and speak clearly.");
-            setIsVoiceRecording(false);
+            setIsProcessingVoice(false);
             return;
           }
           
           // Create audio blob from chunks
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const audioBlob = new Blob(chunks, { type: "audio/webm" });
           console.log("Audio blob created:", audioBlob.size, "bytes");
           
           if (audioBlob.size === 0) {
             console.error("Empty audio blob created");
             toast.error("No audio recorded. Please try again and speak clearly.");
-            setIsVoiceRecording(false);
+            setIsProcessingVoice(false);
             return;
           }
           
@@ -341,14 +347,14 @@ export const useFridge = () => {
               console.error("Error processing transcription:", error);
               toast.error(`Failed to process voice note: ${error.message}`);
             } finally {
-              setIsVoiceRecording(false);
+              setIsProcessingVoice(false);
             }
           };
           
           reader.onerror = (error) => {
             console.error("FileReader error:", error);
             toast.error("Failed to process audio recording");
-            setIsVoiceRecording(false);
+            setIsProcessingVoice(false);
           };
           
           // Start the reading process
@@ -356,18 +362,18 @@ export const useFridge = () => {
         } catch (error: any) {
           console.error("Error creating audio blob:", error);
           toast.error(`Failed to process recording: ${error.message}`);
-          setIsVoiceRecording(false);
+          setIsProcessingVoice(false);
         }
       });
       
       // Start recording with small timeslice to get frequent dataavailable events
       recorder.start(500); // Get data every 500ms for more reliable chunking
-      setIsVoiceRecording(true);
       toast.info("Recording started. Speak clearly to add items.");
     } catch (error: any) {
       console.error("Error starting voice recording:", error);
       toast.error(`Failed to access microphone: ${error.message}`);
       setIsVoiceRecording(false);
+      setIsProcessingVoice(false);
     }
   };
 
@@ -397,6 +403,7 @@ export const useFridge = () => {
     toggleAlwaysAvailable,
     batchAddItems,
     isVoiceRecording,
+    isProcessingVoice,
     startVoiceRecording,
     stopVoiceRecording,
   };
