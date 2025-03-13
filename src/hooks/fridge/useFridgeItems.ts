@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { FridgeItem } from "./types";
 
+// Helper type for Supabase items
+type SupabaseItem = Record<string, any>;
+
 export const useFridgeItems = (user: User | null) => {
   return useQuery({
     queryKey: ["fridge-items", user?.id],
@@ -31,8 +34,8 @@ export const useFridgeItems = (user: User | null) => {
       // Ensure fridgeItems is an array and not an error object
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
-      // Filter out any null or non-object items with a simpler approach
-      const validItems = items.filter((item): item is Record<string, any> => 
+      // Filter out any null or non-object items
+      const validItems = items.filter((item): item is SupabaseItem => 
         item !== null && typeof item === 'object' && 'id' in item
       );
       
