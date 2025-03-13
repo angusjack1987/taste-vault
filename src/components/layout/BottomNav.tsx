@@ -3,9 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Home, 
   Book, 
-  Calendar, 
-  ShoppingCart, 
-  Refrigerator,
+  Calendar,
   Settings 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,8 +12,6 @@ const navItems = [
   { to: "/", label: "Home", icon: Home },
   { to: "/recipes", label: "Recipes", icon: Book },
   { to: "/meal-plan", label: "Meal Plan", icon: Calendar },
-  { to: "/shopping", label: "Shopping", icon: ShoppingCart },
-  { to: "/fridge", label: "Fridge", icon: Refrigerator },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

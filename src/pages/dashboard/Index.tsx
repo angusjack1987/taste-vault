@@ -134,9 +134,11 @@ const Dashboard = () => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
-                  <Plus className="h-6 w-6" />
-                </Button>
+                <div>
+                  <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
+                    <Plus className="h-6 w-6" />
+                  </Button>
+                </div>
               </TooltipTrigger>
               <TooltipContent side="left" align="end" className="flex flex-col p-0 rounded-lg overflow-hidden">
                 <Link to="/recipes/new">
