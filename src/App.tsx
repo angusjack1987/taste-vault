@@ -14,6 +14,7 @@ import RecipeDetail from "./pages/recipes/RecipeDetail";
 import RecipeForm from "./pages/recipes/RecipeForm";
 import MealPlan from "./pages/meal-plan/Index";
 import ShoppingListPage from "./pages/shopping/Index";
+import FridgePage from "./pages/fridge/Index";
 import Settings from "./pages/settings/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
@@ -76,6 +77,11 @@ const App = () => (
             <Route path="/shopping" element={
               <AuthGuard>
                 <ShoppingListPage />
+              </AuthGuard>
+            } />
+            <Route path="/fridge" element={
+              <AuthGuard>
+                <FridgePage />
               </AuthGuard>
             } />
             <Route path="/settings" element={<Settings />} />
