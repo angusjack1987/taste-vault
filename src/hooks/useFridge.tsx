@@ -83,25 +83,33 @@ export const useFridge = () => {
           console.error("Error fetching user preferences:", prefsError);
         }
         
-        const itemsWithPrefs = (fridgeItems || []).map(item => {
-          const prefsObj = userPrefs?.preferences || {};
-          const fridgeItemPrefs = typeof prefsObj === 'object' ? 
-                                (prefsObj as Record<string, any>).fridge_items || {} : 
-                                {};
+        const items = Array.isArray(fridgeItems) ? fridgeItems : [];
+        
+        const itemsWithPrefs = items.map(item => {
+          const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
+            ? userPrefs.preferences 
+            : {};
+            
+          const fridgeItemPrefs = typeof prefsObj === 'object' 
+            ? (prefsObj as Record<string, any>).fridge_items || {} 
+            : {};
           
-          const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs ? 
-                           (fridgeItemPrefs as Record<string, any>)[item.id] || {} : 
-                           {};
+          const itemId = typeof item === 'object' && item !== null ? item.id : '';
+          const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
+            ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
+            : {};
             
           return {
-            ...item,
-            always_available: Boolean(itemPrefs && 
-                             typeof itemPrefs === 'object' && 
-                             itemPrefs.always_available)
-          };
+            ...(typeof item === 'object' ? item : {}),
+            always_available: Boolean(
+              itemPrefs && 
+              typeof itemPrefs === 'object' && 
+              itemPrefs.always_available
+            )
+          } as FridgeItem;
         });
         
-        return itemsWithPrefs as FridgeItem[];
+        return itemsWithPrefs;
       },
       enabled: !!user,
     });
@@ -182,13 +190,13 @@ export const useFridge = () => {
         
         const existingPreferences = existingPrefs?.preferences || {};
         
-        const safePrefs = typeof existingPreferences === 'object' ? 
-                         existingPreferences as Record<string, any> : 
-                         {};
+        const safePrefs = typeof existingPreferences === 'object' 
+          ? existingPreferences as Record<string, any> 
+          : {};
                          
-        const safeFridgeItemPrefs = typeof safePrefs.fridge_items === 'object' ? 
-                                  safePrefs.fridge_items as Record<string, any> : 
-                                  {};
+        const safeFridgeItemPrefs = typeof safePrefs.fridge_items === 'object' 
+          ? safePrefs.fridge_items as Record<string, any> 
+          : {};
         
         safeFridgeItemPrefs[id] = { 
           ...((typeof safeFridgeItemPrefs[id] === 'object' && safeFridgeItemPrefs[id]) || {}), 
