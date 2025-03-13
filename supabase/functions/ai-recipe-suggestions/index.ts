@@ -21,15 +21,52 @@ serve(async (req) => {
     let prompt = '';
     let systemPrompt = 'You are an AI assistant specialized in recipe suggestions and meal planning. Be concise and provide practical advice.';
     
+    // Process the user's food preferences if available
+    const formatUserPreferences = (userFoodPreferences: any) => {
+      if (!userFoodPreferences) return '';
+      
+      let prefString = 'Based on these user preferences:';
+      
+      if (userFoodPreferences.favoriteCuisines) {
+        prefString += ` Favorite cuisines: ${userFoodPreferences.favoriteCuisines}.`;
+      }
+      
+      if (userFoodPreferences.favoriteChefs) {
+        prefString += ` Favorite chefs/cooks: ${userFoodPreferences.favoriteChefs}.`;
+      }
+      
+      if (userFoodPreferences.ingredientsToAvoid) {
+        prefString += ` Ingredients to avoid: ${userFoodPreferences.ingredientsToAvoid}.`;
+      }
+      
+      if (userFoodPreferences.dietaryNotes) {
+        prefString += ` Additional notes: ${userFoodPreferences.dietaryNotes}.`;
+      }
+      
+      return prefString;
+    };
+    
     if (type === 'suggest-recipes') {
-      const { preferences, dietaryRestrictions } = data;
-      prompt = `Suggest 3 recipe ideas ${preferences ? `based on these preferences: ${preferences}` : ''} ${dietaryRestrictions ? `with these dietary restrictions: ${dietaryRestrictions}` : ''}. For each recipe, provide the title, a brief description, and a list of main ingredients.`;
+      const { preferences, dietaryRestrictions, userFoodPreferences } = data;
+      
+      // Include user's stored food preferences in the prompt
+      const userPrefsString = formatUserPreferences(userFoodPreferences);
+      
+      prompt = `Suggest 3 recipe ideas ${preferences ? `based on these preferences: ${preferences}` : ''} ${dietaryRestrictions ? `with these dietary restrictions: ${dietaryRestrictions}` : ''}. ${userPrefsString} For each recipe, provide the title, a brief description, and a list of main ingredients.`;
+      
+      console.log("Recipe suggestion prompt:", prompt);
     } else if (type === 'analyze-meal-plan') {
       const { mealPlan } = data;
       prompt = `Analyze this weekly meal plan and provide feedback on nutritional balance and suggest improvements: ${JSON.stringify(mealPlan)}`;
     } else if (type === 'generate-recipe') {
-      const { title, ingredients } = data;
-      prompt = `Create a complete recipe for "${title}" using these main ingredients: ${ingredients}. Include detailed instructions, cooking time, and serving size.`;
+      const { title, ingredients, userFoodPreferences } = data;
+      
+      // Include user's stored food preferences in the prompt
+      const userPrefsString = formatUserPreferences(userFoodPreferences);
+      
+      prompt = `Create a complete recipe for "${title}" using these main ingredients: ${ingredients}. ${userPrefsString} Include detailed instructions, cooking time, and serving size.`;
+      
+      console.log("Recipe generation prompt:", prompt);
     } else {
       return new Response(
         JSON.stringify({ error: 'Invalid request type' }),

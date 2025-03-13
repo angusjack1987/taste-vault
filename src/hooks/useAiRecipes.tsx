@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import useAuth from "@/hooks/useAuth";
 
 interface SuggestRecipesParams {
   preferences?: string;
@@ -20,16 +21,46 @@ interface GenerateRecipeParams {
 export const useAiRecipes = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  const getUserFoodPreferences = async () => {
+    if (!user) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('preferences')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error) throw error;
+      
+      return data?.preferences?.food || null;
+    } catch (err) {
+      console.error("Error fetching food preferences:", err);
+      return null;
+    }
+  };
 
   const suggestRecipes = async ({ preferences, dietaryRestrictions }: SuggestRecipesParams) => {
     setLoading(true);
     setError(null);
     
     try {
+      // Get user's food preferences from the database
+      const userFoodPreferences = await getUserFoodPreferences();
+      
+      // Combine explicit preferences with stored user preferences
+      const combinedData = {
+        preferences,
+        dietaryRestrictions,
+        userFoodPreferences
+      };
+      
       const { data, error } = await supabase.functions.invoke("ai-recipe-suggestions", {
         body: {
           type: "suggest-recipes",
-          data: { preferences, dietaryRestrictions },
+          data: combinedData,
         },
       });
 
@@ -78,10 +109,17 @@ export const useAiRecipes = () => {
     setError(null);
     
     try {
+      // Get user's food preferences from the database
+      const userFoodPreferences = await getUserFoodPreferences();
+      
       const { data, error } = await supabase.functions.invoke("ai-recipe-suggestions", {
         body: {
           type: "generate-recipe",
-          data: { title, ingredients },
+          data: { 
+            title, 
+            ingredients,
+            userFoodPreferences 
+          },
         },
       });
 

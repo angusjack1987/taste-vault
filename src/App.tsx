@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +16,7 @@ import Settings from "./pages/settings/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import FoodPreferences from "./pages/settings/FoodPreferences";
 
 const queryClient = new QueryClient();
 
@@ -71,11 +71,8 @@ const App = () => (
                 <MealPlan />
               </AuthGuard>
             } />
-            <Route path="/settings" element={
-              <AuthGuard>
-                <Settings />
-              </AuthGuard>
-            } />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings/food-preferences" element={<FoodPreferences />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

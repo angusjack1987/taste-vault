@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -64,6 +65,24 @@ const Settings = () => {
                   onCheckedChange={setMealRemindersEnabled}
                 />
               </div>
+            </div>
+          </div>
+          
+          <div className="border-t pt-6">
+            <h2 className="text-lg font-medium mb-4">Food Preferences</h2>
+            <div className="space-y-1">
+              <Link 
+                to="/settings/food-preferences" 
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted"
+              >
+                <div>
+                  <span className="font-medium">Food Preferences</span>
+                  <p className="text-sm text-muted-foreground">
+                    Set your favorite cuisines, chefs, and ingredients to avoid
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </Link>
             </div>
           </div>
           
