@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -135,11 +134,11 @@
   }
   
   .stat-card-blue {
-    @apply bg-ocean-300 text-ocean-900 border-ocean-400 shadow-vibrant;
+    @apply bg-ocean-300 text-ocean-900 border-ocean-500 shadow-vibrant;
   }
   
   .stat-card-red {
-    @apply bg-berry-300 text-berry-900 border-berry-400 shadow-vibrant;
+    @apply bg-berry-300 text-berry-900 border-berry-500 shadow-vibrant;
   }
   
   .stat-card-black {
