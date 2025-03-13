@@ -42,7 +42,7 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center px-2 py-1 transition-all hover:scale-110 min-w-[60px]",
+                "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110 min-w-[60px] text-center",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
@@ -52,7 +52,7 @@ const BottomNav = () => {
                   isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
                 )}
               />
-              <span className="text-xs font-medium">{item.label}</span>
+              <span className="text-xs font-medium text-center w-full">{item.label}</span>
             </Link>
           );
         })}
@@ -97,7 +97,7 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center px-2 py-1 transition-all hover:scale-110 min-w-[60px]",
+                "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110 min-w-[60px] text-center",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
@@ -107,7 +107,7 @@ const BottomNav = () => {
                   isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
                 )}
               />
-              <span className="text-xs font-medium">{item.label}</span>
+              <span className="text-xs font-medium text-center w-full">{item.label}</span>
             </Link>
           );
         })}
