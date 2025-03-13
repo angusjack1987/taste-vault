@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Trash2, 
@@ -106,7 +105,13 @@ const ShoppingListPage = () => {
     }
   };
   
-  // Organize items by category
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddItem(e as unknown as React.FormEvent);
+    }
+  };
+  
   const categorizeItems = () => {
     if (!shoppingItems) return {};
     
@@ -166,6 +171,7 @@ const ShoppingListPage = () => {
             <Input
               value={newItem}
               onChange={(e) => setNewItem(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Add new item..."
               disabled={isAdding}
               className="flex-1"

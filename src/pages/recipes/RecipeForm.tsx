@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
@@ -22,7 +21,6 @@ const RecipeForm = () => {
   const { mutate: createRecipe, isPending: isCreating } = useCreateRecipe();
   const { mutate: updateRecipe, isPending: isUpdating } = useUpdateRecipe();
   
-  // Initialize form with empty values or existing recipe data if editing
   const [formData, setFormData] = useState<RecipeFormData>({
     title: "",
     image: "",
@@ -38,7 +36,6 @@ const RecipeForm = () => {
   const [newTag, setNewTag] = useState("");
   const isSubmitting = isCreating || isUpdating;
   
-  // Load existing recipe data when editing
   useEffect(() => {
     if (isEditing && existingRecipe) {
       setFormData({
@@ -87,6 +84,30 @@ const RecipeForm = () => {
     });
   };
   
+  const handleIngredientKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddIngredient();
+      setTimeout(() => {
+        const inputs = document.querySelectorAll('input[placeholder^="Ingredient"]');
+        const newInput = inputs[inputs.length - 1] as HTMLInputElement;
+        if (newInput) newInput.focus();
+      }, 10);
+    }
+  };
+  
+  const handleInstructionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, index: number) => {
+    if (e.key === 'Enter' && !e.shiftKey && e.currentTarget.selectionStart === e.currentTarget.value.length) {
+      e.preventDefault();
+      handleAddInstruction();
+      setTimeout(() => {
+        const textareas = document.querySelectorAll('textarea[placeholder^="Step"]');
+        const newTextarea = textareas[textareas.length - 1] as HTMLTextAreaElement;
+        if (newTextarea) newTextarea.focus();
+      }, 10);
+    }
+  };
+  
   const handleAddTag = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
       setFormData({
@@ -107,7 +128,6 @@ const RecipeForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Filter out empty ingredients and instructions
     const cleanedData = {
       ...formData,
       ingredients: formData.ingredients.filter(i => i.trim() !== ""),
@@ -246,7 +266,6 @@ const RecipeForm = () => {
           <div className="space-y-3">
             <Label>Ingredients</Label>
             {formData.ingredients.map((ingredient, index) => {
-              // Display the parsed ingredient for visual reference
               const parsedIngredient = parseIngredientAmount(ingredient);
               
               return (
@@ -260,6 +279,7 @@ const RecipeForm = () => {
                         newIngredients[index] = e.target.value;
                         setFormData({...formData, ingredients: newIngredients});
                       }}
+                      onKeyDown={(e) => handleIngredientKeyDown(e, index)}
                     />
                     <Button
                       type="button"
@@ -309,6 +329,7 @@ const RecipeForm = () => {
                     newInstructions[index] = e.target.value;
                     setFormData({...formData, instructions: newInstructions});
                   }}
+                  onKeyDown={(e) => handleInstructionKeyDown(e, index)}
                   className="flex-grow"
                 />
                 <Button
