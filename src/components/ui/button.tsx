@@ -6,7 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-bold transition-all duration-200 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:-translate-y-[2px] active:translate-y-0 group",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-bold transition-all duration-200 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:-translate-y-[2px] active:translate-y-0 group hover:shadow-md",
   {
     variants: {
       variant: {
@@ -14,7 +14,7 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow hover:shadow-md [&_svg]:group-hover:animate-shake",
         outline:
-          "border-2 border-input bg-background hover:bg-accent/20 hover:text-accent-foreground shadow-sm hover:shadow [&_svg]:group-hover:animate-pulse-slow",
+          "border-2 border-input bg-background hover:bg-accent/20 hover:text-accent-foreground shadow-sm hover:border-accent [&_svg]:group-hover:animate-pulse-slow",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow hover:shadow-vibrant [&_svg]:group-hover:animate-pulse-slow",
         ghost: "hover:bg-accent/10 hover:text-accent-foreground [&_svg]:group-hover:animate-spin-slow",
