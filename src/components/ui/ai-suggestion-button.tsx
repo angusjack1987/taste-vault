@@ -8,9 +8,10 @@ interface AiSuggestionButtonProps {
   onClick: () => void;
   label?: string;
   className?: string;
-  size?: "default" | "sm" | "lg" | "icon";
+  size?: "default" | "sm" | "lg" | "icon" | "xl";
   isLoading?: boolean;
   children?: React.ReactNode;
+  variant?: "default" | "sunshine" | "berry" | "ocean" | "mint";
 }
 
 const AiSuggestionButton = ({
@@ -20,23 +21,32 @@ const AiSuggestionButton = ({
   size = "default",
   isLoading = false,
   children,
+  variant = "sunshine",
 }: AiSuggestionButtonProps) => {
   return (
     <Button
       onClick={onClick}
       className={cn(
-        "bg-sunshine-500 hover:bg-sunshine-400 text-charcoal-800 relative overflow-hidden group rounded-full border-2 border-sunshine-600 shadow-md",
+        "relative overflow-hidden group rounded-full border-2 border-sunshine-600 shadow-md",
         className
       )}
       size={size}
+      variant={variant}
       disabled={isLoading}
     >
       <span className="absolute inset-0 w-full h-full bg-white/30 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-      {children || (
-        <>
-          <Sparkles className="h-4 w-4 mr-2 text-charcoal-800 animate-pulse" />
-          {label}
-        </>
+      {isLoading ? (
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          Processing...
+        </div>
+      ) : (
+        children || (
+          <>
+            <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+            {label}
+          </>
+        )
       )}
     </Button>
   );

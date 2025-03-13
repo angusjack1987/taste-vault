@@ -24,7 +24,7 @@ const buttonVariants = cva(
         ocean: "bg-ocean-500 text-white hover:bg-ocean-400 shadow-sm hover:shadow-vibrant [&_svg]:group-hover:animate-pulse-slow",
         berry: "bg-berry-500 text-white hover:bg-berry-400 shadow-sm hover:shadow-vibrant [&_svg]:group-hover:animate-pulse-slow",
         sunshine: "bg-sunshine-500 text-charcoal-800 hover:bg-sunshine-400 shadow-sm hover:shadow-vibrant [&_svg]:group-hover:animate-bounce",
-        cta: "bg-gradient-to-r from-secondary via-secondary/90 to-secondary text-white rounded-full px-6 py-3 font-bold shadow-md hover:shadow-vibrant hover:opacity-90 [&_svg]:group-hover:animate-pulse-slow",
+        cta: "bg-gradient-to-r from-secondary via-secondary/90 to-secondary text-white rounded-full px-6 py-3 font-bold shadow-md hover:shadow-vibrant hover:opacity-90 [&_svg]:group-hover:animate-pulse-slow transform transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",
