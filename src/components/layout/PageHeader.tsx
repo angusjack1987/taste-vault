@@ -48,7 +48,7 @@ const PageHeader = ({
   const firstName = user?.user_metadata?.first_name || 'Chef';
 
   return (
-    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm px-4 pt-6 pb-3">
+    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 pt-6 pb-3 border-b border-border/30">
       <div className="flex items-center justify-between max-w-5xl mx-auto">
         <div className="flex items-center gap-3">
           {showBackButton && (
@@ -62,7 +62,7 @@ const PageHeader = ({
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <h1 className="text-xl font-bold">{title}</h1>
+          <h1 className="fancy-heading text-xl font-bold">{title}</h1>
         </div>
         
         <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ const PageHeader = ({
                   variant="ghost" 
                   size="icon" 
                   aria-label="User menu"
-                  className="rounded-full bg-muted h-9 w-9 p-0 overflow-hidden"
+                  className="rounded-full bg-secondary/20 h-9 w-9 p-0 overflow-hidden border-2 border-transparent hover:border-secondary"
                 >
                   {user?.user_metadata?.avatar_url ? (
                     <img 
@@ -88,26 +88,26 @@ const PageHeader = ({
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl">
-                <div className="px-2 py-1.5 text-sm font-medium">
-                  Hi, {firstName}!
+              <DropdownMenuContent align="end" className="rounded-xl border-2 border-border animate-in">
+                <div className="px-3 py-2 text-sm font-medium text-center">
+                  Hi, <span className="text-secondary font-bold">{firstName}</span>!
                 </div>
                 <DropdownMenuSeparator />
                 <Link to="/profile">
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem className="cursor-pointer rounded-lg">
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
                 </Link>
                 <Link to="/settings">
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem className="cursor-pointer rounded-lg">
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  className="cursor-pointer text-red-500 focus:text-red-500" 
+                  className="cursor-pointer text-red-500 focus:text-red-500 rounded-lg" 
                   onClick={handleSignOut}
                 >
                   <LogOut className="h-4 w-4 mr-2" />

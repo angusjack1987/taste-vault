@@ -5,7 +5,10 @@ import {
   Book, 
   Plus,
   Calendar,
-  Settings 
+  Settings,
+  BookPlus, 
+  ShoppingCart, 
+  Refrigerator
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -14,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookPlus, ShoppingCart, Refrigerator } from "lucide-react";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home },
@@ -30,7 +32,7 @@ const BottomNav = () => {
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
-      <div className="flex items-center bg-primary text-primary-foreground rounded-full px-6 py-3 shadow-lg relative">
+      <div className="flex items-center bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-6 py-3 shadow-lg relative">
         {navItems.slice(0, 2).map((item) => {
           const isActive = pathname === item.to || 
                           (item.to !== "/" && pathname.startsWith(item.to));
@@ -40,14 +42,14 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center px-5 py-1",
+                "flex flex-col items-center px-5 py-1 transition-all",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
               <item.icon
                 className={cn(
-                  "w-5 h-5 mb-1",
-                  isActive ? "text-secondary" : "text-primary-foreground"
+                  "w-5 h-5 mb-1 transition-all",
+                  isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
                 )}
               />
               <span className="text-xs font-medium">{item.label}</span>
@@ -59,25 +61,25 @@ const BottomNav = () => {
         <div className="mx-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-center w-14 h-14 rounded-full bg-mint-600 hover:bg-mint-700 transition-colors border-4 border-primary text-white shadow-md -mt-8">
+              <button className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 transition-all border-4 border-primary text-white shadow-md -mt-8 hover:-translate-y-1 active:translate-y-0">
                 <Plus className="w-7 h-7" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="center" className="w-56 mb-2">
+            <DropdownMenuContent side="top" align="center" className="w-56 mb-2 border-2 rounded-xl animate-in">
               <Link to="/recipes/new">
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer rounded-lg">
                   <BookPlus className="h-4 w-4 mr-2" />
                   Add Recipe
                 </DropdownMenuItem>
               </Link>
               <Link to="/fridge">
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer rounded-lg">
                   <Refrigerator className="h-4 w-4 mr-2" />
                   Fridge
                 </DropdownMenuItem>
               </Link>
               <Link to="/shopping">
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer rounded-lg">
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Shopping List
                 </DropdownMenuItem>
@@ -95,14 +97,14 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center px-5 py-1",
+                "flex flex-col items-center px-5 py-1 transition-all",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
               <item.icon
                 className={cn(
-                  "w-5 h-5 mb-1",
-                  isActive ? "text-secondary" : "text-primary-foreground"
+                  "w-5 h-5 mb-1 transition-all",
+                  isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
                 )}
               />
               <span className="text-xs font-medium">{item.label}</span>

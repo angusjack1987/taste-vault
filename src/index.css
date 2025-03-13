@@ -1,28 +1,29 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 42 33% 95%;
+    --background: 42 33% 97%;
     --foreground: 0 0% 12%;
 
-    --card: 42 33% 95%;
+    --card: 42 33% 97%;
     --card-foreground: 0 0% 12%;
 
-    --popover: 42 33% 95%;
+    --popover: 42 33% 97%;
     --popover-foreground: 0 0% 12%;
 
     --primary: 0 0% 12%;
-    --primary-foreground: 42 33% 95%;
+    --primary-foreground: 42 33% 97%;
 
     --secondary: 49 100% 50%;
     --secondary-foreground: 0 0% 12%;
 
-    --muted: 42 20% 90%;
+    --muted: 42 20% 92%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 134 50% 75%;
+    --accent: 134 60% 75%;
     --accent-foreground: 0 0% 12%;
 
     --destructive: 0 84.2% 60.2%;
@@ -32,7 +33,7 @@
     --input: 42 15% 85%;
     --ring: 0 0% 12%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -46,15 +47,15 @@
 
   .dark {
     --background: 0 0% 12%;
-    --foreground: 42 33% 95%;
+    --foreground: 42 33% 97%;
 
     --card: 0 0% 15%;
-    --card-foreground: 42 33% 95%;
+    --card-foreground: 42 33% 97%;
 
     --popover: 0 0% 15%;
-    --popover-foreground: 42 33% 95%;
+    --popover-foreground: 42 33% 97%;
 
-    --primary: 42 33% 95%;
+    --primary: 42 33% 97%;
     --primary-foreground: 0 0% 12%;
 
     --secondary: 49 100% 50%;
@@ -64,14 +65,14 @@
     --muted-foreground: 42 15% 70%;
 
     --accent: 134 50% 30%;
-    --accent-foreground: 42 33% 95%;
+    --accent-foreground: 42 33% 97%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 42 33% 95%;
+    --ring: 42 33% 97%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -97,7 +98,7 @@
 
 @layer components {
   .recipe-card {
-    @apply rounded-xl overflow-hidden border-2 border-border transition-all duration-200 hover:shadow-md;
+    @apply rounded-xl overflow-hidden border-2 border-border transition-all duration-300 hover:shadow-md hover:-translate-y-1;
   }
   
   .page-container {
@@ -118,23 +119,23 @@
   
   /* New styled components based on the mockup */
   .playful-card {
-    @apply bg-background rounded-2xl p-5 border-2 border-border shadow-sm transition-all duration-200 hover:shadow-md;
+    @apply bg-background rounded-2xl p-5 border-2 border-border shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1;
   }
   
   .stat-card {
-    @apply flex flex-col items-center justify-center rounded-2xl p-4 text-center transition-all duration-200 border-2;
+    @apply flex flex-col items-center justify-center rounded-2xl p-4 text-center transition-all duration-300 border-2 hover:-translate-y-1 hover:shadow-md;
   }
   
   .stat-card-yellow {
-    @apply bg-secondary text-secondary-foreground border-lemon-600;
+    @apply bg-secondary/90 text-secondary-foreground border-cream-600 shadow-yellow;
   }
   
   .stat-card-green {
-    @apply bg-accent text-accent-foreground border-mint-600;
+    @apply bg-accent/90 text-accent-foreground border-mint-600 shadow-green;
   }
   
   .stat-card-blue {
-    @apply bg-blue-200 text-blue-800 border-blue-400;
+    @apply bg-sky-100 text-sky-800 border-sky-400 shadow-blue;
   }
   
   .stat-card-black {
@@ -150,33 +151,33 @@
   }
   
   .fancy-heading {
-    @apply text-3xl font-bold mb-6;
+    @apply text-3xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
   }
   
   .fancy-button {
-    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-medium transition-all hover:opacity-90 flex items-center justify-center border-2 border-primary;
+    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-medium transition-all hover:opacity-90 hover:-translate-y-1 hover:shadow-md flex items-center justify-center border-2 border-primary;
   }
   
   .fancy-icon-button {
-    @apply bg-primary text-primary-foreground rounded-full p-3 transition-all hover:opacity-90 flex items-center justify-center border-2 border-primary;
+    @apply bg-primary text-primary-foreground rounded-full p-3 transition-all hover:opacity-90 hover:-translate-y-1 hover:shadow-sm flex items-center justify-center border-2 border-primary;
   }
   
   /* Colorful highlights */
   .highlight-yellow {
-    @apply bg-lemon-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-cream-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
   }
   
   .highlight-green {
-    @apply bg-mint-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-mint-100 px-1 py-0.5 rounded text-charcoal-800 font-medium;
   }
   
   .highlight-blue {
-    @apply bg-sky-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-sky-100 px-1 py-0.5 rounded text-charcoal-800 font-medium;
   }
   
   /* Bold outlines for interactive elements */
   .outlined-card {
-    @apply border-2 border-secondary rounded-xl p-4 hover:border-lemon-600 transition-colors;
+    @apply border-2 border-secondary rounded-xl p-4 hover:border-cream-600 transition-colors;
   }
   
   .outlined-input {
@@ -228,6 +229,40 @@
     box-shadow: 0 4px 14px -4px rgba(33, 150, 243, 0.7);
   }
   
+  /* Shake animation */
+  @keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-2px);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translateX(2px);
+    }
+  }
+  
+  .animate-shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+  
+  /* Pulse animation */
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.05);
+    }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+  
+  /* Sound wave animation */
   @keyframes sound-wave {
     0% {
       transform: scaleY(0.2);
@@ -242,5 +277,21 @@
   
   .animate-sound-wave {
     animation: sound-wave 1s ease-in-out infinite;
+  }
+  
+  /* Shimmer effect */
+  @keyframes shimmer {
+    0% {
+      background-position: -100% 0;
+    }
+    100% {
+      background-position: 100% 0;
+    }
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.5), rgba(255,255,255,0));
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
   }
 }
