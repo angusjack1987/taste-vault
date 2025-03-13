@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Mic, Plus, Trash2, X, Star, Utensils } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Mic, Plus, Trash2, X, Star, Utensils, AudioWaveform } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ const FridgePage = () => {
     startVoiceRecording,
     stopVoiceRecording,
     isProcessingVoice,
+    audioLevel,
   } = useFridge();
   
   const { data: fridgeItems, isLoading } = useFridgeItems();
@@ -127,7 +128,11 @@ const FridgePage = () => {
                     className="relative rounded-full h-10 w-10"
                     disabled={isProcessingVoice && !isVoiceRecording}
                   >
-                    <Mic className={`h-5 w-5 ${isVoiceRecording ? 'animate-pulse' : ''}`} />
+                    {isVoiceRecording ? (
+                      <AudioWaveform className="h-5 w-5 animate-pulse" />
+                    ) : (
+                      <Mic className="h-5 w-5" />
+                    )}
                     {isVoiceRecording && (
                       <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
                     )}
@@ -135,13 +140,32 @@ const FridgePage = () => {
                 </form>
                 
                 {isVoiceRecording && (
-                  <div className="bg-secondary/20 p-4 rounded-xl text-center">
+                  <div className="bg-secondary/20 p-4 rounded-xl text-center relative overflow-hidden">
                     <p className="mb-2 text-sm">Recording... Speak clearly to add items</p>
-                    <div className="flex items-center justify-center space-x-1 my-2">
-                      <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                      <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                      <span className="inline-block w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    
+                    {/* Voice amplitude visualization */}
+                    <div className="flex items-center justify-center h-12 mb-2">
+                      {Array.from({ length: 9 }).map((_, i) => {
+                        // Calculate animation delay and height based on position
+                        const delay = `${i * 50}ms`;
+                        const height = audioLevel > 0 
+                          ? Math.min(100, 30 + (audioLevel * 70 * Math.sin((i + 1) * 0.7))) 
+                          : 30 + (30 * Math.sin((i + 1) * 0.7));
+                          
+                        return (
+                          <div 
+                            key={i} 
+                            className="mx-0.5 w-1 bg-primary rounded-full animate-sound-wave"
+                            style={{ 
+                              height: `${height}%`, 
+                              animationDelay: delay,
+                              transform: `scaleY(${audioLevel > 0 ? (0.5 + audioLevel * 0.5) : 0.5})`
+                            }}
+                          />
+                        );
+                      })}
                     </div>
+                    
                     <Button 
                       variant="destructive" 
                       size="sm" 

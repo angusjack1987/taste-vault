@@ -105,3 +105,21 @@ body {
   padding: 20px;
   box-shadow: 8px 8px 0 0 #000;
 }
+
+/* Audio visualization animations */
+@keyframes sound-wave {
+  0% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(0.5);
+  }
+}
+
+.animate-sound-wave {
+  animation: sound-wave 0.6s ease-in-out infinite;
+  transform-origin: center;
+}

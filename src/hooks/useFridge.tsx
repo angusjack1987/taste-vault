@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import useAuth from "@/hooks/useAuth";
@@ -23,6 +24,47 @@ export const useFridge = () => {
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioLevel, setAudioLevel] = useState(0);
+  
+  // Audio analyzer for visualizations
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Clean up audio processing on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
+  // Audio level analyzer function
+  const analyzeAudioLevel = () => {
+    if (analyserRef.current && dataArrayRef.current) {
+      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      
+      // Calculate average volume level from frequency data
+      const average = dataArrayRef.current.reduce((sum, value) => sum + value, 0) / 
+                     dataArrayRef.current.length;
+      
+      // Normalize to 0-1 range and update state
+      const normalizedLevel = average / 255;
+      setAudioLevel(normalizedLevel);
+      
+      // Continue analyzing if still recording
+      if (isVoiceRecording) {
+        animationFrameRef.current = requestAnimationFrame(analyzeAudioLevel);
+      } else {
+        setAudioLevel(0);
+      }
+    }
+  };
 
   // Fetch fridge items
   const useFridgeItems = () => {
@@ -245,10 +287,29 @@ export const useFridge = () => {
   // Voice recording functions
   const startVoiceRecording = async () => {
     try {
+      // Reset audio state for new recording
       setAudioChunks([]);
       setIsVoiceRecording(true);
+      setAudioLevel(0);
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Set up audio analyzer for visualizations
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+      
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      
+      const bufferLength = analyserRef.current.frequencyBinCount;
+      dataArrayRef.current = new Uint8Array(bufferLength);
+      
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+      
+      // Start audio level analysis
+      analyzeAudioLevel();
       
       const recorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm',
@@ -268,11 +329,17 @@ export const useFridge = () => {
           setIsVoiceRecording(false);
           setIsProcessingVoice(true);
           
-          // Ensure we received audio chunks
-          const chunks = audioChunks;
-          console.log(`Processing ${chunks.length} audio chunks`);
+          // Stop audio visualization
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+          }
           
-          if (chunks.length === 0) {
+          // Get the latest audio chunks
+          const currentChunks = audioChunks;
+          console.log(`Processing ${currentChunks.length} audio chunks`);
+          
+          if (currentChunks.length === 0) {
             console.error("No audio chunks recorded");
             toast.error("No audio recorded. Please try again and speak clearly.");
             setIsProcessingVoice(false);
@@ -280,7 +347,7 @@ export const useFridge = () => {
           }
           
           // Create audio blob from chunks
-          const audioBlob = new Blob(chunks, { type: "audio/webm" });
+          const audioBlob = new Blob(currentChunks, { type: "audio/webm" });
           console.log("Audio blob created:", audioBlob.size, "bytes");
           
           if (audioBlob.size === 0) {
@@ -347,6 +414,8 @@ export const useFridge = () => {
               console.error("Error processing transcription:", error);
               toast.error(`Failed to process voice note: ${error.message}`);
             } finally {
+              // Clear audio chunks after processing to prevent reuse
+              setAudioChunks([]);
               setIsProcessingVoice(false);
             }
           };
@@ -354,6 +423,7 @@ export const useFridge = () => {
           reader.onerror = (error) => {
             console.error("FileReader error:", error);
             toast.error("Failed to process audio recording");
+            setAudioChunks([]);
             setIsProcessingVoice(false);
           };
           
@@ -362,6 +432,7 @@ export const useFridge = () => {
         } catch (error: any) {
           console.error("Error creating audio blob:", error);
           toast.error(`Failed to process recording: ${error.message}`);
+          setAudioChunks([]);
           setIsProcessingVoice(false);
         }
       });
@@ -378,6 +449,14 @@ export const useFridge = () => {
   };
 
   const stopVoiceRecording = () => {
+    // Stop audio level visualization
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    
+    setAudioLevel(0);
+    
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       console.log("Stopping voice recording...");
       mediaRecorder.stop();
@@ -406,6 +485,7 @@ export const useFridge = () => {
     isProcessingVoice,
     startVoiceRecording,
     stopVoiceRecording,
+    audioLevel, // Export audio level for visualization
   };
 };
 
