@@ -32,13 +32,13 @@ export const useFridgeItems = (user: User | null) => {
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
       // First filter out any null or non-object items
-      const validItems = items.filter(item => 
+      const validItems = items.filter((item): item is Record<string, any> => 
         item !== null && typeof item === 'object' && 'id' in item);
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
         // At this point, item is guaranteed not to be null due to our filter above
-        const itemObject = item as Record<string, any>;
+        // with the type predicate, TypeScript knows item is Record<string, any>
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
           ? userPrefs.preferences 
@@ -49,14 +49,14 @@ export const useFridgeItems = (user: User | null) => {
           : {};
           
         // We already checked that the item has an id property in our filter
-        const itemId = itemObject.id || '';
+        const itemId = item.id || '';
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
             
         return {
-          ...itemObject,
+          ...item,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 
