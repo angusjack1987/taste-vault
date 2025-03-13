@@ -254,7 +254,7 @@ export const useFridgeMutations = (user: User | null) => {
         
         Object.entries(fridgeItemPrefs).forEach(([itemId, prefs]) => {
           const itemPrefs = prefs as Record<string, any>;
-          if (itemPrefs.always_available) {
+          if (itemPrefs && itemPrefs.always_available) {
             alwaysAvailableIds.push(itemId);
           }
         });
@@ -265,7 +265,7 @@ export const useFridgeMutations = (user: User | null) => {
         // Create a safe list of IDs to delete
         const itemsToDelete: string[] = [];
         
-        // Safely iterate through items
+        // Safely iterate through items with null checks
         fridgeItems.forEach(item => {
           if (item && 
               typeof item === 'object' && 

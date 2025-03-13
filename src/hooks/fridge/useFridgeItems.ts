@@ -31,17 +31,16 @@ export const useFridgeItems = (user: User | null) => {
       // Ensure fridgeItems is an array and not an error object
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
-      // Filter out any null or non-object items
-      // Using a simpler, more direct filtering approach
+      // Filter out any null or non-object items with a simpler approach
       const validItems = items.filter(item => 
         item !== null && typeof item === 'object' && 'id' in item
       );
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
-        // Skip invalid items (this should never happen due to our filter above)
-        if (item === null || typeof item !== 'object') {
-          return null;
+        // We already know item is not null due to our filter above
+        if (!item) {
+          return null; // TypeScript safety - this should never happen
         }
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
@@ -51,17 +50,21 @@ export const useFridgeItems = (user: User | null) => {
         const fridgeItemPrefs = typeof prefsObj === 'object' 
           ? (prefsObj as Record<string, any>).fridge_items || {} 
           : {};
+        
+        // Double-check that item has an id
+        if (!item || !('id' in item)) {
+          return null; // TypeScript safety - this should never happen
+        }
           
-        // We already verified item is not null and has an id property
         const itemId = item.id;
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
         
-        // Use type assertion after verifying item is an object with expected properties
+        // Use explicit type assertion after all our checks
         return {
-          ...(item as unknown as Record<string, any>),
+          ...item,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 
