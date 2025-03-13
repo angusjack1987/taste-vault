@@ -35,14 +35,14 @@ export const useFridgeItems = (user: User | null) => {
       const validItems = items.filter(item => 
         item !== null && typeof item === 'object' && 'id' in item);
       
-      // Now map the valid items with preferences
+      // Now map the valid items with preferences - the error was happening here
       const itemsWithPrefs = validItems.map(item => {
-        // Ensure item is not null before proceeding
+        // Explicit null check to satisfy TypeScript
         if (item === null) {
-          return null; // This will be filtered out later
+          return null; // This will be filtered out in the next step
         }
         
-        // We've confirmed item is an object with an id
+        // Type assertion since we've verified item is not null and has 'id'
         const itemObject = item as Record<string, any>;
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
@@ -68,7 +68,7 @@ export const useFridgeItems = (user: User | null) => {
             itemPrefs.always_available
           )
         } as FridgeItem;
-      }).filter((item): item is FridgeItem => item !== null); // Remove any null items that might have been introduced
+      }).filter((item): item is FridgeItem => item !== null); // Type guard to ensure non-null items
       
       return itemsWithPrefs;
     },
