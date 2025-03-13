@@ -119,6 +119,50 @@ export type Database = {
         }
         Relationships: []
       }
+      shopping_list: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          ingredient: string
+          is_checked: boolean
+          quantity: string | null
+          recipe_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          ingredient: string
+          is_checked?: boolean
+          quantity?: string | null
+          recipe_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          ingredient?: string
+          is_checked?: boolean
+          quantity?: string | null
+          recipe_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_api_keys: {
         Row: {
           api_key: string

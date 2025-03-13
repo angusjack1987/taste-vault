@@ -9,22 +9,54 @@ import {
   Heart, 
   Share2, 
   Edit,
-  Loader2
+  Loader2,
+  ShoppingBag,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MainLayout from "@/components/layout/MainLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useRecipes from "@/hooks/useRecipes";
+import useShoppingList, { ShoppingListItemInput, categorizeIngredient } from "@/hooks/useShoppingList";
 import { toast } from "sonner";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isFavorited, setIsFavorited] = useState(false);
+  const [addingToShoppingList, setAddingToShoppingList] = useState(false);
   
   const { useRecipe } = useRecipes();
+  const { useAddManyShoppingListItems } = useShoppingList();
+  
   const { data: recipe, isLoading, error } = useRecipe(id);
+  const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
+  
+  const handleAddToShoppingList = async () => {
+    if (!recipe) return;
+    
+    setAddingToShoppingList(true);
+    
+    try {
+      // Transform the ingredients into shopping list items
+      const shoppingItems: ShoppingListItemInput[] = recipe.ingredients.map(ingredient => ({
+        recipe_id: recipe.id,
+        ingredient,
+        category: categorizeIngredient(ingredient),
+        is_checked: false,
+        quantity: null,
+      }));
+      
+      await addToShoppingList(shoppingItems);
+      toast.success("Added to shopping list");
+    } catch (error) {
+      console.error("Error adding to shopping list:", error);
+      toast.error("Failed to add to shopping list");
+    } finally {
+      setAddingToShoppingList(false);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -175,13 +207,19 @@ const RecipeDetail = () => {
             <Button 
               variant="outline" 
               className="flex-1 max-w-40"
-              onClick={() => console.log('Add to shopping list')}
+              onClick={handleAddToShoppingList}
+              disabled={addingToShoppingList}
             >
+              {addingToShoppingList ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <ShoppingBag className="h-4 w-4 mr-2" />
+              )}
               Add to Shopping List
             </Button>
             <Button 
               className="flex-1 max-w-40"
-              onClick={() => console.log('Add to meal plan')}
+              onClick={() => navigate("/meal-plan")}
             >
               Add to Meal Plan
             </Button>
