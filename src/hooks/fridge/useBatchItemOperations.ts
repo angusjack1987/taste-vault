@@ -6,6 +6,44 @@ import { FridgeItem } from "./types";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper function to categorize items based on their name (copied for consistency)
+const categorizeItem = (itemName: string): string => {
+  // Convert to lowercase for case-insensitive matching
+  const name = itemName.toLowerCase();
+  
+  // Common freezer items
+  const freezerItems = [
+    'frozen', 'ice', 'ice cream', 'freezer', 
+    'pizza', 'frozen meal', 'fish stick', 'fish fingers', 'frozen vegetable',
+    'frozen fruit', 'icecream', 'peas', 'corn', 'berries'
+  ];
+  
+  // Common pantry items
+  const pantryItems = [
+    'flour', 'sugar', 'rice', 'pasta', 'noodle', 'cereal', 'cracker', 'cookie',
+    'bean', 'lentil', 'canned', 'jar', 'spice', 'herb', 'oil', 'vinegar',
+    'sauce', 'soup', 'mix', 'tea', 'coffee', 'cocoa', 'chocolate', 'snack',
+    'chip', 'nut', 'dried', 'grain', 'bread', 'baking'
+  ];
+  
+  // Check freezer items first
+  for (const freezerItem of freezerItems) {
+    if (name.includes(freezerItem)) {
+      return 'Freezer';
+    }
+  }
+  
+  // Then check pantry items
+  for (const pantryItem of pantryItems) {
+    if (name.includes(pantryItem)) {
+      return 'Pantry';
+    }
+  }
+  
+  // Default to Fridge for everything else
+  return 'Fridge';
+};
+
 export const useBatchItemOperations = (user: User | null) => {
   const queryClient = useQueryClient();
 
@@ -40,13 +78,16 @@ export const useBatchItemOperations = (user: User | null) => {
       return false;
     }
     
+    // Auto-determine category based on name
+    const category = categorizeItem(name);
+    
     const { data, error } = await supabase
       .from('fridge_items' as any)
       .insert([
         {
           name: name,
           quantity: amount || undefined,
-          category: 'Fridge',
+          category: category,
           user_id: user?.id,
         },
       ])

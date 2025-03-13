@@ -1,9 +1,48 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FridgeItem } from "./types";
 import { User } from "@supabase/supabase-js";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
+
+// Helper function to categorize items based on their name
+const categorizeItem = (itemName: string): string => {
+  // Convert to lowercase for case-insensitive matching
+  const name = itemName.toLowerCase();
+  
+  // Common freezer items
+  const freezerItems = [
+    'frozen', 'ice', 'popsicle', 'ice cream', 'freezer', 
+    'pizza', 'frozen meal', 'fish stick', 'fish fingers', 'frozen vegetable',
+    'frozen fruit', 'icecream', 'peas', 'corn', 'berries'
+  ];
+  
+  // Common pantry items
+  const pantryItems = [
+    'flour', 'sugar', 'rice', 'pasta', 'noodle', 'cereal', 'cracker', 'cookie',
+    'bean', 'lentil', 'canned', 'jar', 'spice', 'herb', 'oil', 'vinegar',
+    'sauce', 'soup', 'mix', 'tea', 'coffee', 'cocoa', 'chocolate', 'snack',
+    'chip', 'nut', 'dried', 'grain', 'bread', 'baking'
+  ];
+  
+  // Check freezer items first
+  for (const freezerItem of freezerItems) {
+    if (name.includes(freezerItem)) {
+      return 'Freezer';
+    }
+  }
+  
+  // Then check pantry items
+  for (const pantryItem of pantryItems) {
+    if (name.includes(pantryItem)) {
+      return 'Pantry';
+    }
+  }
+  
+  // Default to Fridge for everything else
+  return 'Fridge';
+};
 
 export const useFridgeMutations = (user: User | null) => {
   const queryClient = useQueryClient();
@@ -14,11 +53,15 @@ export const useFridgeMutations = (user: User | null) => {
       
       const { always_available, ...dbItem } = item;
       
+      // Automatically determine the category if not provided
+      const category = item.category || categorizeItem(item.name);
+      
       const { data, error } = await supabase
         .from('fridge_items' as any)
         .insert([
           {
             ...dbItem,
+            category,
             user_id: user.id,
           },
         ])

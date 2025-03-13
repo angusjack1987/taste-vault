@@ -39,8 +39,9 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
-        if (!item || typeof item !== 'object') {
-          return null; // Skip invalid items
+        // Skip invalid items (this should never happen due to our filter above)
+        if (item === null || typeof item !== 'object') {
+          return null;
         }
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
@@ -51,17 +52,16 @@ export const useFridgeItems = (user: User | null) => {
           ? (prefsObj as Record<string, any>).fridge_items || {} 
           : {};
           
-        const itemId = 'id' in item && item.id ? item.id : '';
+        // We already verified item is not null and has an id property
+        const itemId = item.id;
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
         
-        // Use type assertion after checking 'id' existence
-        const validItem = item as unknown as Record<string, any>;
-            
+        // Use type assertion after verifying item is an object with expected properties
         return {
-          ...validItem,
+          ...(item as unknown as Record<string, any>),
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 
