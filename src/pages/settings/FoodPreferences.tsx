@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 interface FoodPreferences {
   favoriteCuisines: string;
@@ -106,23 +108,29 @@ const FoodPreferences = () => {
             ? (existingPrefs.preferences as UserPreferences) 
             : {};
           
-        const updatedPreferences = {
+        // Create a new object that conforms to Json type
+        const updatedPreferences: Record<string, any> = {
           ...currentPrefs,
           food: foodPreferences
         };
         
         const { error } = await supabase
           .from('user_preferences')
-          .update({ preferences: updatedPreferences })
+          .update({ preferences: updatedPreferences as Json })
           .eq('id', existingPrefs.id);
           
         if (error) throw error;
       } else {
+        // Create a new object that conforms to Json type
+        const newPreferences: Record<string, any> = {
+          food: foodPreferences
+        };
+        
         const { error } = await supabase
           .from('user_preferences')
           .insert({
             user_id: user.id,
-            preferences: { food: foodPreferences }
+            preferences: newPreferences as Json
           });
           
         if (error) throw error;
