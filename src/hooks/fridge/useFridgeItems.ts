@@ -32,20 +32,12 @@ export const useFridgeItems = (user: User | null) => {
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
       // Filter out any null or non-object items with a simpler approach
-      const validItems = items.filter(item => 
+      const validItems = items.filter((item): item is Record<string, any> => 
         item !== null && typeof item === 'object' && 'id' in item
       );
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
-        // We've already filtered out nulls, but TypeScript needs another check
-        if (item === null || typeof item !== 'object') {
-          return null;
-        }
-        
-        // Now we know for sure item is an object
-        const itemObj = item as Record<string, any>;
-        
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
           ? userPrefs.preferences 
           : {};
@@ -54,26 +46,21 @@ export const useFridgeItems = (user: User | null) => {
           ? (prefsObj as Record<string, any>).fridge_items || {} 
           : {};
         
-        // Double check that we have an id before proceeding
-        if (!itemObj || typeof itemObj.id !== 'string') {
-          return null;
-        }
-        
-        const itemId = itemObj.id;
+        const itemId = item.id;
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
         
         return {
-          ...itemObj,
+          ...item,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 
             itemPrefs.always_available
           )
         } as FridgeItem;
-      }).filter((item): item is FridgeItem => item !== null); // Type guard to ensure non-null
+      });
       
       return itemsWithPrefs;
     },
