@@ -24,6 +24,17 @@ interface GenerateRecipeParams {
   ingredients: string[];
 }
 
+interface RecipeOption {
+  title: string;
+  description: string;
+  highlights?: string[];
+  ingredients: string[];
+  instructions: string[];
+  time?: number | null;
+  servings?: number | null;
+  rawContent?: string;
+}
+
 interface UserFoodPreferences {
   favoriteCuisines?: string;
   favoriteChefs?: string;
@@ -149,13 +160,13 @@ export const useAiRecipes = () => {
 
       if (error) throw error;
       
-      return data.recipe;
+      return data.recipes || [];
     } catch (err) {
       console.error("Error generating recipe:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to generate recipe";
       setError(errorMessage);
       toast.error(errorMessage);
-      return null;
+      return [];
     } finally {
       setLoading(false);
     }

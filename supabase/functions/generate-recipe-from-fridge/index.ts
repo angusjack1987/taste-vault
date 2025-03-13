@@ -22,23 +22,33 @@ serve(async (req) => {
       throw new Error('No ingredients provided');
     }
 
-    console.log("Generating recipe with ingredients:", ingredients);
+    console.log("Generating recipes with ingredients:", ingredients);
     
     // Format user preferences if provided
     const userPrefsString = formatUserPreferences(userFoodPreferences);
     
-    // Prepare the prompt for generating a recipe
-    const prompt = `Create a recipe using some or all of these ingredients: ${ingredients.join(', ')}. 
+    // Prepare the prompt for generating multiple recipe options
+    const prompt = `Create TWO different recipe options using some or all of these ingredients: ${ingredients.join(', ')}. 
 ${userPrefsString}
 
-The recipe should include:
-1. A creative title
-2. A brief description
-3. Ingredients list (with quantities)
-4. Step-by-step instructions
-5. Approximate cooking time and servings
+For EACH recipe, provide the following in JSON format:
+{
+  "title": "Recipe Title",
+  "description": "A brief appealing description of the dish",
+  "highlights": ["highlight1", "highlight2", "highlight3"],
+  "ingredients": ["ingredient with quantity 1", "ingredient with quantity 2", ...],
+  "instructions": ["step 1", "step 2", ...],
+  "time": estimated_minutes_to_prepare,
+  "servings": number_of_servings
+}
 
-Not all ingredients need to be used, but use as many as possible to create a delicious, cohesive dish.`;
+Return your response as a JSON array with exactly two recipe objects:
+[
+  {first recipe object},
+  {second recipe object}
+]
+
+Not all ingredients need to be used in each recipe, but use as many as possible to create delicious, cohesive dishes. Make the recipes distinct from each other - different cuisines or cooking methods.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -51,11 +61,12 @@ Not all ingredients need to be used, but use as many as possible to create a del
         messages: [
           { 
             role: 'system', 
-            content: 'You are a skilled chef that specializes in creating delicious recipes from available ingredients. Be creative and provide detailed, easy-to-follow recipes.'
+            content: 'You are a skilled chef that specializes in creating delicious recipes from available ingredients. You always return responses in the exact JSON format requested, with no additional text.'
           },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
+        response_format: { type: "json_object" }
       }),
     });
 
@@ -63,14 +74,30 @@ Not all ingredients need to be used, but use as many as possible to create a del
     
     if (data.error) {
       console.error("OpenAI API error:", data.error);
-      throw new Error(data.error.message || 'Error generating recipe');
+      throw new Error(data.error.message || 'Error generating recipes');
     }
 
     const recipeContent = data.choices[0].message.content;
-    console.log("Recipe generated successfully");
+    console.log("Recipes generated successfully");
+    
+    // Parse the JSON response and ensure it's in the correct format
+    let recipeOptions = [];
+    try {
+      const parsedContent = JSON.parse(recipeContent);
+      if (Array.isArray(parsedContent) && parsedContent.length > 0) {
+        recipeOptions = parsedContent;
+      } else {
+        // Fall back if we didn't get an array
+        recipeOptions = [{ rawContent: recipeContent }];
+      }
+    } catch (e) {
+      console.error("Error parsing recipe JSON:", e);
+      // If parsing fails, return the raw text
+      recipeOptions = [{ rawContent: recipeContent }];
+    }
 
     return new Response(
-      JSON.stringify({ recipe: recipeContent }),
+      JSON.stringify({ recipes: recipeOptions }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     
