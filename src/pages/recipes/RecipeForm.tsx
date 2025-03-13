@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
@@ -91,12 +90,18 @@ const RecipeForm = () => {
   const handleIngredientKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleAddIngredient();
-      setTimeout(() => {
-        const inputs = document.querySelectorAll('input[placeholder^="Ingredient"]');
-        const newInput = inputs[inputs.length - 1] as HTMLInputElement;
-        if (newInput) newInput.focus();
-      }, 10);
+      
+      // Only add a new ingredient if the current one has content
+      if (formData.ingredients[index].trim()) {
+        handleAddIngredient();
+        
+        // Focus the newly added ingredient input after a short delay
+        setTimeout(() => {
+          const inputs = document.querySelectorAll('input[placeholder^="Ingredient"]');
+          const newInput = inputs[inputs.length - 1] as HTMLInputElement;
+          if (newInput) newInput.focus();
+        }, 10);
+      }
     }
   };
   
@@ -462,3 +467,4 @@ const RecipeForm = () => {
 };
 
 export default RecipeForm;
+

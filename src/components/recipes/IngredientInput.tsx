@@ -48,6 +48,10 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
         const { mainText, preparation } = parsePreparation(ingredient);
         const { name, amount } = parseIngredientAmount(mainText);
         
+        const isLastItem = index === ingredients.length - 1;
+        
+        // Only show the ingredient input and the parsed details for the last row
+        // This saves space and only shows the active row
         return (
           <div key={index} className="space-y-1">
             <div className="flex gap-2">
@@ -73,7 +77,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
               </Button>
             </div>
             
-            {ingredient && (
+            {ingredient && isLastItem && (
               <div className="grid grid-cols-3 gap-2 px-2 mt-1">
                 {amount && (
                   <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center border border-sage-200">
