@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -85,34 +86,34 @@ export const useFridge = () => {
         
         const items = Array.isArray(fridgeItems) ? fridgeItems : [];
         
-        const itemsWithPrefs = items.map(item => {
-          if (!item || typeof item !== 'object') {
-            return null;
-          }
-          
-          const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
-            ? userPrefs.preferences 
-            : {};
+        const itemsWithPrefs = items
+          .filter(item => item !== null && typeof item === 'object')
+          .map(item => {
+            // At this point item is guaranteed to be a non-null object
+            const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
+              ? userPrefs.preferences 
+              : {};
+              
+            const fridgeItemPrefs = typeof prefsObj === 'object' 
+              ? (prefsObj as Record<string, any>).fridge_items || {} 
+              : {};
             
-          const fridgeItemPrefs = typeof prefsObj === 'object' 
-            ? (prefsObj as Record<string, any>).fridge_items || {} 
-            : {};
-          
-          const itemId = item.id || '';
-          
-          const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
-            ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
-            : {};
+            // Now we know item is an object so we can safely access its properties
+            const itemId = item.id || '';
             
-          return {
-            ...item,
-            always_available: Boolean(
-              itemPrefs && 
-              typeof itemPrefs === 'object' && 
-              itemPrefs.always_available
-            )
-          } as FridgeItem;
-        }).filter(Boolean) as FridgeItem[];
+            const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
+              ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
+              : {};
+              
+            return {
+              ...item,
+              always_available: Boolean(
+                itemPrefs && 
+                typeof itemPrefs === 'object' && 
+                itemPrefs.always_available
+              )
+            } as FridgeItem;
+          });
         
         return itemsWithPrefs;
       },
