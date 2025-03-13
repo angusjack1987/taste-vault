@@ -290,6 +290,8 @@ const FridgeItemCard = ({
     
     setIsToggling(true);
     
+    console.log(`Toggle always available for ${item.name} to: ${checked}`);
+    
     // Call the parent handler with the new value
     onToggleAlwaysAvailable(checked);
     

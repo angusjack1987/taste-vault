@@ -65,14 +65,29 @@ export const useFridge = () => {
       queryFn: async () => {
         if (!user) return [];
         
-        const { data, error } = await supabase
+        const { data: fridgeItems, error } = await supabase
           .from('fridge_items' as any)
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         
         if (error) throw error;
-        return (data || []) as unknown as FridgeItem[];
+        
+        const { data: userPrefs, error: prefsError } = await supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        const itemsWithPrefs = (fridgeItems || []).map(item => {
+          const prefs = userPrefs?.preferences?.fridge_items?.[item.id];
+          return {
+            ...item,
+            always_available: prefs?.always_available || false
+          };
+        });
+        
+        return itemsWithPrefs as unknown as FridgeItem[];
       },
       enabled: !!user,
     });
@@ -135,25 +150,58 @@ export const useFridge = () => {
       
       console.log(`Toggling item ${id} always_available to: ${always_available}`);
       
-      const { data, error } = await supabase
-        .from('fridge_items')
-        .update({ always_available })
-        .eq("id", id)
-        .eq("user_id", user.id)
-        .select()
-        .single();
+      const updateData = { 
+        id: id
+      };
       
-      if (error) {
-        console.error("Error updating always_available:", error);
+      try {
+        const { data: existingPrefs, error: prefsError } = await supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (prefsError && prefsError.code !== 'PGSQL_ERROR') {
+          console.error("Error fetching user preferences:", prefsError);
+          throw prefsError;
+        }
+        
+        let fridgeItemPrefs = existingPrefs?.preferences?.fridge_items || {};
+        fridgeItemPrefs[id] = { ...fridgeItemPrefs[id], always_available };
+        
+        const prefsToUpsert = {
+          user_id: user.id,
+          preferences: {
+            ...(existingPrefs?.preferences || {}),
+            fridge_items: fridgeItemPrefs
+          }
+        };
+        
+        const { error: upsertError } = await supabase
+          .from('user_preferences')
+          .upsert(prefsToUpsert);
+          
+        if (upsertError) {
+          console.error("Error upserting preferences:", upsertError);
+          throw upsertError;
+        }
+        
+        return {
+          id,
+          name: "",
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+          always_available
+        } as FridgeItem;
+      } catch (error) {
+        console.error("Error in toggleAlwaysAvailable:", error);
         throw error;
       }
-      
-      return data as unknown as FridgeItem;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
       const status = data.always_available ? "marked as always available" : "no longer marked as always available";
-      toast.success(`"${data.name}" ${status}`);
+      toast.success(`Item ${status}`);
     },
     onError: (error) => {
       console.error("Failed to update always_available:", error);
