@@ -16,6 +16,11 @@ interface FoodPreferences {
   dietaryNotes: string;
 }
 
+interface UserPreferences {
+  food?: FoodPreferences;
+  [key: string]: any;
+}
+
 const FoodPreferences = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -27,7 +32,6 @@ const FoodPreferences = () => {
     dietaryNotes: ""
   });
 
-  // Fetch existing preferences when component mounts
   useEffect(() => {
     const fetchUserPreferences = async () => {
       if (!user) return;
@@ -42,14 +46,18 @@ const FoodPreferences = () => {
           
         if (error) throw error;
         
-        if (data && data.preferences && typeof data.preferences === 'object') {
-          const foodPrefs = data.preferences.food || {};
-          setPreferences({
-            favoriteCuisines: foodPrefs.favoriteCuisines || "",
-            favoriteChefs: foodPrefs.favoriteChefs || "",
-            ingredientsToAvoid: foodPrefs.ingredientsToAvoid || "",
-            dietaryNotes: foodPrefs.dietaryNotes || ""
-          });
+        if (data?.preferences && 
+            typeof data.preferences === 'object' && 
+            !Array.isArray(data.preferences)) {
+          const userPrefs = data.preferences as UserPreferences;
+          if (userPrefs.food) {
+            setPreferences({
+              favoriteCuisines: userPrefs.food.favoriteCuisines || "",
+              favoriteChefs: userPrefs.food.favoriteChefs || "",
+              ingredientsToAvoid: userPrefs.food.ingredientsToAvoid || "",
+              dietaryNotes: userPrefs.food.dietaryNotes || ""
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching food preferences:", error);
@@ -79,14 +87,13 @@ const FoodPreferences = () => {
     
     setLoading(true);
     try {
-      // First check if user already has preferences
       const { data: existingPrefs } = await supabase
         .from('user_preferences')
         .select('id, preferences')
         .eq('user_id', user.id)
         .single();
       
-      const foodPreferences = {
+      const foodPreferences: FoodPreferences = {
         favoriteCuisines: preferences.favoriteCuisines,
         favoriteChefs: preferences.favoriteChefs,
         ingredientsToAvoid: preferences.ingredientsToAvoid,
@@ -94,9 +101,10 @@ const FoodPreferences = () => {
       };
       
       if (existingPrefs) {
-        // Update existing preferences with proper type checking
-        const currentPrefs = typeof existingPrefs.preferences === 'object' ? 
-          existingPrefs.preferences : {};
+        const currentPrefs: UserPreferences = 
+          (typeof existingPrefs.preferences === 'object' && !Array.isArray(existingPrefs.preferences)) 
+            ? (existingPrefs.preferences as UserPreferences) 
+            : {};
           
         const updatedPreferences = {
           ...currentPrefs,
@@ -110,7 +118,6 @@ const FoodPreferences = () => {
           
         if (error) throw error;
       } else {
-        // Insert new preferences
         const { error } = await supabase
           .from('user_preferences')
           .insert({

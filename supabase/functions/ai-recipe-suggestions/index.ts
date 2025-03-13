@@ -26,7 +26,7 @@ serve(async (req) => {
       if (!userFoodPreferences) return '';
       
       // Ensure userFoodPreferences is an object
-      if (typeof userFoodPreferences !== 'object') return '';
+      if (typeof userFoodPreferences !== 'object' || Array.isArray(userFoodPreferences)) return '';
       
       let prefString = 'Based on these user preferences:';
       

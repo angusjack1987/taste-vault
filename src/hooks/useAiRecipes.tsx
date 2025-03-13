@@ -25,6 +25,12 @@ interface UserFoodPreferences {
   dietaryNotes?: string;
 }
 
+// Define a type for the preferences object shape
+interface UserPreferences {
+  food?: UserFoodPreferences;
+  [key: string]: any; // Allow other preference categories
+}
+
 export const useAiRecipes = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +49,12 @@ export const useAiRecipes = () => {
       if (error) throw error;
       
       // Make sure we safely access the food preferences object
-      if (data?.preferences && typeof data.preferences === 'object') {
-        return data.preferences.food as UserFoodPreferences || null;
+      if (data?.preferences && 
+          typeof data.preferences === 'object' && 
+          !Array.isArray(data.preferences)) {
+        // Cast to UserPreferences to access the food property
+        const userPrefs = data.preferences as UserPreferences;
+        return userPrefs.food || null;
       }
       
       return null;
