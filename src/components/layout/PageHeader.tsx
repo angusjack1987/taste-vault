@@ -62,7 +62,7 @@ const PageHeader = ({
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <h1 className="fancy-heading text-xl font-bold">{title}</h1>
+          <h1 className="font-heading text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">{title}</h1>
         </div>
         
         <div className="flex items-center gap-2">
@@ -89,25 +89,25 @@ const PageHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="rounded-xl border-2 border-border animate-in">
-                <div className="px-3 py-2 text-sm font-medium text-center">
+                <div className="px-3 py-2 text-sm font-bold text-center">
                   Hi, <span className="text-secondary font-bold">{firstName}</span>!
                 </div>
                 <DropdownMenuSeparator />
                 <Link to="/profile">
-                  <DropdownMenuItem className="cursor-pointer rounded-lg">
+                  <DropdownMenuItem className="cursor-pointer rounded-lg font-medium">
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
                 </Link>
                 <Link to="/settings">
-                  <DropdownMenuItem className="cursor-pointer rounded-lg">
+                  <DropdownMenuItem className="cursor-pointer rounded-lg font-medium">
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  className="cursor-pointer text-red-500 focus:text-red-500 rounded-lg" 
+                  className="cursor-pointer text-red-500 focus:text-red-500 rounded-lg font-medium" 
                   onClick={handleSignOut}
                 >
                   <LogOut className="h-4 w-4 mr-2" />

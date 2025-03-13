@@ -44,7 +44,7 @@ const RecipeCard = ({
         </div>
         
         <div className="p-3">
-          <h3 className="font-bold text-sm line-clamp-1">{title}</h3>
+          <h3 className="font-heading font-bold text-sm line-clamp-1">{title}</h3>
           
           {time && (
             <div className="mt-1 flex items-center text-seafoam-600 text-xs font-medium">

@@ -82,16 +82,20 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold;
+  }
+  
+  body {
+    @apply font-sans bg-background text-foreground;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
   }
 }
 
@@ -105,7 +109,7 @@
   }
   
   .section-title {
-    @apply text-xl font-semibold text-foreground mb-4;
+    @apply text-xl font-heading font-bold text-foreground mb-4;
   }
   
   .nav-item {
@@ -113,7 +117,7 @@
   }
   
   .nav-item-active {
-    @apply text-primary;
+    @apply text-primary font-bold;
   }
   
   /* New styled components based on the mockup */
@@ -154,28 +158,28 @@
   }
   
   .fancy-heading {
-    @apply text-3xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
+    @apply text-3xl font-heading font-extrabold mb-6 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent hover:bg-size-200 transition-all duration-300;
   }
   
   .fancy-button {
-    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-medium transition-all hover:opacity-90 hover:-translate-y-1 hover:shadow-md flex items-center justify-center border-2 border-primary;
+    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-bold transition-all hover:opacity-90 hover:-translate-y-1 hover:shadow-md flex items-center justify-center border-2 border-primary;
   }
   
   .fancy-icon-button {
-    @apply bg-primary text-primary-foreground rounded-full p-3 transition-all hover:opacity-90 hover:-translate-y-1 hover:shadow-sm flex items-center justify-center border-2 border-primary;
+    @apply bg-primary text-primary-foreground rounded-full p-3 transition-all hover:opacity-90 hover:-translate-y-1 hover:shadow-sm flex items-center justify-center border-2 border-primary font-bold;
   }
   
   /* Colorful highlights */
   .highlight-yellow {
-    @apply bg-sunshine-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-sunshine-200 px-1 py-0.5 rounded text-charcoal-800 font-semibold;
   }
   
   .highlight-green {
-    @apply bg-seafoam-100 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-seafoam-100 px-1 py-0.5 rounded text-charcoal-800 font-semibold;
   }
   
   .highlight-blue {
-    @apply bg-ocean-100 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-ocean-100 px-1 py-0.5 rounded text-charcoal-800 font-semibold;
   }
   
   /* Bold outlines for interactive elements */
@@ -185,6 +189,60 @@
   
   .outlined-input {
     @apply border-2 focus-within:border-primary;
+  }
+  
+  /* Typography styles */
+  .text-display {
+    @apply font-heading text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight;
+  }
+  
+  .text-title {
+    @apply font-heading text-2xl sm:text-3xl font-bold;
+  }
+  
+  .text-subtitle {
+    @apply font-heading text-xl font-semibold;
+  }
+  
+  .text-body-large {
+    @apply text-lg leading-relaxed;
+  }
+  
+  .text-body {
+    @apply text-base leading-relaxed;
+  }
+  
+  .text-body-small {
+    @apply text-sm leading-relaxed;
+  }
+  
+  .text-caption {
+    @apply text-xs font-medium opacity-80;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-sunshine-500 via-primary to-sunshine-600 bg-clip-text text-transparent hover:animate-text-shine bg-size-200;
+  }
+  
+  .text-highlight {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .text-highlight::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background-color: hsl(var(--primary) / 0.3);
+    z-index: -1;
+    transform: rotate(-1deg);
+  }
+  
+  .button-text {
+    @apply font-heading font-bold tracking-wide;
   }
 }
 
@@ -296,5 +354,54 @@
     background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.5), rgba(255,255,255,0));
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
+  }
+  
+  /* Hover text effects */
+  .hover-text-lift {
+    @apply transition-transform hover:-translate-y-1;
+  }
+  
+  .hover-text-shine {
+    background-size: 200% auto;
+    background-clip: text;
+    @apply text-transparent bg-gradient-to-r from-sunshine-500 via-primary to-sunshine-600 transition-all duration-500 ease-in-out;
+  }
+  
+  .hover-text-shine:hover {
+    background-position: 100% 0;
+  }
+  
+  .hover-text-underline {
+    position: relative;
+  }
+  
+  .hover-text-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    @apply bg-primary;
+    transition: width 0.3s ease;
+  }
+  
+  .hover-text-underline:hover::after {
+    width: 100%;
+  }
+  
+  .bg-size-200 {
+    background-size: 200% 100%;
+  }
+  
+  /* Animated letters */
+  .animated-letter {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  
+  .animated-letter:hover {
+    transform: translateY(-3px) rotate(6deg);
+    @apply text-primary;
   }
 }

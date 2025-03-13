@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -19,6 +18,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Nunito', 'sans-serif'],
+				heading: ['Poppins', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -63,7 +66,6 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Updated vibrant color palette
 				sunshine: {
 					50: '#FFFDF5',
 					100: '#FFFAEB',
@@ -108,7 +110,7 @@ export default {
 					50: '#F8E0EB',
 					100: '#F1C1D7',
 					300: '#E684AF',
-					400: '#EC407A', // Added berry-400
+					400: '#EC407A',
 					500: '#E91E63',
 					600: '#D81B60',
 					700: '#C2185B',
@@ -118,7 +120,7 @@ export default {
 					50: '#E3F2FD',
 					100: '#BBDEFB',
 					300: '#64B5F6',
-					400: '#42A5F5', // Added ocean-400
+					400: '#42A5F5',
 					500: '#2196F3',
 					600: '#1E88E5',
 					700: '#1976D2',
@@ -168,6 +170,14 @@ export default {
 				'bounce-light': {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-5px)' }
+				},
+				'text-bounce': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-3px)' }
+				},
+				'text-shine': {
+					'0%': { backgroundPosition: '0% 50%' },
+					'100%': { backgroundPosition: '100% 50%' }
 				}
 			},
 			animation: {
@@ -175,7 +185,9 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-shadow': 'pulse-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
 				'float': 'float 5s ease-in-out infinite',
-				'bounce-light': 'bounce-light 2s ease-in-out infinite'
+				'bounce-light': 'bounce-light 2s ease-in-out infinite',
+				'text-bounce': 'text-bounce 1s ease-in-out infinite',
+				'text-shine': 'text-shine 3s linear infinite'
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
