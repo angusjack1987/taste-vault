@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -35,12 +34,10 @@ const FoodPreferences = () => {
     dietaryNotes: ""
   });
 
-  // Tag inputs state
   const [cuisineTags, setCuisineTags] = useState<string[]>([]);
   const [chefTags, setChefTags] = useState<string[]>([]);
   const [avoidTags, setAvoidTags] = useState<string[]>([]);
   
-  // Create a debounced save function to prevent too many saves
   const debouncedSave = useRef(
     debounce(async (prefsToSave: FoodPreferences) => {
       if (!user) return;
@@ -80,7 +77,6 @@ const FoodPreferences = () => {
               dietaryNotes: userPrefs.food.dietaryNotes || ""
             });
 
-            // Split existing values into tags
             if (userPrefs.food.favoriteCuisines) {
               setCuisineTags(userPrefs.food.favoriteCuisines.split(',').map(tag => tag.trim()).filter(Boolean));
             }
@@ -102,7 +98,6 @@ const FoodPreferences = () => {
     fetchUserPreferences();
   }, [user]);
 
-  // Handle input changes for non-tag fields
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     const updatedPreferences = {
@@ -111,11 +106,9 @@ const FoodPreferences = () => {
     };
     setPreferences(updatedPreferences);
     
-    // Trigger auto-save
     debouncedSave(updatedPreferences);
   };
 
-  // Update preferences state when tags change
   const handleTagsChange = (tags: string[], field: keyof FoodPreferences) => {
     const updatedPreferences = {
       ...preferences,
@@ -123,7 +116,6 @@ const FoodPreferences = () => {
     };
     setPreferences(updatedPreferences);
     
-    // Trigger auto-save
     debouncedSave(updatedPreferences);
   };
 
@@ -153,7 +145,6 @@ const FoodPreferences = () => {
             ? (existingPrefs.preferences as UserPreferences) 
             : {};
           
-        // Create a new object that conforms to Json type
         const updatedPreferences: Record<string, any> = {
           ...currentPrefs,
           food: foodPreferences
@@ -166,7 +157,6 @@ const FoodPreferences = () => {
           
         if (error) throw error;
       } else {
-        // Create a new object that conforms to Json type
         const newPreferences: Record<string, any> = {
           food: foodPreferences
         };
@@ -190,6 +180,14 @@ const FoodPreferences = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement?.tagName === 'INPUT') {
+      const inputValue = (activeElement as HTMLInputElement).value.trim();
+      if (inputValue) {
+        return;
+      }
+    }
     
     setLoading(true);
     try {

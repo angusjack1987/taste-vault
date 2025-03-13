@@ -1,4 +1,3 @@
-
 import React, { useState, KeyboardEvent, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,12 @@ const TagInput = ({
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault(); // Prevent form submission
       e.stopPropagation(); // Stop event propagation
-      addTag(inputValue);
+      
+      if (inputValue.trim()) {
+        addTag(inputValue);
+      }
+      
+      return false; // Ensure the event is fully canceled
     }
   };
 
@@ -63,12 +67,14 @@ const TagInput = ({
       setInputValue("");
       if (onTagsChange) onTagsChange(newTags);
       
-      // Restore focus to input if preserveFocus is true
-      if (preserveFocus && inputRef.current) {
+      // Ensure input keeps focus after adding tag
+      if (inputRef.current) {
         setTimeout(() => {
           inputRef.current?.focus();
         }, 0);
       }
+    } else {
+      setInputValue("");
     }
   };
 
@@ -78,10 +84,30 @@ const TagInput = ({
     if (onTagsChange) onTagsChange(newTags);
     
     // Focus the input after removing a tag
-    if (preserveFocus && inputRef.current) {
+    if (inputRef.current) {
       inputRef.current.focus();
     }
   };
+
+  // Ensure the form doesn't submit when Enter is pressed in the input
+  useEffect(() => {
+    const formElement = inputRef.current?.closest('form');
+    
+    if (formElement) {
+      const handleFormSubmit = (e: Event) => {
+        const activeElement = document.activeElement;
+        if (activeElement === inputRef.current && inputValue.trim()) {
+          e.preventDefault();
+        }
+      };
+      
+      formElement.addEventListener('submit', handleFormSubmit);
+      
+      return () => {
+        formElement.removeEventListener('submit', handleFormSubmit);
+      };
+    }
+  }, [inputValue]);
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -115,6 +141,7 @@ const TagInput = ({
           onKeyDown={handleKeyDown}
           aria-label="Add tag"
           ref={inputRef}
+          autoComplete="off" // Prevent browser autocomplete from interfering
         />
         <Button 
           type="button" 
