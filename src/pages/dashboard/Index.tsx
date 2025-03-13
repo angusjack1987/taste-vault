@@ -1,15 +1,10 @@
-import { Plus, Loader2, BookPlus, ShoppingCart, Refrigerator } from "lucide-react";
+
+import { Plus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
 import CategorySection from "@/components/recipes/CategorySection";
 import useRecipes from "@/hooks/useRecipes";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const Dashboard = () => {
   const { useAllRecipes } = useRecipes();
@@ -123,36 +118,6 @@ const Dashboard = () => {
             )}
           </>
         )}
-        
-        <div className="fixed bottom-24 right-6 z-20">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
-                <Plus className="h-6 w-6" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="left" align="end" className="w-56">
-              <Link to="/recipes/new">
-                <DropdownMenuItem className="cursor-pointer">
-                  <BookPlus className="h-4 w-4 mr-2" />
-                  Add Recipe
-                </DropdownMenuItem>
-              </Link>
-              <Link to="/fridge">
-                <DropdownMenuItem className="cursor-pointer">
-                  <Refrigerator className="h-4 w-4 mr-2" />
-                  Fridge
-                </DropdownMenuItem>
-              </Link>
-              <Link to="/shopping">
-                <DropdownMenuItem className="cursor-pointer">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Shopping List
-                </DropdownMenuItem>
-              </Link>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
     </MainLayout>
   );

@@ -29,7 +29,7 @@ const MainLayout = ({
         action={action}
       />
       
-      <main className="flex-1 pb-28 px-2">
+      <main className="flex-1 pb-24 px-2">
         <div className="max-w-4xl mx-auto w-full">
           {children}
         </div>
