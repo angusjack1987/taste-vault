@@ -1,4 +1,3 @@
-
 import { Plus, Loader2, BookPlus, ShoppingCart, Refrigerator } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,30 +5,26 @@ import MainLayout from "@/components/layout/MainLayout";
 import CategorySection from "@/components/recipes/CategorySection";
 import useRecipes from "@/hooks/useRecipes";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Dashboard = () => {
   const { useAllRecipes } = useRecipes();
   const { data: recipes, isLoading } = useAllRecipes();
   
-  // Format recipes for grid display
   const formattedRecipes = recipes?.map(recipe => ({
     id: recipe.id,
     title: recipe.title,
     image: recipe.image || "",
     time: recipe.time || undefined,
-    rating: undefined, // No ratings yet
+    rating: undefined,
   })) || [];
   
-  // Get the latest recipes for the "Recently Added" section
   const recentlyAdded = [...(formattedRecipes || [])].slice(0, 3);
   
-  // For now, favorites and popular are the same as all recipes
-  // In the future, these could be filtered based on actual favorites/popularity
   const favorites = formattedRecipes.slice(0, 3);
   const popular = formattedRecipes.slice(0, 4);
   
@@ -38,7 +33,6 @@ const Dashboard = () => {
   return (
     <MainLayout title="Flavor Librarian">
       <div className="page-container">
-        {/* Today's Meal section */}
         <section className="mb-8">
           <h2 className="section-title">Today's Meal Plan</h2>
           <div className="bg-muted rounded-xl p-4">
@@ -131,49 +125,33 @@ const Dashboard = () => {
         )}
         
         <div className="fixed bottom-24 right-6 z-20">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
-                    <Plus className="h-6 w-6" />
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="left" align="end" className="flex flex-col p-0 rounded-lg overflow-hidden">
-                <Link to="/recipes/new">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="justify-start w-full px-3 py-2 h-auto text-sm gap-2 rounded-none hover:bg-accent"
-                  >
-                    <BookPlus className="h-4 w-4" />
-                    Add Recipe
-                  </Button>
-                </Link>
-                <Link to="/fridge">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="justify-start w-full px-3 py-2 h-auto text-sm gap-2 rounded-none hover:bg-accent"
-                  >
-                    <Refrigerator className="h-4 w-4" />
-                    Fridge
-                  </Button>
-                </Link>
-                <Link to="/shopping">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="justify-start w-full px-3 py-2 h-auto text-sm gap-2 rounded-none hover:bg-accent"
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                    Shopping List
-                  </Button>
-                </Link>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
+                <Plus className="h-6 w-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="left" align="end" className="w-56">
+              <Link to="/recipes/new">
+                <DropdownMenuItem className="cursor-pointer">
+                  <BookPlus className="h-4 w-4 mr-2" />
+                  Add Recipe
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/fridge">
+                <DropdownMenuItem className="cursor-pointer">
+                  <Refrigerator className="h-4 w-4 mr-2" />
+                  Fridge
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/shopping">
+                <DropdownMenuItem className="cursor-pointer">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Shopping List
+                </DropdownMenuItem>
+              </Link>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </MainLayout>
