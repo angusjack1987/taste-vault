@@ -66,3 +66,42 @@ body {
     box-shadow: 0 0 0 0 rgba(255, 214, 0, 0);
   }
 }
+
+/* Bold outlines */
+.bold-outline {
+  border: 2px solid currentColor;
+}
+
+.bold-outline-yellow {
+  border: 2px solid #FFDC72;
+}
+
+.bold-outline-green {
+  border: 2px solid #4CAF50;
+}
+
+.bold-outline-blue {
+  border: 2px solid #2196F3;
+}
+
+/* Colorful backgrounds */
+.bg-gradient-yellow {
+  background: linear-gradient(135deg, #FFF9C4 0%, #FFEB3B 100%);
+}
+
+.bg-gradient-green {
+  background: linear-gradient(135deg, #C8E6C9 0%, #4CAF50 100%);
+}
+
+.bg-gradient-blue {
+  background: linear-gradient(135deg, #BBDEFB 0%, #2196F3 100%);
+}
+
+/* Fun container style */
+.fun-container {
+  border-radius: 24px;
+  border: 2px solid #FFDC72;
+  background-color: white;
+  padding: 20px;
+  box-shadow: 8px 8px 0 0 #000;
+}

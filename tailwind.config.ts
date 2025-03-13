@@ -71,6 +71,9 @@ export default {
 					300: '#FFF0C2',
 					400: '#FFE69A',
 					500: '#FFDC72',
+					600: '#FFCE3A',
+					700: '#FFBD00',
+					800: '#CC9700',
 					900: '#513C06',
 				},
 				charcoal: {
@@ -97,6 +100,7 @@ export default {
 					100: '#C8E6C9',
 					300: '#81C784',
 					500: '#4CAF50',
+					600: '#3D8B40',
 					700: '#388E3C',
 					900: '#1B5E20',
 				},
@@ -105,6 +109,7 @@ export default {
 					100: '#BBDEFB',
 					300: '#64B5F6',
 					500: '#2196F3',
+					600: '#1E88E5',
 					700: '#1976D2',
 					900: '#0D47A1',
 				}
@@ -113,6 +118,11 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				'colorful': '0 4px 14px -4px rgba(255, 220, 72, 0.5)',
+				'neo': '8px 8px 0 0 #000',
+				'pastel': '0 4px 14px rgba(200, 200, 200, 0.5)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -130,11 +140,20 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-shadow': {
+					'0%, 100%': {
+						boxShadow: '0 0 0 0 rgba(255, 220, 72, 0.4)'
+					},
+					'50%': {
+						boxShadow: '0 0 0 15px rgba(255, 220, 72, 0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-shadow': 'pulse-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
 			}
 		}
 	},

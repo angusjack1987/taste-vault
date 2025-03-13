@@ -29,8 +29,10 @@ const MainLayout = ({
         action={action}
       />
       
-      <main className="flex-1 pb-28">
-        {children}
+      <main className="flex-1 pb-28 px-2">
+        <div className="max-w-4xl mx-auto w-full">
+          {children}
+        </div>
       </main>
       
       {!hideNavigation && <BottomNav />}

@@ -98,7 +98,7 @@
 
 @layer components {
   .recipe-card {
-    @apply rounded-xl overflow-hidden border border-border transition-all duration-200 hover:shadow-md;
+    @apply rounded-xl overflow-hidden border-2 border-border transition-all duration-200 hover:shadow-md;
   }
   
   .page-container {
@@ -119,27 +119,27 @@
   
   /* New styled components based on the mockup */
   .playful-card {
-    @apply bg-background rounded-2xl p-5 border border-border shadow-sm transition-all duration-200 hover:shadow-md;
+    @apply bg-background rounded-2xl p-5 border-2 border-border shadow-sm transition-all duration-200 hover:shadow-md;
   }
   
   .stat-card {
-    @apply flex flex-col items-center justify-center rounded-2xl p-4 text-center transition-all duration-200;
+    @apply flex flex-col items-center justify-center rounded-2xl p-4 text-center transition-all duration-200 border-2;
   }
   
   .stat-card-yellow {
-    @apply bg-secondary text-secondary-foreground;
+    @apply bg-secondary text-secondary-foreground border-lemon-600;
   }
   
   .stat-card-green {
-    @apply bg-accent text-accent-foreground;
+    @apply bg-accent text-accent-foreground border-mint-600;
   }
   
   .stat-card-blue {
-    @apply bg-blue-200 text-blue-800;
+    @apply bg-blue-200 text-blue-800 border-blue-400;
   }
   
   .stat-card-black {
-    @apply bg-primary text-primary-foreground;
+    @apply bg-primary text-primary-foreground border-charcoal-700;
   }
   
   .stat-card-icon {
@@ -155,11 +155,33 @@
   }
   
   .fancy-button {
-    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-medium transition-all hover:opacity-90 flex items-center justify-center;
+    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-medium transition-all hover:opacity-90 flex items-center justify-center border-2 border-primary;
   }
   
   .fancy-icon-button {
-    @apply bg-primary text-primary-foreground rounded-full p-3 transition-all hover:opacity-90 flex items-center justify-center;
+    @apply bg-primary text-primary-foreground rounded-full p-3 transition-all hover:opacity-90 flex items-center justify-center border-2 border-primary;
+  }
+  
+  /* Colorful highlights */
+  .highlight-yellow {
+    @apply bg-lemon-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+  }
+  
+  .highlight-green {
+    @apply bg-mint-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+  }
+  
+  .highlight-blue {
+    @apply bg-sky-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+  }
+  
+  /* Bold outlines for interactive elements */
+  .outlined-card {
+    @apply border-2 border-secondary rounded-xl p-4 hover:border-lemon-600 transition-colors;
+  }
+  
+  .outlined-input {
+    @apply border-2 focus-within:border-secondary;
   }
 }
 
@@ -180,5 +202,30 @@
     50% {
       transform: translateY(-10px);
     }
+  }
+  
+  .outlined {
+    @apply border-2 border-secondary;
+  }
+  
+  .outlined-primary {
+    @apply border-2 border-primary;
+  }
+  
+  .outlined-accent {
+    @apply border-2 border-accent;
+  }
+  
+  /* Colorful shadows */
+  .shadow-yellow {
+    box-shadow: 0 4px 14px -4px rgba(255, 220, 72, 0.7);
+  }
+  
+  .shadow-green {
+    box-shadow: 0 4px 14px -4px rgba(76, 175, 80, 0.7);
+  }
+  
+  .shadow-blue {
+    box-shadow: 0 4px 14px -4px rgba(33, 150, 243, 0.7);
   }
 }
