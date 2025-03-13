@@ -31,17 +31,25 @@ export const useScrapedRecipes = () => {
       let imageUrl = null;
       if (scrapedRecipe.image) {
         try {
+          console.log("Attempting to download image from:", scrapedRecipe.image);
+          
           // Fetch the image
           const imgResponse = await fetch(scrapedRecipe.image);
-          if (!imgResponse.ok) throw new Error("Failed to fetch image");
+          if (!imgResponse.ok) {
+            console.error("Failed to fetch image:", imgResponse.status, imgResponse.statusText);
+            throw new Error("Failed to fetch image");
+          }
           
           const blob = await imgResponse.blob();
+          console.log("Image downloaded successfully, size:", blob.size, "type:", blob.type);
           
           // Generate a unique file name
           const fileExt = scrapedRecipe.image.split('.').pop()?.split('?')[0] || 'jpg';
           const randomId = Math.random().toString(36).substring(2, 15);
           const fileName = `scraped-${Date.now()}-${randomId}.${fileExt}`;
           const filePath = `recipe-images/${fileName}`;
+          
+          console.log("Uploading image to storage path:", filePath);
           
           // Upload to Supabase storage
           const { data: uploadData, error: uploadError } = await supabase.storage
@@ -51,7 +59,12 @@ export const useScrapedRecipes = () => {
               cacheControl: '3600'
             });
           
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error("Error uploading to storage:", uploadError);
+            throw uploadError;
+          }
+          
+          console.log("Image uploaded successfully:", uploadData);
           
           // Get the public URL
           const { data: publicUrlData } = supabase.storage
@@ -59,6 +72,7 @@ export const useScrapedRecipes = () => {
             .getPublicUrl(filePath);
           
           imageUrl = publicUrlData.publicUrl;
+          console.log("Image public URL:", imageUrl);
         } catch (imgError) {
           console.error("Error uploading image:", imgError);
           // Continue without image if there's an error

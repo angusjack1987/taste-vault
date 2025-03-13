@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import useScrapedRecipes from "@/hooks/useScrapedRecipes";
+import { Label } from "@/components/ui/label";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -97,9 +98,3 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
 };
 
 export default ImportRecipeDialog;
-
-export const Label = ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
-  <label className="text-sm font-medium text-muted-foreground" {...props}>
-    {children}
-  </label>
-);
