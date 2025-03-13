@@ -71,17 +71,19 @@ export const useFridgeMutations = (user: User | null) => {
       console.log(`Toggling item ${id} always_available to: ${always_available}`);
       
       try {
+        // First, check if the user already has preferences in the table
         const { data: existingPrefs, error: prefsError } = await supabase
           .from('user_preferences')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to handle case when no record exists
           
         if (prefsError && prefsError.code !== 'PGSQL_ERROR') {
           console.error("Error fetching user preferences:", prefsError);
           throw prefsError;
         }
         
+        // Initialize preferences structure
         const existingPreferences = existingPrefs?.preferences || {};
         
         const safePrefs = typeof existingPreferences === 'object' 
@@ -92,26 +94,44 @@ export const useFridgeMutations = (user: User | null) => {
           ? safePrefs.fridge_items as Record<string, any> 
           : {};
         
+        // Update the specific item preference
         safeFridgeItemPrefs[id] = { 
           ...((typeof safeFridgeItemPrefs[id] === 'object' && safeFridgeItemPrefs[id]) || {}), 
           always_available 
         };
         
-        const prefsToUpsert = {
-          user_id: user.id,
-          preferences: {
-            ...safePrefs,
-            fridge_items: safeFridgeItemPrefs
-          }
+        // Prepare updated preferences object
+        const updatedPreferences = {
+          ...safePrefs,
+          fridge_items: safeFridgeItemPrefs
         };
         
-        const { error: upsertError } = await supabase
-          .from('user_preferences')
-          .upsert(prefsToUpsert);
-          
-        if (upsertError) {
-          console.error("Error upserting preferences:", upsertError);
-          throw upsertError;
+        let result;
+        
+        if (existingPrefs) {
+          // If user already has preferences, update them
+          const { error: updateError } = await supabase
+            .from('user_preferences')
+            .update({ preferences: updatedPreferences })
+            .eq('id', existingPrefs.id);
+            
+          if (updateError) {
+            console.error("Error updating preferences:", updateError);
+            throw updateError;
+          }
+        } else {
+          // If user doesn't have preferences yet, insert new record
+          const { error: insertError } = await supabase
+            .from('user_preferences')
+            .insert({
+              user_id: user.id,
+              preferences: updatedPreferences
+            });
+            
+          if (insertError) {
+            console.error("Error inserting preferences:", insertError);
+            throw insertError;
+          }
         }
         
         return {

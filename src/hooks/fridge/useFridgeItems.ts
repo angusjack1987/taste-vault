@@ -37,7 +37,7 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map(item => {
-        // Ensure item is not null before proceeding (this addresses the TypeScript error)
+        // Ensure item is not null before proceeding
         if (item === null) {
           return null; // This will be filtered out later
         }
