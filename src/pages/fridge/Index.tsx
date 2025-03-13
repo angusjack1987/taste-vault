@@ -21,6 +21,7 @@ const FridgePage = () => {
     addItem,
     deleteItem,
     toggleAlwaysAvailable,
+    clearNonAlwaysAvailableItems,
     isVoiceRecording,
     startVoiceRecording,
     stopVoiceRecording,
@@ -52,6 +53,12 @@ const FridgePage = () => {
     }
   };
 
+  const handleClearAllItems = () => {
+    if (window.confirm("Are you sure you want to clear all non-saved items from your fridge?")) {
+      clearNonAlwaysAvailableItems.mutate();
+    }
+  };
+
   const generateRecipeFromFridge = async () => {
     if (!fridgeItems || fridgeItems.length === 0) {
       toast.error("Add some ingredients to your fridge first");
@@ -78,7 +85,25 @@ const FridgePage = () => {
     }
   };
 
-  const categories = ["All", "Fridge", "Pantry", "Freezer"];
+  // Add "Always Available" to the categories
+  const categories = ["All", "Always Available", "Fridge", "Pantry", "Freezer"];
+
+  // Filtering logic for the "Always Available" tab
+  const getFilteredItems = (category: string) => {
+    if (!fridgeItems) return [];
+    
+    if (category === "Always Available") {
+      return fridgeItems.filter(item => item.always_available);
+    }
+    
+    if (category === "All") {
+      return fridgeItems;
+    }
+    
+    return fridgeItems.filter(item => 
+      (item.category || "Fridge") === category
+    );
+  };
   
   return (
     <MainLayout title="My Fridge" showBackButton>
@@ -92,7 +117,14 @@ const FridgePage = () => {
                   value={category} 
                   className="flex-1 rounded-full data-[state=active]:bg-secondary data-[state=active]:text-primary"
                 >
-                  {category}
+                  {category === "Always Available" ? (
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Always</span>
+                    </div>
+                  ) : (
+                    category
+                  )}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -101,43 +133,45 @@ const FridgePage = () => {
           {categories.map((category) => (
             <TabsContent key={category} value={category} className="mt-4">
               <div className="space-y-6">
-                <form onSubmit={handleAddItem} className="flex gap-2 items-start">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Add item to your fridge..."
-                      value={newItemName}
-                      onChange={(e) => setNewItemName(e.target.value)}
-                      className="w-full rounded-full"
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    size="icon" 
-                    disabled={!newItemName.trim()}
-                    className="rounded-full bg-primary text-primary-foreground h-10 w-10"
-                  >
-                    <Plus className="h-5 w-5" />
-                  </Button>
-                  
-                  <Button
-                    type="button"
-                    onClick={handleVoiceButton}
-                    variant={isVoiceRecording ? "destructive" : "outline"}
-                    size="icon"
-                    className="relative rounded-full h-10 w-10"
-                    disabled={isProcessingVoice && !isVoiceRecording}
-                  >
-                    {isVoiceRecording ? (
-                      <AudioWaveform className="h-5 w-5 animate-pulse" />
-                    ) : (
-                      <Mic className="h-5 w-5" />
-                    )}
-                    {isVoiceRecording && (
-                      <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-                    )}
-                  </Button>
-                </form>
+                {category !== "Always Available" && (
+                  <form onSubmit={handleAddItem} className="flex gap-2 items-start">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Add item to your fridge..."
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        className="w-full rounded-full"
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      size="icon" 
+                      disabled={!newItemName.trim()}
+                      className="rounded-full bg-primary text-primary-foreground h-10 w-10"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      onClick={handleVoiceButton}
+                      variant={isVoiceRecording ? "destructive" : "outline"}
+                      size="icon"
+                      className="relative rounded-full h-10 w-10"
+                      disabled={isProcessingVoice && !isVoiceRecording}
+                    >
+                      {isVoiceRecording ? (
+                        <AudioWaveform className="h-5 w-5 animate-pulse" />
+                      ) : (
+                        <Mic className="h-5 w-5" />
+                      )}
+                      {isVoiceRecording && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
+                      )}
+                    </Button>
+                  </form>
+                )}
                 
                 {isVoiceRecording && (
                   <div className="bg-secondary/20 p-4 rounded-xl text-center relative overflow-hidden">
@@ -202,38 +236,47 @@ const FridgePage = () => {
                     <h2 className="text-lg font-bold">
                       {category === "All" ? "All Items" : `${category} Items`}
                     </h2>
-                    <span className="text-sm text-muted-foreground">
-                      {fridgeItems?.filter(item => 
-                        category === "All" || 
-                        (item.category || "Fridge") === category
-                      ).length || 0} items
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {getFilteredItems(category).length || 0} items
+                      </span>
+                      
+                      {category !== "Always Available" && fridgeItems && fridgeItems.length > 0 && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleClearAllItems}
+                          className="gap-1 text-destructive hover:text-destructive rounded-full"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Clear Non-Saved</span>
+                          <span className="inline sm:hidden">Clear</span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   
                   {isLoading ? (
                     <div className="py-8 text-center text-muted-foreground">Loading items...</div>
-                  ) : fridgeItems?.length === 0 ? (
+                  ) : getFilteredItems(category).length === 0 ? (
                     <div className="py-8 text-center text-muted-foreground">
-                      No items added yet. Add items using the form above.
+                      {category === "Always Available" 
+                        ? "No saved items yet. Mark items as 'Always Available'."
+                        : "No items added yet. Add items using the form above."}
                     </div>
                   ) : (
                     <ScrollArea className="h-[calc(100vh-360px)]">
                       <div className="space-y-2 pr-4">
-                        {fridgeItems
-                          ?.filter(item => 
-                            category === "All" || 
-                            (item.category || "Fridge") === category
-                          )
-                          .map((item) => (
-                            <FridgeItemCard 
-                              key={item.id} 
-                              item={item} 
-                              onDelete={() => deleteItem.mutate(item.id)}
-                              onToggleAlwaysAvailable={(always_available) => 
-                                toggleAlwaysAvailable.mutate({ id: item.id, always_available })
-                              }
-                            />
-                          ))}
+                        {getFilteredItems(category).map((item) => (
+                          <FridgeItemCard 
+                            key={item.id} 
+                            item={item} 
+                            onDelete={() => deleteItem.mutate(item.id)}
+                            onToggleAlwaysAvailable={(always_available) => 
+                              toggleAlwaysAvailable.mutate({ id: item.id, always_available })
+                            }
+                          />
+                        ))}
                       </div>
                     </ScrollArea>
                   )}

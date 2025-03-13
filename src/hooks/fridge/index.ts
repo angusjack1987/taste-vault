@@ -11,7 +11,7 @@ export type { FridgeItem } from "./types";
 export const useFridge = () => {
   const { user } = useAuth();
   const { batchAddItems } = useBatchItemOperations(user);
-  const { addItem, updateItem, deleteItem, toggleAlwaysAvailable } = useFridgeMutations(user);
+  const { addItem, updateItem, deleteItem, toggleAlwaysAvailable, clearNonAlwaysAvailableItems } = useFridgeMutations(user);
   
   const handleItemsDetected = (items: string[]) => {
     batchAddItems.mutate(items);
@@ -31,6 +31,7 @@ export const useFridge = () => {
     updateItem,
     deleteItem,
     toggleAlwaysAvailable,
+    clearNonAlwaysAvailableItems,
     batchAddItems,
     isVoiceRecording,
     isProcessingVoice,

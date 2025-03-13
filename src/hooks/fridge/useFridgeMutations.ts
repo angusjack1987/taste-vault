@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -179,10 +178,79 @@ export const useFridgeMutations = (user: User | null) => {
     },
   });
 
+  const clearNonAlwaysAvailableItems = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+      
+      // First, get the current items
+      const { data: fridgeItems, error: fetchError } = await supabase
+        .from('fridge_items' as any)
+        .select("*")
+        .eq("user_id", user.id);
+      
+      if (fetchError) throw fetchError;
+      
+      // Get user preferences to identify always_available items
+      const { data: userPrefs, error: prefsError } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (prefsError && prefsError.code !== 'PGSQL_ERROR') {
+        console.error("Error fetching user preferences:", prefsError);
+        throw prefsError;
+      }
+      
+      // Extract always available item IDs
+      const alwaysAvailableIds: string[] = [];
+      
+      if (userPrefs && userPrefs.preferences) {
+        const prefsObj = userPrefs.preferences as Record<string, any>;
+        const fridgeItemPrefs = prefsObj.fridge_items || {};
+        
+        Object.entries(fridgeItemPrefs).forEach(([itemId, prefs]) => {
+          const itemPrefs = prefs as Record<string, any>;
+          if (itemPrefs.always_available) {
+            alwaysAvailableIds.push(itemId);
+          }
+        });
+      }
+      
+      // Delete all items that are not marked as always available
+      if (Array.isArray(fridgeItems)) {
+        const itemsToDelete = fridgeItems
+          .filter(item => !alwaysAvailableIds.includes(item.id))
+          .map(item => item.id);
+        
+        if (itemsToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('fridge_items' as any)
+            .delete()
+            .in("id", itemsToDelete);
+          
+          if (deleteError) throw deleteError;
+        }
+        
+        return itemsToDelete.length;
+      }
+      
+      return 0;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
+      toast.success(`Cleared ${count} non-saved items from your fridge`);
+    },
+    onError: (error) => {
+      toast.error(`Failed to clear items: ${error.message}`);
+    },
+  });
+
   return {
     addItem,
     updateItem,
     deleteItem,
-    toggleAlwaysAvailable
+    toggleAlwaysAvailable,
+    clearNonAlwaysAvailableItems
   };
 };
