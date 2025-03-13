@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
+import { debounce } from "lodash";
 
 interface FoodPreferences {
   favoriteCuisines: string;
@@ -38,6 +39,20 @@ const FoodPreferences = () => {
   const [cuisineTags, setCuisineTags] = useState<string[]>([]);
   const [chefTags, setChefTags] = useState<string[]>([]);
   const [avoidTags, setAvoidTags] = useState<string[]>([]);
+  
+  // Create a debounced save function to prevent too many saves
+  const debouncedSave = useRef(
+    debounce(async (prefsToSave: FoodPreferences) => {
+      if (!user) return;
+      try {
+        await savePreferences(prefsToSave);
+        toast.success("Food preferences saved", { id: "auto-save" });
+      } catch (error) {
+        console.error("Auto-save error:", error);
+        toast.error("Failed to auto-save", { id: "auto-save-error" });
+      }
+    }, 1500)
+  ).current;
 
   useEffect(() => {
     const fetchUserPreferences = async () => {
@@ -90,29 +105,34 @@ const FoodPreferences = () => {
   // Handle input changes for non-tag fields
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setPreferences(prev => ({
-      ...prev,
+    const updatedPreferences = {
+      ...preferences,
       [name]: value
-    }));
+    };
+    setPreferences(updatedPreferences);
+    
+    // Trigger auto-save
+    debouncedSave(updatedPreferences);
   };
 
   // Update preferences state when tags change
   const handleTagsChange = (tags: string[], field: keyof FoodPreferences) => {
-    setPreferences(prev => ({
-      ...prev,
+    const updatedPreferences = {
+      ...preferences,
       [field]: tags.join(", ")
-    }));
+    };
+    setPreferences(updatedPreferences);
+    
+    // Trigger auto-save
+    debouncedSave(updatedPreferences);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const savePreferences = async (prefsToSave: FoodPreferences) => {
     if (!user) {
       toast.error("You must be logged in to save preferences");
       return;
     }
     
-    setLoading(true);
     try {
       const { data: existingPrefs } = await supabase
         .from('user_preferences')
@@ -121,10 +141,10 @@ const FoodPreferences = () => {
         .single();
       
       const foodPreferences: FoodPreferences = {
-        favoriteCuisines: preferences.favoriteCuisines,
-        favoriteChefs: preferences.favoriteChefs,
-        ingredientsToAvoid: preferences.ingredientsToAvoid,
-        dietaryNotes: preferences.dietaryNotes
+        favoriteCuisines: prefsToSave.favoriteCuisines,
+        favoriteChefs: prefsToSave.favoriteChefs,
+        ingredientsToAvoid: prefsToSave.ingredientsToAvoid,
+        dietaryNotes: prefsToSave.dietaryNotes
       };
       
       if (existingPrefs) {
@@ -161,10 +181,22 @@ const FoodPreferences = () => {
         if (error) throw error;
       }
       
+      return true;
+    } catch (error) {
+      console.error("Error saving food preferences:", error);
+      throw error;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    setLoading(true);
+    try {
+      await savePreferences(preferences);
       toast.success("Food preferences saved successfully");
       navigate('/settings');
     } catch (error) {
-      console.error("Error saving food preferences:", error);
       toast.error("Failed to save food preferences");
     } finally {
       setLoading(false);
@@ -184,6 +216,7 @@ const FoodPreferences = () => {
                 setTags={setCuisineTags}
                 placeholder="Type cuisine and press Enter or comma to add"
                 onTagsChange={(tags) => handleTagsChange(tags, 'favoriteCuisines')}
+                preserveFocus={true}
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Separate multiple cuisines with Enter key or comma
@@ -198,6 +231,7 @@ const FoodPreferences = () => {
                 setTags={setChefTags}
                 placeholder="Type chef name and press Enter or comma to add"
                 onTagsChange={(tags) => handleTagsChange(tags, 'favoriteChefs')}
+                preserveFocus={true}
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Chefs or cooks whose recipes you enjoy
@@ -212,6 +246,7 @@ const FoodPreferences = () => {
                 setTags={setAvoidTags}
                 placeholder="Type ingredient and press Enter or comma to add"
                 onTagsChange={(tags) => handleTagsChange(tags, 'ingredientsToAvoid')}
+                preserveFocus={true}
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Ingredients you dislike or want to avoid

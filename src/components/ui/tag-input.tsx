@@ -1,5 +1,5 @@
 
-import React, { useState, KeyboardEvent } from "react";
+import React, { useState, KeyboardEvent, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X, Tag as TagIcon } from "lucide-react";
@@ -14,6 +14,7 @@ interface TagInputProps {
   id?: string;
   name?: string;
   onTagsChange?: (tags: string[]) => void;
+  preserveFocus?: boolean;
 }
 
 const TagInput = ({
@@ -25,8 +26,10 @@ const TagInput = ({
   id,
   name,
   onTagsChange,
+  preserveFocus = false,
 }: TagInputProps) => {
   const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -58,6 +61,13 @@ const TagInput = ({
       setTags(newTags);
       setInputValue("");
       if (onTagsChange) onTagsChange(newTags);
+      
+      // Restore focus to input if preserveFocus is true
+      if (preserveFocus && inputRef.current) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
+      }
     }
   };
 
@@ -65,6 +75,11 @@ const TagInput = ({
     const newTags = tags.filter(tag => tag !== tagToRemove);
     setTags(newTags);
     if (onTagsChange) onTagsChange(newTags);
+    
+    // Focus the input after removing a tag
+    if (preserveFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   return (
@@ -98,6 +113,7 @@ const TagInput = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           aria-label="Add tag"
+          ref={inputRef}
         />
         <Button 
           type="button" 
