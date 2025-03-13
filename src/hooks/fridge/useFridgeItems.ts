@@ -37,7 +37,7 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
-        // Type assertion with a defensive check - we know item is not null from our filter
+        // At this point, item is guaranteed not to be null due to our filter above
         const itemObject = item as Record<string, any>;
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
