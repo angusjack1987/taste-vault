@@ -1,25 +1,25 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Mic, Plus, Trash2, X, Star, Utensils, AudioWaveform, Loader2, BookmarkPlus, Calendar } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Mic, Utensils, AudioWaveform } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import useFridge, { FridgeItem } from "@/hooks/useFridge";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
+import { Star } from "lucide-react";
 import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
-import useAiRecipes from "@/hooks/useAiRecipes";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
+import useFridge from "@/hooks/useFridge";
+import useAiRecipes from "@/hooks/useAiRecipes";
 import useRecipes from "@/hooks/useRecipes";
 import useMealPlans, { MealType } from "@/hooks/useMealPlans";
-import { format, addDays } from "date-fns";
-import { CheckCircle2, Circle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
+// Newly created components
+import FridgeAddItemForm from "@/components/fridge/FridgeAddItemForm";
+import VoiceInputSection from "@/components/fridge/VoiceInputSection";
+import FridgeItemsList from "@/components/fridge/FridgeItemsList";
+import RecipeOptionsDialog from "@/components/fridge/RecipeOptionsDialog";
+import SaveToMealPlanDialog from "@/components/fridge/SaveToMealPlanDialog";
 
 const FridgePage = () => {
   const {
@@ -33,10 +33,9 @@ const FridgePage = () => {
     stopVoiceRecording,
     isProcessingVoice,
     audioLevel,
-    batchAddItems,
   } = useFridge();
   
-  const { data: fridgeItems, isLoading, refetch } = useFridgeItems();
+  const { data: fridgeItems, isLoading } = useFridgeItems();
   const [newItemName, setNewItemName] = useState("");
   const [recipeDialogOpen, setRecipeDialogOpen] = useState(false);
   const [selectedRecipeIndex, setSelectedRecipeIndex] = useState<number | null>(null);
@@ -44,7 +43,7 @@ const FridgePage = () => {
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   
-  const { generateRecipe, loading: recipeLoading } = useAiRecipes();
+  const { generateRecipe } = useAiRecipes();
   const { useCreateRecipe } = useRecipes();
   const { useCreateMealPlan } = useMealPlans();
   
@@ -269,97 +268,23 @@ const FridgePage = () => {
             <TabsContent key={category} value={category} className="mt-4">
               <div className="space-y-6">
                 {category !== "Always Available" && (
-                  <form onSubmit={handleAddItem} className="flex gap-2 items-start">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Add item to your fridge..."
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                        className="w-full rounded-full"
-                      />
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      size="icon" 
-                      disabled={!newItemName.trim()}
-                      className="rounded-full bg-primary text-primary-foreground h-10 w-10"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </Button>
-                    
-                    <Button
-                      type="button"
-                      onClick={handleVoiceButton}
-                      variant={isVoiceRecording ? "destructive" : "outline"}
-                      size="icon"
-                      className="relative rounded-full h-10 w-10"
-                      disabled={isProcessingVoice && !isVoiceRecording}
-                    >
-                      {isVoiceRecording ? (
-                        <AudioWaveform className="h-5 w-5 animate-pulse" />
-                      ) : isProcessingVoice ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <Mic className="h-5 w-5" />
-                      )}
-                      {isVoiceRecording && (
-                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-                      )}
-                    </Button>
-                  </form>
+                  <FridgeAddItemForm 
+                    newItemName={newItemName}
+                    onNewItemNameChange={setNewItemName}
+                    onAddItem={handleAddItem}
+                    isVoiceRecording={isVoiceRecording}
+                    isProcessingVoice={isProcessingVoice}
+                    onVoiceButtonClick={handleVoiceButton}
+                  />
                 )}
                 
-                {isVoiceRecording && (
-                  <div className="bg-secondary/20 p-4 rounded-xl text-center relative overflow-hidden">
-                    <p className="mb-2 text-sm">Recording... Speak clearly to add items</p>
-                    
-                    {/* Voice amplitude visualization */}
-                    <div className="flex items-center justify-center h-12 mb-2">
-                      {Array.from({ length: 9 }).map((_, i) => {
-                        // Calculate animation delay and height based on position
-                        const delay = `${i * 50}ms`;
-                        const height = audioLevel > 0 
-                          ? Math.min(100, 30 + (audioLevel * 70 * Math.sin((i + 1) * 0.7))) 
-                          : 30 + (30 * Math.sin((i + 1) * 0.7));
-                          
-                        return (
-                          <div 
-                            key={i} 
-                            className="mx-0.5 w-1 bg-primary rounded-full animate-sound-wave"
-                            style={{ 
-                              height: `${height}%`, 
-                              animationDelay: delay,
-                              transform: `scaleY(${audioLevel > 0 ? (0.5 + audioLevel * 0.5) : 0.5})`
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                    
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      onClick={stopVoiceRecording}
-                      className="gap-1 rounded-full"
-                    >
-                      <X className="h-4 w-4" /> Stop Recording
-                    </Button>
-                  </div>
-                )}
-
-                {isProcessingVoice && !isVoiceRecording && (
-                  <div className="bg-secondary/20 p-4 rounded-xl text-center animate-fade-in">
-                    <p className="mb-2 text-sm">Processing your voice input...</p>
-                    <div className="my-4">
-                      <Progress value={processingProgress} className="h-2" />
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Identifying food items</span>
-                    </div>
-                  </div>
-                )}
+                <VoiceInputSection 
+                  isVoiceRecording={isVoiceRecording}
+                  isProcessingVoice={isProcessingVoice}
+                  audioLevel={audioLevel}
+                  processingProgress={processingProgress}
+                  stopVoiceRecording={stopVoiceRecording}
+                />
                 
                 <div className="flex justify-center mt-4">
                   <AiSuggestionButton
@@ -370,305 +295,41 @@ const FridgePage = () => {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold">
-                      {category === "All" ? "All Items" : `${category} Items`}
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {getFilteredItems(category).length || 0} items
-                      </span>
-                      
-                      {category !== "Always Available" && fridgeItems && fridgeItems.length > 0 && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleClearAllItems}
-                          className="gap-1 text-destructive hover:text-destructive rounded-full"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Clear Non-Saved</span>
-                          <span className="inline sm:hidden">Clear</span>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {isLoading ? (
-                    <div className="py-8 text-center text-muted-foreground">Loading items...</div>
-                  ) : getFilteredItems(category).length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">
-                      {category === "Always Available" 
-                        ? "No saved items yet. Mark items as 'Always Available'."
-                        : "No items added yet. Add items using the form above."}
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-[calc(100vh-360px)]">
-                      <div className="space-y-2 pr-4">
-                        {getFilteredItems(category).map((item) => (
-                          <FridgeItemCard 
-                            key={item.id} 
-                            item={item} 
-                            onDelete={() => deleteItem.mutate(item.id)}
-                            onToggleAlwaysAvailable={(always_available) => 
-                              toggleAlwaysAvailable.mutate({ id: item.id, always_available })
-                            }
-                          />
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  )}
-                </div>
+                <FridgeItemsList 
+                  category={category}
+                  filteredItems={getFilteredItems(category)}
+                  isLoading={isLoading}
+                  onDeleteItem={(id) => deleteItem.mutate(id)}
+                  onToggleAlwaysAvailable={(id, value) => toggleAlwaysAvailable.mutate({ id, always_available: value })}
+                  onClearNonSavedItems={handleClearAllItems}
+                />
               </div>
             </TabsContent>
           ))}
         </Tabs>
         
         {/* Recipe Options Dialog */}
-        <Dialog open={recipeDialogOpen} onOpenChange={setRecipeDialogOpen}>
-          <DialogContent className="max-w-xl max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle>Recipes from Your Fridge</DialogTitle>
-              <DialogDescription>
-                Choose from recipe options based on ingredients in your fridge
-              </DialogDescription>
-            </DialogHeader>
-            
-            <ScrollArea className="flex-grow overflow-auto pr-4 mt-4">
-              {isGeneratingRecipe ? (
-                <div className="py-8 text-center">
-                  <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-                  <div className="text-lg font-medium">Creating delicious recipes</div>
-                  <div className="text-muted-foreground">Analyzing your ingredients...</div>
-                </div>
-              ) : generatedRecipes.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No recipes could be generated. Please try again.
-                </div>
-              ) : generatedRecipes[0]?.rawContent ? (
-                <div className="whitespace-pre-line p-4">
-                  {generatedRecipes[0].rawContent}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="text-sm text-muted-foreground text-center mb-2">
-                    Select one recipe to save or add to your meal plan
-                  </div>
-                  
-                  {generatedRecipes.map((recipe, index) => (
-                    <div 
-                      key={index}
-                      onClick={() => setSelectedRecipeIndex(index)}
-                      className={cn(
-                        "border rounded-xl p-4 cursor-pointer transition-all",
-                        selectedRecipeIndex === index 
-                          ? "border-primary bg-primary/5 shadow-md" 
-                          : "hover:border-muted-foreground"
-                      )}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-lg font-semibold">{recipe.title}</h3>
-                        <div className={cn(
-                          "rounded-full border w-6 h-6 flex items-center justify-center",
-                          selectedRecipeIndex === index ? "border-primary text-primary" : "border-muted-foreground"
-                        )}>
-                          {selectedRecipeIndex === index 
-                            ? <CheckCircle2 className="h-5 w-5" /> 
-                            : <Circle className="h-5 w-5" />
-                          }
-                        </div>
-                      </div>
-                      
-                      <p className="text-muted-foreground mb-3">{recipe.description}</p>
-                      
-                      {recipe.highlights && recipe.highlights.length > 0 && (
-                        <div className="mb-3">
-                          <div className="flex flex-wrap gap-2">
-                            {recipe.highlights.map((highlight: string, hidx: number) => (
-                              <div key={hidx} className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full flex items-center">
-                                <Star className="h-3 w-3 mr-1 text-amber-500" />
-                                {highlight}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="text-sm space-y-4">
-                        <div>
-                          <h4 className="font-medium mb-1">Ingredients:</h4>
-                          <ul className="list-disc pl-5 space-y-1">
-                            {recipe.ingredients?.map((ingredient: string, idx: number) => (
-                              <li key={idx}>{ingredient}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-medium mb-1">Instructions:</h4>
-                          <ol className="list-decimal pl-5 space-y-2">
-                            {recipe.instructions?.map((step: string, idx: number) => (
-                              <li key={idx}>{step}</li>
-                            ))}
-                          </ol>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 pt-2 text-muted-foreground">
-                          {recipe.time && (
-                            <div>⏱️ {recipe.time} min</div>
-                          )}
-                          {recipe.servings && (
-                            <div>👥 Serves {recipe.servings}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-            
-            {!isGeneratingRecipe && generatedRecipes.length > 0 && !generatedRecipes[0]?.rawContent && (
-              <DialogFooter className="flex flex-row gap-2 justify-end pt-4 border-t mt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setRecipeDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSaveToRecipeBook}
-                  disabled={selectedRecipeIndex === null}
-                  className="gap-2"
-                >
-                  <BookmarkPlus className="h-4 w-4" />
-                  Save to Recipe Book
-                </Button>
-                <Button
-                  onClick={handleAddToMealPlan}
-                  disabled={selectedRecipeIndex === null}
-                  className="gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Add to Meal Plan
-                </Button>
-              </DialogFooter>
-            )}
-          </DialogContent>
-        </Dialog>
+        <RecipeOptionsDialog 
+          open={recipeDialogOpen}
+          onOpenChange={setRecipeDialogOpen}
+          isGeneratingRecipe={isGeneratingRecipe}
+          generatedRecipes={generatedRecipes}
+          selectedRecipeIndex={selectedRecipeIndex}
+          onSelectRecipe={setSelectedRecipeIndex}
+          onSaveToRecipeBook={handleSaveToRecipeBook}
+          onAddToMealPlan={handleAddToMealPlan}
+        />
         
         {/* Add to Meal Plan Dialog */}
-        <Dialog open={savePlanDialogOpen} onOpenChange={setSavePlanDialogOpen}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Add to Meal Plan</DialogTitle>
-              <DialogDescription>
-                Choose which meal to add this recipe to
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Meal Type</label>
-                <div className="flex flex-col space-y-2">
-                  {["breakfast", "lunch", "dinner"].map((type) => (
-                    <label key={type} className="flex items-center space-x-2 cursor-pointer p-2 border rounded-lg hover:bg-secondary/10">
-                      <input
-                        type="radio"
-                        value={type}
-                        checked={selectedMealType === type}
-                        onChange={() => setSelectedMealType(type as MealType)}
-                        className="text-primary"
-                      />
-                      <span className="capitalize">{type}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSavePlanDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveToMealPlan}>
-                Add to Today's Plan
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <SaveToMealPlanDialog 
+          open={savePlanDialogOpen}
+          onOpenChange={setSavePlanDialogOpen}
+          selectedMealType={selectedMealType}
+          onMealTypeChange={setSelectedMealType}
+          onSave={handleSaveToMealPlan}
+        />
       </div>
     </MainLayout>
-  );
-};
-
-const FridgeItemCard = ({ 
-  item, 
-  onDelete,
-  onToggleAlwaysAvailable
-}: { 
-  item: FridgeItem; 
-  onDelete: () => void;
-  onToggleAlwaysAvailable: (always_available: boolean) => void;
-}) => {
-  // Track if toggle is in progress to prevent double-clicks
-  const [isToggling, setIsToggling] = useState(false);
-  
-  const handleToggleAlwaysAvailable = (checked: boolean) => {
-    // Prevent multiple rapid toggles
-    if (isToggling) return;
-    
-    setIsToggling(true);
-    
-    console.log(`Toggle always available for ${item.name} to: ${checked}`);
-    
-    // Call the parent handler with the new value
-    onToggleAlwaysAvailable(checked);
-    
-    // Reset the toggling state after a short delay
-    setTimeout(() => setIsToggling(false), 500);
-  };
-  
-  return (
-    <Card className={`overflow-hidden border-border rounded-xl hover:shadow-sm transition-all ${item.always_available ? 'border-yellow-300 bg-yellow-50/30 dark:bg-yellow-950/10' : ''}`}>
-      <CardContent className="p-3 flex justify-between items-center">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <p className="font-bold">{item.name}</p>
-              {item.always_available && (
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              )}
-            </div>
-            {item.quantity && (
-              <p className="text-sm text-muted-foreground">{item.quantity}</p>
-            )}
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 mr-2">
-            <Switch 
-              checked={!!item.always_available}
-              onCheckedChange={handleToggleAlwaysAvailable}
-              id={`always-available-${item.id}`}
-              disabled={isToggling}
-            />
-            <span className="text-xs text-muted-foreground hidden sm:inline">Always</span>
-          </div>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onDelete}
-            className="rounded-full h-8 w-8"
-          >
-            <Trash2 className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 };
 
