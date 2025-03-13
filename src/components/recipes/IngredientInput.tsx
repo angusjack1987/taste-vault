@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Carrot, Plus, Scissors } from "lucide-react";
+import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
@@ -29,7 +29,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     
     for (const separator of separators) {
       if (ingredient.includes(separator)) {
-        // Fix: Remove the limit parameter (2) from RegExp constructor
+        // Fix: Remove the limit parameter from RegExp constructor
         const parts = ingredient.split(new RegExp(`(${separator})`));
         if (parts.length >= 3) {
           mainText = parts[0];
@@ -40,6 +40,25 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     }
     
     return { mainText, preparation };
+  };
+
+  // Function to determine the appropriate icon based on ingredient name
+  const getIngredientIcon = (ingredientName: string) => {
+    const lowerName = ingredientName.toLowerCase();
+    
+    if (/chicken|turkey|beef|meat|steak|pork|lamb|veal/i.test(lowerName)) {
+      return <Beef className="h-4 w-4 text-sage-500" />;
+    } else if (/fish|salmon|tuna|cod|tilapia|shrimp|prawn|seafood/i.test(lowerName)) {
+      return <Fish className="h-4 w-4 text-sage-500" />;
+    } else if (/egg|eggs/i.test(lowerName)) {
+      return <Egg className="h-4 w-4 text-sage-500" />;
+    } else if (/flour|bread|rice|pasta|grain|wheat|cereal|oat/i.test(lowerName)) {
+      return <Wheat className="h-4 w-4 text-sage-500" />;
+    } else if (/carrot|vegetable|tomato|potato|onion|garlic|pepper|cucumber|lettuce/i.test(lowerName)) {
+      return <Carrot className="h-4 w-4 text-sage-500" />;
+    } else {
+      return <Utensils className="h-4 w-4 text-sage-500" />;
+    }
   };
 
   return (
@@ -86,7 +105,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                   )}
                   
                   <div className="flex items-center gap-1">
-                    <Carrot className="h-4 w-4 text-sage-500" />
+                    {getIngredientIcon(name)}
                     <span className="text-sm">{name}</span>
                   </div>
                   
@@ -117,7 +136,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                 )}
                 
                 <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center gap-2 border border-sage-200">
-                  <Carrot className="h-4 w-4 text-sage-500" />
+                  {getIngredientIcon(name)}
                   <span>{name}</span>
                 </div>
                 
