@@ -266,7 +266,8 @@ export const useFridgeMutations = (user: User | null) => {
         const itemsToDelete: string[] = [];
         
         // Safely iterate through items with null checks
-        fridgeItems.forEach(item => {
+        for (const item of fridgeItems) {
+          // Only proceed if item is valid and has an id property
           if (item && 
               typeof item === 'object' && 
               'id' in item && 
@@ -274,7 +275,7 @@ export const useFridgeMutations = (user: User | null) => {
               !alwaysAvailableIds.includes(item.id)) {
             itemsToDelete.push(item.id);
           }
-        });
+        }
         
         if (itemsToDelete.length > 0) {
           const { error: deleteError } = await supabase
