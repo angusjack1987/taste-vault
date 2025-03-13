@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import MainLayout from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
-import { parseIngredientAmount } from "@/lib/ingredient-parser";
+import IngredientInput from "@/components/recipes/IngredientInput";
 import { supabase } from "@/integrations/supabase/client";
 
 const RecipeForm = () => {
@@ -341,51 +341,13 @@ const RecipeForm = () => {
           
           <div className="space-y-3">
             <Label>Ingredients</Label>
-            {formData.ingredients.map((ingredient, index) => {
-              const parsedIngredient = parseIngredientAmount(ingredient);
-              
-              return (
-                <div key={index} className="space-y-1">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder={`Ingredient ${index + 1} (e.g., 500g Chicken Breast)`}
-                      value={ingredient}
-                      onChange={(e) => {
-                        const newIngredients = [...formData.ingredients];
-                        newIngredients[index] = e.target.value;
-                        setFormData({...formData, ingredients: newIngredients});
-                      }}
-                      onKeyDown={(e) => handleIngredientKeyDown(e, index)}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleRemoveIngredient(index)}
-                      disabled={formData.ingredients.length <= 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {ingredient && (
-                    <div className="text-xs text-muted-foreground pl-2">
-                      {parsedIngredient.name}
-                      {parsedIngredient.amount && <span className="ml-2 font-mono">{parsedIngredient.amount}</span>}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddIngredient}
-              className="mt-2"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Ingredient
-            </Button>
+            <IngredientInput 
+              ingredients={formData.ingredients}
+              onChange={(ingredients) => setFormData({...formData, ingredients})}
+              onAdd={handleAddIngredient}
+              onRemove={handleRemoveIngredient}
+              onKeyDown={handleIngredientKeyDown}
+            />
           </div>
           
           <div className="space-y-3">
