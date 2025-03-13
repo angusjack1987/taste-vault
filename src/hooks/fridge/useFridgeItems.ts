@@ -38,8 +38,7 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
-        // Typescript safety - even though our filter should have removed nulls
-        if (!item || typeof item !== 'object' || !('id' in item)) {
+        if (item === null || typeof item !== 'object' || !('id' in item)) {
           return null;
         }
         
@@ -51,17 +50,21 @@ export const useFridgeItems = (user: User | null) => {
           ? (prefsObj as Record<string, any>).fridge_items || {} 
           : {};
         
-        // Get the item ID (we've already confirmed it exists)
+        if (!item || !item.id) {
+          return null;
+        }
+        
         const itemId = item.id;
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
         
-        // Since we've verified item is an object with expected properties,
-        // we can safely cast it and use spread
+        // Use explicit type assertion
+        const safeItem = item as Record<string, any>;
+        
         return {
-          ...(item as Record<string, any>),
+          ...safeItem,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 

@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Mic, Plus, Trash2, X, Star, Utensils, AudioWaveform } from "lucide-react";
+import { Mic, Plus, Trash2, X, Star, Utensils, AudioWaveform, Loader2 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import useAiRecipes from "@/hooks/useAiRecipes";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 
 const FridgePage = () => {
   const {
@@ -27,15 +28,51 @@ const FridgePage = () => {
     stopVoiceRecording,
     isProcessingVoice,
     audioLevel,
+    batchAddItems,
   } = useFridge();
   
-  const { data: fridgeItems, isLoading } = useFridgeItems();
+  const { data: fridgeItems, isLoading, refetch } = useFridgeItems();
   const [newItemName, setNewItemName] = useState("");
   const [recipeDialogOpen, setRecipeDialogOpen] = useState(false);
   const [generatedRecipe, setGeneratedRecipe] = useState("");
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
   
   const { generateRecipe, loading: recipeLoading } = useAiRecipes();
+  
+  // Effect to animate processing progress
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isProcessingVoice) {
+      setProcessingProgress(0);
+      
+      interval = setInterval(() => {
+        setProcessingProgress(prev => {
+          // Slow down progress as it approaches 90%
+          const increment = prev < 30 ? 10 : prev < 60 ? 5 : prev < 80 ? 2 : 1;
+          const nextProgress = Math.min(prev + increment, 90);
+          return nextProgress;
+        });
+      }, 300);
+    } else {
+      // When processing is done, fill to 100%
+      setProcessingProgress(isProcessingVoice ? 0 : 100);
+      
+      // Reset to 0 after completion animation
+      if (!isProcessingVoice && processingProgress === 100) {
+        const timeout = setTimeout(() => {
+          setProcessingProgress(0);
+        }, 1000);
+        
+        return () => clearTimeout(timeout);
+      }
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isProcessingVoice]);
   
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,6 +200,8 @@ const FridgePage = () => {
                     >
                       {isVoiceRecording ? (
                         <AudioWaveform className="h-5 w-5 animate-pulse" />
+                      ) : isProcessingVoice ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
                         <Mic className="h-5 w-5" />
                       )}
@@ -212,12 +251,14 @@ const FridgePage = () => {
                 )}
 
                 {isProcessingVoice && !isVoiceRecording && (
-                  <div className="bg-secondary/20 p-4 rounded-xl text-center">
+                  <div className="bg-secondary/20 p-4 rounded-xl text-center animate-fade-in">
                     <p className="mb-2 text-sm">Processing your voice input...</p>
-                    <div className="flex items-center justify-center space-x-2 my-2">
-                      <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
-                      <Skeleton className="h-4 w-16 animate-pulse" />
-                      <Skeleton className="h-4 w-4 rounded-full animate-pulse" />
+                    <div className="my-4">
+                      <Progress value={processingProgress} className="h-2" />
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Identifying food items</span>
                     </div>
                   </div>
                 )}

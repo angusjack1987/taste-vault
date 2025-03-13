@@ -48,7 +48,7 @@ export const useBatchItemOperations = (user: User | null) => {
   const queryClient = useQueryClient();
 
   const checkItemExists = async (itemName: string): Promise<boolean> => {
-    if (!user) return false;
+    if (!user || !itemName.trim()) return false;
     
     const { data, error } = await supabase
       .from('fridge_items' as any)
@@ -81,24 +81,30 @@ export const useBatchItemOperations = (user: User | null) => {
     // Auto-determine category based on name
     const category = categorizeItem(name);
     
-    const { data, error } = await supabase
-      .from('fridge_items' as any)
-      .insert([
-        {
-          name: name,
-          quantity: amount || undefined,
-          category: category,
-          user_id: user?.id,
-        },
-      ])
-      .select();
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('fridge_items' as any)
+        .insert([
+          {
+            name: name,
+            quantity: amount || undefined,
+            category: category,
+            user_id: user?.id,
+          },
+        ])
+        .select();
+      
+      if (error) {
+        console.error(`Error adding item "${name}":`, error);
+        return false;
+      }
+      
+      console.log(`Added item "${name}" successfully`);
+      return true;
+    } catch (error) {
       console.error(`Error adding item "${name}":`, error);
       return false;
     }
-    
-    return true;
   };
 
   const batchAddItems = useMutation({
@@ -106,40 +112,64 @@ export const useBatchItemOperations = (user: User | null) => {
       if (!user) throw new Error("User not authenticated");
       
       if (!items || items.length === 0) {
-        throw new Error("No valid items to add");
+        console.warn("No valid items to add");
+        return [];
       }
       
       console.log("Processing items:", items);
       
+      const addedCount = { success: 0, duplicates: 0, failed: 0 };
       const addedItems: FridgeItem[] = [];
-      const duplicates: string[] = [];
+      const duplicateItems: string[] = [];
       
       for (const itemText of items) {
+        if (!itemText.trim()) continue;
+        
         try {
           const added = await processAndAddItem(itemText);
-          if (!added) {
-            duplicates.push(itemText);
+          if (added) {
+            addedCount.success++;
+          } else {
+            // If not added, it was likely a duplicate
+            addedCount.duplicates++;
+            duplicateItems.push(itemText);
           }
         } catch (error) {
           console.error(`Error adding item "${itemText}":`, error);
+          addedCount.failed++;
         }
       }
       
-      if (duplicates.length > 0) {
-        console.log("Duplicate items not added:", duplicates);
-        if (duplicates.length === items.length) {
-          toast.info("All items already exist in your fridge");
-        } else {
-          toast.info(`${duplicates.length} item(s) already in your fridge`);
-        }
+      console.log("Batch add results:", addedCount);
+      
+      if (duplicateItems.length > 0) {
+        console.log("Duplicate items not added:", duplicateItems);
       }
       
-      return addedItems;
+      return {
+        addedItems,
+        stats: addedCount
+      };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
-      if (data.length > 0) {
-        toast.success(`Added items to your fridge`);
+      
+      if (data.stats.success > 0) {
+        toast.success(`Added ${data.stats.success} item${data.stats.success !== 1 ? 's' : ''} to your fridge`);
+      }
+      
+      if (data.stats.duplicates > 0) {
+        if (data.stats.duplicates === 1) {
+          toast.info("1 item already exists in your fridge");
+        } else if (data.stats.success === 0) {
+          toast.info(`All ${data.stats.duplicates} items already exist in your fridge`);
+        } else {
+          toast.info(`${data.stats.duplicates} item${data.stats.duplicates !== 1 ? 's' : ''} already in your fridge`);
+        }
+      }
+      
+      if (data.stats.failed > 0) {
+        toast.error(`Failed to add ${data.stats.failed} item${data.stats.failed !== 1 ? 's' : ''}`);
       }
     },
     onError: (error) => {

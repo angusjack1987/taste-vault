@@ -15,6 +15,7 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     return () => {
@@ -47,6 +48,7 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
 
   const startVoiceRecording = async () => {
     try {
+      audioChunksRef.current = [];
       setAudioChunks([]);
       setIsVoiceRecording(true);
       setAudioLevel(0);
@@ -77,7 +79,8 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
       recorder.addEventListener("dataavailable", (event) => {
         if (event.data && event.data.size > 0) {
           console.log(`Received audio chunk: ${event.data.size} bytes`);
-          setAudioChunks((previousChunks) => [...previousChunks, event.data]);
+          audioChunksRef.current.push(event.data);
+          setAudioChunks(prev => [...prev, event.data]);
         }
       });
       
@@ -91,7 +94,7 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
             animationFrameRef.current = null;
           }
           
-          const currentChunks = audioChunks;
+          const currentChunks = audioChunksRef.current;
           console.log(`Processing ${currentChunks.length} audio chunks`);
           
           if (currentChunks.length === 0) {
@@ -104,9 +107,9 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
           const audioBlob = new Blob(currentChunks, { type: "audio/webm" });
           console.log("Audio blob created:", audioBlob.size, "bytes");
           
-          if (audioBlob.size === 0) {
-            console.error("Empty audio blob created");
-            toast.error("No audio recorded. Please try again and speak clearly.");
+          if (audioBlob.size < 1000) {
+            console.error("Audio recording too short");
+            toast.error("Recording too short. Please try again and speak longer.");
             setIsProcessingVoice(false);
             return;
           }
@@ -167,6 +170,7 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
               toast.error(`Failed to process voice note: ${error.message}`);
             } finally {
               setAudioChunks([]);
+              audioChunksRef.current = [];
               setIsProcessingVoice(false);
             }
           };
@@ -175,6 +179,7 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
             console.error("FileReader error:", error);
             toast.error("Failed to process audio recording");
             setAudioChunks([]);
+            audioChunksRef.current = [];
             setIsProcessingVoice(false);
           };
           
@@ -183,6 +188,7 @@ export const useVoiceInput = (user: User | null, onItemsDetected: (items: string
           console.error("Error creating audio blob:", error);
           toast.error(`Failed to process recording: ${error.message}`);
           setAudioChunks([]);
+          audioChunksRef.current = [];
           setIsProcessingVoice(false);
         }
       });

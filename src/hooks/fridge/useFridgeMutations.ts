@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -6,19 +5,15 @@ import { FridgeItem } from "./types";
 import { User } from "@supabase/supabase-js";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
 
-// Helper function to categorize items based on their name
 const categorizeItem = (itemName: string): string => {
-  // Convert to lowercase for case-insensitive matching
   const name = itemName.toLowerCase();
   
-  // Common freezer items
   const freezerItems = [
     'frozen', 'ice', 'popsicle', 'ice cream', 'freezer', 
     'pizza', 'frozen meal', 'fish stick', 'fish fingers', 'frozen vegetable',
     'frozen fruit', 'icecream', 'peas', 'corn', 'berries'
   ];
   
-  // Common pantry items
   const pantryItems = [
     'flour', 'sugar', 'rice', 'pasta', 'noodle', 'cereal', 'cracker', 'cookie',
     'bean', 'lentil', 'canned', 'jar', 'spice', 'herb', 'oil', 'vinegar',
@@ -26,21 +21,18 @@ const categorizeItem = (itemName: string): string => {
     'chip', 'nut', 'dried', 'grain', 'bread', 'baking'
   ];
   
-  // Check freezer items first
   for (const freezerItem of freezerItems) {
     if (name.includes(freezerItem)) {
       return 'Freezer';
     }
   }
   
-  // Then check pantry items
   for (const pantryItem of pantryItems) {
     if (name.includes(pantryItem)) {
       return 'Pantry';
     }
   }
   
-  // Default to Fridge for everything else
   return 'Fridge';
 };
 
@@ -53,7 +45,6 @@ export const useFridgeMutations = (user: User | null) => {
       
       const { always_available, ...dbItem } = item;
       
-      // Automatically determine the category if not provided
       const category = item.category || categorizeItem(item.name);
       
       const { data, error } = await supabase
@@ -113,19 +104,17 @@ export const useFridgeMutations = (user: User | null) => {
       console.log(`Toggling item ${id} always_available to: ${always_available}`);
       
       try {
-        // First, check if the user already has preferences in the table
         const { data: existingPrefs, error: prefsError } = await supabase
           .from('user_preferences')
           .select('*')
           .eq('user_id', user.id)
-          .maybeSingle(); // Use maybeSingle instead of single to handle case when no record exists
+          .maybeSingle();
           
         if (prefsError && prefsError.code !== 'PGSQL_ERROR') {
           console.error("Error fetching user preferences:", prefsError);
           throw prefsError;
         }
         
-        // Initialize preferences structure
         const existingPreferences = existingPrefs?.preferences || {};
         
         const safePrefs = typeof existingPreferences === 'object' 
@@ -136,13 +125,11 @@ export const useFridgeMutations = (user: User | null) => {
           ? safePrefs.fridge_items as Record<string, any> 
           : {};
         
-        // Update the specific item preference
         safeFridgeItemPrefs[id] = { 
           ...((typeof safeFridgeItemPrefs[id] === 'object' && safeFridgeItemPrefs[id]) || {}), 
           always_available 
         };
         
-        // Prepare updated preferences object
         const updatedPreferences = {
           ...safePrefs,
           fridge_items: safeFridgeItemPrefs
@@ -151,7 +138,6 @@ export const useFridgeMutations = (user: User | null) => {
         let result;
         
         if (existingPrefs) {
-          // If user already has preferences, update them
           const { error: updateError } = await supabase
             .from('user_preferences')
             .update({ preferences: updatedPreferences })
@@ -162,7 +148,6 @@ export const useFridgeMutations = (user: User | null) => {
             throw updateError;
           }
         } else {
-          // If user doesn't have preferences yet, insert new record
           const { error: insertError } = await supabase
             .from('user_preferences')
             .insert({
@@ -225,7 +210,6 @@ export const useFridgeMutations = (user: User | null) => {
     mutationFn: async () => {
       if (!user) throw new Error("User not authenticated");
       
-      // First, get the current items
       const { data: fridgeItems, error: fetchError } = await supabase
         .from('fridge_items' as any)
         .select("*")
@@ -233,7 +217,6 @@ export const useFridgeMutations = (user: User | null) => {
       
       if (fetchError) throw fetchError;
       
-      // Get user preferences to identify always_available items
       const { data: userPrefs, error: prefsError } = await supabase
         .from('user_preferences')
         .select('*')
@@ -245,7 +228,6 @@ export const useFridgeMutations = (user: User | null) => {
         throw prefsError;
       }
       
-      // Extract always available item IDs
       const alwaysAvailableIds: string[] = [];
       
       if (userPrefs && userPrefs.preferences) {
@@ -260,19 +242,19 @@ export const useFridgeMutations = (user: User | null) => {
         });
       }
       
-      // Delete all items that are not marked as always available
       if (Array.isArray(fridgeItems)) {
-        // Create a safe list of IDs to delete
         const itemsToDelete: string[] = [];
         
-        // Safely iterate through items with null checks
         for (const item of fridgeItems) {
-          // Only proceed if item is valid and has an id property
-          if (item && 
-              typeof item === 'object' && 
-              'id' in item && 
-              typeof item.id === 'string' && 
-              !alwaysAvailableIds.includes(item.id)) {
+          if (item === null || typeof item !== 'object') {
+            continue;
+          }
+          
+          if (!('id' in item) || typeof item.id !== 'string') {
+            continue;
+          }
+          
+          if (!alwaysAvailableIds.includes(item.id)) {
             itemsToDelete.push(item.id);
           }
         }
