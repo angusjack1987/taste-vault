@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import useAuth from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { parseIngredientAmount } from "@/lib/ingredient-parser";
 
 export interface FridgeItem {
   id: string;
@@ -119,34 +120,95 @@ export const useFridge = () => {
     },
   });
 
+  // Check if item already exists in fridge
+  const checkItemExists = async (itemName: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    const { data, error } = await supabase
+      .from('fridge_items' as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .ilike("name", itemName.trim());
+    
+    if (error) {
+      console.error("Error checking item existence:", error);
+      return false;
+    }
+    
+    return (data && data.length > 0);
+  };
+
+  // Process and add items from the ingredient text, considering duplicates
+  const processAndAddItem = async (itemText: string): Promise<boolean> => {
+    if (!itemText.trim()) return false;
+    
+    // Parse the ingredient to separate name and quantity
+    const { name, amount } = parseIngredientAmount(itemText);
+    
+    if (!name) return false;
+    
+    // Check if the item already exists in the fridge
+    const exists = await checkItemExists(name);
+    
+    if (exists) {
+      console.log(`Item "${name}" already exists in fridge - skipping`);
+      return false;
+    }
+    
+    // If it doesn't exist, prepare the item for addition
+    const newItem = {
+      name: name,
+      quantity: amount || undefined,
+      category: 'Fridge' // Default category
+    };
+    
+    await addItem.mutateAsync(newItem);
+    return true;
+  };
+
   // Batch add items (from voice input)
   const batchAddItems = useMutation({
-    mutationFn: async (itemsText: string) => {
+    mutationFn: async (items: string[]) => {
       if (!user) throw new Error("User not authenticated");
       
-      // Parse items from text input
-      // Simple parsing: Split by commas or newlines
-      const itemNames = itemsText
-        .split(/[,\n]/)
-        .map(item => item.trim())
-        .filter(item => item.length > 0);
+      if (!items || items.length === 0) {
+        throw new Error("No valid items to add");
+      }
       
-      const items = itemNames.map(name => ({
-        name,
-        user_id: user.id,
-      }));
+      console.log("Processing items:", items);
       
-      const { data, error } = await supabase
-        .from('fridge_items' as any)
-        .insert(items)
-        .select();
+      // Process each item, checking for duplicates
+      const addedItems: FridgeItem[] = [];
+      const duplicates: string[] = [];
       
-      if (error) throw error;
-      return (data || []) as unknown as FridgeItem[];
+      for (const itemText of items) {
+        try {
+          const added = await processAndAddItem(itemText);
+          if (!added) {
+            duplicates.push(itemText);
+          }
+        } catch (error) {
+          console.error(`Error adding item "${itemText}":`, error);
+        }
+      }
+      
+      // Show message about duplicates if any
+      if (duplicates.length > 0) {
+        console.log("Duplicate items not added:", duplicates);
+        if (duplicates.length === items.length) {
+          toast.info("All items already exist in your fridge");
+        } else {
+          toast.info(`${duplicates.length} item(s) already in your fridge`);
+        }
+      }
+      
+      return addedItems;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
-      toast.success(`Added ${data.length} items to your fridge`);
+      if (data.length > 0) {
+        toast.success(`Added items to your fridge`);
+      }
     },
     onError: (error) => {
       toast.error(`Failed to add items: ${error.message}`);
@@ -228,13 +290,20 @@ export const useFridge = () => {
                 throw new Error(response.error.message || "Transcription failed");
               }
               
-              if (response.data && response.data.text) {
-                const transcribedText = response.data.text.trim();
-                console.log("Transcribed text:", transcribedText);
+              if (response.data) {
+                const transcribedText = response.data.text?.trim();
+                const foodItems = response.data.foodItems || [];
                 
-                if (transcribedText) {
+                console.log("Transcribed text:", transcribedText);
+                console.log("Extracted food items:", foodItems);
+                
+                if (foodItems && foodItems.length > 0) {
                   toast.success("Voice note transcribed successfully");
-                  batchAddItems.mutate(transcribedText);
+                  batchAddItems.mutate(foodItems);
+                } else if (transcribedText) {
+                  // Fallback to using the full text if no food items were extracted
+                  toast.info("Processing full transcription as no specific items were detected");
+                  batchAddItems.mutate([transcribedText]);
                 } else {
                   toast.error("Could not understand speech. Please try again and speak clearly.");
                 }
