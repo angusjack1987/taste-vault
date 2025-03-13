@@ -2,7 +2,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import FridgeItemCard from "./FridgeItemCard";
 import { FridgeItem } from "@/hooks/fridge/types";
 
@@ -58,20 +57,18 @@ const FridgeItemsList = ({
             : "No items added yet. Add items using the form above."}
         </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-360px)]">
-          <div className="space-y-2 pr-4">
-            {filteredItems.map((item) => (
-              <FridgeItemCard 
-                key={item.id} 
-                item={item} 
-                onDelete={() => onDeleteItem(item.id)}
-                onToggleAlwaysAvailable={(always_available) => 
-                  onToggleAlwaysAvailable(item.id, always_available)
-                }
-              />
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="space-y-2 pb-20">
+          {filteredItems.map((item) => (
+            <FridgeItemCard 
+              key={item.id} 
+              item={item} 
+              onDelete={() => onDeleteItem(item.id)}
+              onToggleAlwaysAvailable={(always_available) => 
+                onToggleAlwaysAvailable(item.id, always_available)
+              }
+            />
+          ))}
+        </div>
       )}
     </div>
   );
