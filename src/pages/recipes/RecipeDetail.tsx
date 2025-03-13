@@ -19,6 +19,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useRecipes from "@/hooks/useRecipes";
 import useShoppingList, { ShoppingListItemInput, categorizeIngredient } from "@/hooks/useShoppingList";
+import { parseIngredientAmount } from "@/lib/ingredient-parser";
 import { toast } from "sonner";
 
 const RecipeDetail = () => {
@@ -162,12 +163,20 @@ const RecipeDetail = () => {
             <TabsContent value="ingredients" className="mt-4">
               <ScrollArea className="max-h-[400px]">
                 <ul className="space-y-2">
-                  {recipe.ingredients.map((ingredient, index) => (
-                    <li key={index} className="flex items-baseline gap-2">
-                      <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
-                      <span>{ingredient}</span>
-                    </li>
-                  ))}
+                  {recipe.ingredients.map((ingredient, index) => {
+                    const { name, amount } = parseIngredientAmount(ingredient);
+                    return (
+                      <li key={index} className="flex items-baseline gap-2">
+                        <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
+                        <div>
+                          <div>{name}</div>
+                          {amount && (
+                            <div className="text-xs text-muted-foreground">{amount}</div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </ScrollArea>
             </TabsContent>
