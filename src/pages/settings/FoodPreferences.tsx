@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import TagInput from "@/components/ui/tag-input";
 import MainLayout from "@/components/layout/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
@@ -34,6 +34,11 @@ const FoodPreferences = () => {
     dietaryNotes: ""
   });
 
+  // Tag inputs state
+  const [cuisineTags, setCuisineTags] = useState<string[]>([]);
+  const [chefTags, setChefTags] = useState<string[]>([]);
+  const [avoidTags, setAvoidTags] = useState<string[]>([]);
+
   useEffect(() => {
     const fetchUserPreferences = async () => {
       if (!user) return;
@@ -59,6 +64,17 @@ const FoodPreferences = () => {
               ingredientsToAvoid: userPrefs.food.ingredientsToAvoid || "",
               dietaryNotes: userPrefs.food.dietaryNotes || ""
             });
+
+            // Split existing values into tags
+            if (userPrefs.food.favoriteCuisines) {
+              setCuisineTags(userPrefs.food.favoriteCuisines.split(',').map(tag => tag.trim()).filter(Boolean));
+            }
+            if (userPrefs.food.favoriteChefs) {
+              setChefTags(userPrefs.food.favoriteChefs.split(',').map(tag => tag.trim()).filter(Boolean));
+            }
+            if (userPrefs.food.ingredientsToAvoid) {
+              setAvoidTags(userPrefs.food.ingredientsToAvoid.split(',').map(tag => tag.trim()).filter(Boolean));
+            }
           }
         }
       } catch (error) {
@@ -71,11 +87,20 @@ const FoodPreferences = () => {
     fetchUserPreferences();
   }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Handle input changes for non-tag fields
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setPreferences(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  // Update preferences state when tags change
+  const handleTagsChange = (tags: string[], field: keyof FoodPreferences) => {
+    setPreferences(prev => ({
+      ...prev,
+      [field]: tags.join(", ")
     }));
   };
 
@@ -153,26 +178,26 @@ const FoodPreferences = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="favoriteCuisines">Favorite Cuisines</Label>
-              <Input
+              <TagInput
                 id="favoriteCuisines"
-                name="favoriteCuisines"
-                placeholder="Italian, Thai, Mexican, etc."
-                value={preferences.favoriteCuisines}
-                onChange={handleChange}
+                tags={cuisineTags}
+                setTags={setCuisineTags}
+                placeholder="Type cuisine and press Enter or comma to add"
+                onTagsChange={(tags) => handleTagsChange(tags, 'favoriteCuisines')}
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Separate multiple cuisines with commas
+                Separate multiple cuisines with Enter key or comma
               </p>
             </div>
             
             <div>
               <Label htmlFor="favoriteChefs">Favorite Chefs or Cooks</Label>
-              <Input
+              <TagInput
                 id="favoriteChefs"
-                name="favoriteChefs"
-                placeholder="Gordon Ramsay, Julia Child, etc."
-                value={preferences.favoriteChefs}
-                onChange={handleChange}
+                tags={chefTags}
+                setTags={setChefTags}
+                placeholder="Type chef name and press Enter or comma to add"
+                onTagsChange={(tags) => handleTagsChange(tags, 'favoriteChefs')}
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Chefs or cooks whose recipes you enjoy
@@ -181,13 +206,12 @@ const FoodPreferences = () => {
             
             <div>
               <Label htmlFor="ingredientsToAvoid">Ingredients to Avoid</Label>
-              <Textarea
+              <TagInput
                 id="ingredientsToAvoid"
-                name="ingredientsToAvoid"
-                placeholder="Cilantro, bell peppers, etc."
-                value={preferences.ingredientsToAvoid}
-                onChange={handleChange}
-                className="min-h-[100px]"
+                tags={avoidTags}
+                setTags={setAvoidTags}
+                placeholder="Type ingredient and press Enter or comma to add"
+                onTagsChange={(tags) => handleTagsChange(tags, 'ingredientsToAvoid')}
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Ingredients you dislike or want to avoid
