@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -58,6 +57,42 @@ export const useMealPlans = () => {
     if (error) {
       console.error("Error fetching meal plans:", error);
       toast.error("Failed to load meal plans");
+      throw error;
+    }
+
+    // Transform the data to match our MealPlanWithRecipe type
+    return (data || []).map(item => ({
+      ...item,
+      meal_type: item.meal_type as MealType,
+      recipe: item.recipe || null
+    }));
+  };
+
+  const fetchTodaysMeals = async (): Promise<MealPlanWithRecipe[]> => {
+    if (!user) return [];
+
+    const today = new Date();
+    const todayStr = format(today, "yyyy-MM-dd");
+
+    const { data, error } = await supabase
+      .from("meal_plans")
+      .select(
+        `
+        *,
+        recipe:recipes (
+          id,
+          title,
+          image
+        )
+      `
+      )
+      .eq("user_id", user.id)
+      .eq("date", todayStr)
+      .order("meal_type", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching today's meals:", error);
+      toast.error("Failed to load today's meals");
       throw error;
     }
 
@@ -160,6 +195,14 @@ export const useMealPlans = () => {
     });
   };
 
+  const useTodaysMeals = () => {
+    return useQuery({
+      queryKey: ["meal-plans", "today", format(new Date(), "yyyy-MM-dd")],
+      queryFn: fetchTodaysMeals,
+      enabled: !!user,
+    });
+  };
+
   const useCreateMealPlan = () => {
     return useMutation({
       mutationFn: createMealPlan,
@@ -187,6 +230,7 @@ export const useMealPlans = () => {
     useMealPlansForRange,
     useCreateMealPlan,
     useDeleteMealPlan,
+    useTodaysMeals,
   };
 };
 
