@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -39,6 +38,7 @@ import useAiRecipes from "@/hooks/useAiRecipes";
 import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
+import IngredientDetailAccordion from "@/components/recipes/IngredientDetailAccordion";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -139,7 +139,6 @@ const RecipeDetail = () => {
       try {
         const parsedResult = JSON.parse(result);
         setSuggestedMeal(parsedResult);
-        // Close variations dialog and open suggest meal dialog to show the results
         setVariationsDialogOpen(false);
         setSuggestDialogOpen(true);
       } catch (e) {
@@ -349,20 +348,29 @@ const RecipeDetail = () => {
                   {recipe.ingredients.map((ingredient, index) => {
                     const { name, amount } = parseIngredientAmount(ingredient);
                     return (
-                      <li key={index} className="flex items-baseline gap-2">
-                        <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
-                        <div>
-                          <AiSuggestionTooltip 
-                            content={index % 2 === 0 
-                              ? `Try substituting with ${name.includes("chicken") ? "tofu" : name.includes("beef") ? "mushrooms" : "a seasonal alternative"}`
-                              : `This ${name} pairs well with ${recipe.ingredients[(index + 3) % recipe.ingredients.length].split(" ").pop()}`
-                            }
-                          >
-                            <div className="cursor-help border-b border-dotted border-purple-300">{name}</div>
-                          </AiSuggestionTooltip>
-                          {amount && (
-                            <div className="text-xs text-muted-foreground">{amount}</div>
-                          )}
+                      <li key={index} className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
+                          <div className="flex-1">
+                            <AiSuggestionTooltip 
+                              content={index % 2 === 0 
+                                ? `Try substituting with ${name.includes("chicken") ? "tofu" : name.includes("beef") ? "mushrooms" : "a seasonal alternative"}`
+                                : `This ${name} pairs well with ${recipe.ingredients[(index + 3) % recipe.ingredients.length].split(" ").pop()}`
+                              }
+                            >
+                              <div className="cursor-help border-b border-dotted border-purple-300">{name}</div>
+                            </AiSuggestionTooltip>
+                            {amount && (
+                              <div className="text-xs text-muted-foreground">{amount}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="pl-4">
+                          <IngredientDetailAccordion 
+                            ingredient={ingredient} 
+                            index={index}
+                            allIngredients={recipe.ingredients}
+                          />
                         </div>
                       </li>
                     );
