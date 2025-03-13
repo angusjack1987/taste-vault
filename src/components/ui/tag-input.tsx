@@ -49,7 +49,8 @@ const TagInput = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     // Add tag on Enter or comma
     if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
+      e.preventDefault(); // Prevent form submission
+      e.stopPropagation(); // Stop event propagation
       addTag(inputValue);
     }
   };
