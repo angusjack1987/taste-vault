@@ -48,10 +48,10 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold mb-4">Welcome back, {firstName}!</h1>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <Card className="border-2 border-cream-500 hover-scale shadow-yellow">
+            <Card className="border-2 border-lemon-500 hover-scale shadow-yellow">
               <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                <ChefHat className="h-8 w-8 text-cream-700 mb-2" />
-                <p className="text-3xl font-bold text-cream-800">{recipes.length}</p>
+                <ChefHat className="h-8 w-8 text-lemon-700 mb-2" />
+                <p className="text-3xl font-bold text-lemon-800">{recipes.length}</p>
                 <p className="text-sm font-medium text-muted-foreground">Recipes</p>
               </CardContent>
             </Card>
@@ -93,8 +93,8 @@ const Dashboard = () => {
               <div>
                 <h3 className="font-medium text-sm text-charcoal-600">Breakfast</h3>
                 <Link to="/meal-plan" className="block">
-                  <div className="rounded-lg p-3 border-2 border-dashed border-cream-400 bg-white/70 flex items-center justify-center transition-all hover:bg-cream-50">
-                    <Button variant="ghost" size="sm" className="text-cream-700 hover:text-cream-800 hover:bg-cream-100">
+                  <div className="rounded-lg p-3 border-2 border-dashed border-lemon-400 bg-white/70 flex items-center justify-center transition-all hover:bg-lemon-50">
+                    <Button variant="ghost" size="sm" className="text-lemon-700 hover:text-lemon-800 hover:bg-lemon-100">
                       <Plus className="h-4 w-4 mr-1" />
                       Add Breakfast
                     </Button>
@@ -129,7 +129,7 @@ const Dashboard = () => {
             
             <div className="mt-4 flex justify-end">
               <Link to="/meal-plan">
-                <Button variant="outline" size="sm" className="bg-white hover:bg-cream-50 border-cream-400 text-charcoal-700 hover:text-charcoal-800">
+                <Button variant="outline" size="sm" className="bg-white hover:bg-lemon-50 border-lemon-400 text-charcoal-700 hover:text-charcoal-800">
                   View Full Plan
                 </Button>
               </Link>
@@ -155,7 +155,7 @@ const Dashboard = () => {
         ) : (
           <>
             {recentlyAdded.length > 0 && (
-              <div className="mb-8 p-6 bg-gradient-to-br from-cream-50 to-cream-100 rounded-xl border-2 border-cream-200">
+              <div className="mb-8 p-6 bg-gradient-to-br from-lemon-50 to-lemon-100 rounded-xl border-2 border-lemon-200">
                 <CategorySection 
                   title={<span className="highlight-yellow">Recently Added</span>}
                   recipes={recentlyAdded} 
