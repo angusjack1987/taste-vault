@@ -140,20 +140,16 @@ export const useAiRecipes = () => {
       // Get user's food preferences from the database
       const userFoodPreferences = await getUserFoodPreferences();
       
-      const { data, error } = await supabase.functions.invoke("ai-recipe-suggestions", {
+      const { data, error } = await supabase.functions.invoke("generate-recipe-from-fridge", {
         body: {
-          type: "generate-recipe",
-          data: { 
-            title, 
-            ingredients,
-            userFoodPreferences 
-          },
+          ingredients,
+          userFoodPreferences
         },
       });
 
       if (error) throw error;
       
-      return data.result;
+      return data.recipe;
     } catch (err) {
       console.error("Error generating recipe:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to generate recipe";

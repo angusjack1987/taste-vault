@@ -12,6 +12,7 @@ export interface FridgeItem {
   quantity?: string;
   category?: string;
   expiry_date?: string;
+  always_available?: boolean;
   user_id: string;
   created_at: string;
 }
@@ -91,6 +92,32 @@ export const useFridge = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
       toast.success("Item updated");
+    },
+    onError: (error) => {
+      toast.error(`Failed to update item: ${error.message}`);
+    },
+  });
+
+  // Toggle "always available" status
+  const toggleAlwaysAvailable = useMutation({
+    mutationFn: async ({ id, always_available }: { id: string; always_available: boolean }) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      const { data, error } = await supabase
+        .from('fridge_items' as any)
+        .update({ always_available })
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as unknown as FridgeItem;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
+      const status = data.always_available ? "marked as always available" : "no longer marked as always available";
+      toast.success(`"${data.name}" ${status}`);
     },
     onError: (error) => {
       toast.error(`Failed to update item: ${error.message}`);
@@ -367,6 +394,7 @@ export const useFridge = () => {
     addItem,
     updateItem,
     deleteItem,
+    toggleAlwaysAvailable,
     batchAddItems,
     isVoiceRecording,
     startVoiceRecording,

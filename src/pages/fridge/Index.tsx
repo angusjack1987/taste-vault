@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Mic, Plus, Trash2, X } from "lucide-react";
+import { Mic, Plus, Trash2, X, Star, Utensils } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useFridge, { FridgeItem } from "@/hooks/useFridge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
+import useAiRecipes from "@/hooks/useAiRecipes";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const FridgePage = () => {
   const {
     useFridgeItems,
     addItem,
     deleteItem,
+    toggleAlwaysAvailable,
     isVoiceRecording,
     startVoiceRecording,
     stopVoiceRecording,
@@ -21,6 +27,11 @@ const FridgePage = () => {
   
   const { data: fridgeItems, isLoading } = useFridgeItems();
   const [newItemName, setNewItemName] = useState("");
+  const [recipeDialogOpen, setRecipeDialogOpen] = useState(false);
+  const [generatedRecipe, setGeneratedRecipe] = useState("");
+  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
+  
+  const { generateRecipe, loading: recipeLoading } = useAiRecipes();
   
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +46,34 @@ const FridgePage = () => {
       stopVoiceRecording();
     } else {
       startVoiceRecording();
+    }
+  };
+
+  const generateRecipeFromFridge = async () => {
+    if (!fridgeItems || fridgeItems.length === 0) {
+      toast.error("Add some ingredients to your fridge first");
+      return;
+    }
+
+    try {
+      setIsGeneratingRecipe(true);
+      setRecipeDialogOpen(true);
+      
+      // Get all available ingredients (regular items and always available items)
+      const availableIngredients = fridgeItems.map(item => item.name);
+      
+      // Generate the recipe
+      const recipe = await generateRecipe({
+        title: "Recipe from fridge ingredients",
+        ingredients: availableIngredients
+      });
+      
+      setGeneratedRecipe(recipe || "Sorry, couldn't generate a recipe with these ingredients.");
+    } catch (error) {
+      console.error("Error generating recipe:", error);
+      toast.error("Failed to generate recipe. Please try again.");
+    } finally {
+      setIsGeneratingRecipe(false);
     }
   };
 
@@ -109,6 +148,18 @@ const FridgePage = () => {
                   </div>
                 )}
                 
+                {/* AI Recipe Generator Button */}
+                <div className="flex justify-center mt-4">
+                  <AiSuggestionButton
+                    onClick={generateRecipeFromFridge}
+                    label="Generate Recipe from Fridge"
+                    className="w-full max-w-sm"
+                    isLoading={isGeneratingRecipe}
+                  >
+                    <Utensils className="h-4 w-4 mr-2" />
+                  </AiSuggestionButton>
+                </div>
+                
                 {/* Items list */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -141,7 +192,10 @@ const FridgePage = () => {
                             <FridgeItemCard 
                               key={item.id} 
                               item={item} 
-                              onDelete={() => deleteItem.mutate(item.id)} 
+                              onDelete={() => deleteItem.mutate(item.id)}
+                              onToggleAlwaysAvailable={(always_available) => 
+                                toggleAlwaysAvailable.mutate({ id: item.id, always_available })
+                              }
                             />
                           ))}
                       </div>
@@ -152,6 +206,32 @@ const FridgePage = () => {
             </TabsContent>
           ))}
         </Tabs>
+        
+        {/* Recipe Dialog */}
+        <Dialog open={recipeDialogOpen} onOpenChange={setRecipeDialogOpen}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Recipe from Your Fridge</DialogTitle>
+              <DialogDescription>
+                Here's a recipe based on ingredients in your fridge
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="mt-4">
+              {isGeneratingRecipe ? (
+                <div className="py-8 text-center">
+                  <div className="animate-pulse text-center">
+                    Generating your recipe...
+                  </div>
+                </div>
+              ) : (
+                <div className="whitespace-pre-line">
+                  {generatedRecipe}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
@@ -159,29 +239,49 @@ const FridgePage = () => {
 
 const FridgeItemCard = ({ 
   item, 
-  onDelete 
+  onDelete,
+  onToggleAlwaysAvailable
 }: { 
   item: FridgeItem; 
   onDelete: () => void;
+  onToggleAlwaysAvailable: (always_available: boolean) => void;
 }) => {
   return (
-    <Card className="overflow-hidden border-border rounded-xl hover:shadow-sm transition-all">
+    <Card className={`overflow-hidden border-border rounded-xl hover:shadow-sm transition-all ${item.always_available ? 'border-yellow-300 bg-yellow-50/30 dark:bg-yellow-950/10' : ''}`}>
       <CardContent className="p-3 flex justify-between items-center">
-        <div>
-          <p className="font-bold">{item.name}</p>
-          {item.quantity && (
-            <p className="text-sm text-muted-foreground">{item.quantity}</p>
-          )}
+        <div className="flex items-center gap-3 flex-1">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <p className="font-bold">{item.name}</p>
+              {item.always_available && (
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              )}
+            </div>
+            {item.quantity && (
+              <p className="text-sm text-muted-foreground">{item.quantity}</p>
+            )}
+          </div>
         </div>
         
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onDelete}
-          className="rounded-full h-8 w-8"
-        >
-          <Trash2 className="h-4 w-4 text-muted-foreground" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mr-2">
+            <Switch 
+              checked={item.always_available || false}
+              onCheckedChange={onToggleAlwaysAvailable}
+              id={`always-available-${item.id}`}
+            />
+            <span className="text-xs text-muted-foreground hidden sm:inline">Always</span>
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onDelete}
+            className="rounded-full h-8 w-8"
+          >
+            <Trash2 className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
