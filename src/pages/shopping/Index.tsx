@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Trash2, 
@@ -281,7 +280,7 @@ const ShoppingListPage = () => {
                       </h3>
                       <ul className="space-y-2">
                         {items.map(item => {
-                          const { name, amount } = parseIngredientAmount(item.ingredient);
+                          const { name } = parseIngredientAmount(item.ingredient);
                           
                           return (
                             <li 
@@ -297,19 +296,12 @@ const ShoppingListPage = () => {
                                 />
                                 <div className="flex items-center gap-2">
                                   <span className="flex-shrink-0">{getItemIcon(item)}</span>
-                                  <div>
-                                    <label 
-                                      htmlFor={`item-${item.id}`}
-                                      className={`flex-1 cursor-pointer ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
-                                    >
-                                      {name}
-                                    </label>
-                                    {amount && (
-                                      <div className={`text-xs ${item.is_checked ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                                        {amount}
-                                      </div>
-                                    )}
-                                  </div>
+                                  <label 
+                                    htmlFor={`item-${item.id}`}
+                                    className={`flex-1 cursor-pointer ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
+                                  >
+                                    {name}
+                                  </label>
                                 </div>
                               </div>
                               <Button 

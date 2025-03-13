@@ -142,20 +142,6 @@ const IngredientDetailAccordion = ({ ingredient, index, allIngredients }: Ingred
             </div>
           </div>
 
-          <div>
-            <Label className="text-xs mb-1">Pairs Well With</Label>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {pairsWellWith.map((pair, i) => (
-                <div 
-                  key={i}
-                  className="px-2 py-0.5 rounded-full text-[10px] bg-white border border-purple-100 text-purple-700"
-                >
-                  {pair}
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="bg-white p-2 rounded border border-purple-100">
             <AiSuggestionTooltip content="Information provided by AI and may not be 100% accurate">
               <div className="flex items-center text-[10px] text-muted-foreground italic">

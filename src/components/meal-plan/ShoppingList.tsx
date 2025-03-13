@@ -47,7 +47,6 @@ const ShoppingList = () => {
   
   const [previewItems, setPreviewItems] = useState<Array<{
     name: string;
-    amount: string | null;
     category: string | null;
   }>>();
   
@@ -58,8 +57,8 @@ const ShoppingList = () => {
         .filter(item => !item.is_checked)
         .slice(0, 5)
         .map(item => {
-          const { name, amount } = parseIngredientAmount(item.ingredient);
-          return { name, amount, category: item.category };
+          const { name } = parseIngredientAmount(item.ingredient);
+          return { name, category: item.category };
         });
       
       setPreviewItems(uncheckedItems);
@@ -112,16 +111,11 @@ const ShoppingList = () => {
         </p>
         <ul className="space-y-2">
           {previewItems?.map((item, index) => (
-            <li key={index} className="flex items-start gap-2 text-sm">
-              <span className="mt-1 flex-shrink-0">
+            <li key={index} className="flex items-center gap-2 text-sm">
+              <span className="flex-shrink-0">
                 {getCategoryIcon(item.category)}
               </span>
-              <div>
-                <div>{item.name}</div>
-                {item.amount && (
-                  <div className="text-xs text-muted-foreground">{item.amount}</div>
-                )}
-              </div>
+              <div>{item.name}</div>
             </li>
           ))}
           {uncheckedItems > 5 && (
