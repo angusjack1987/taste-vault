@@ -85,9 +85,21 @@ const App = () => (
                 <FridgePage />
               </AuthGuard>
             } />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/settings/food-preferences" element={<FoodPreferences />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={
+              <AuthGuard>
+                <Settings />
+              </AuthGuard>
+            } />
+            <Route path="/settings/profile" element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            } />
+            <Route path="/settings/food-preferences" element={
+              <AuthGuard>
+                <FoodPreferences />
+              </AuthGuard>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
