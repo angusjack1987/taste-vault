@@ -32,7 +32,7 @@ const BottomNav = () => {
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
-      <div className="flex items-center justify-between bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-8 py-2 shadow-vibrant relative w-fit mx-auto">
+      <div className="flex items-center justify-between bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-6 py-1.5 shadow-vibrant relative w-fit mx-auto">
         {navItems.slice(0, 2).map((item) => {
           const isActive = pathname === item.to || 
                           (item.to !== "/" && pathname.startsWith(item.to));
@@ -42,29 +42,29 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110 min-w-[60px] text-center",
+                "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110 min-w-[50px] text-center",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
               <div className="flex justify-center w-full">
                 <item.icon
                   className={cn(
-                    "w-5 h-5 mb-0.5 transition-all",
+                    "w-4 h-4 mb-0.5 transition-all",
                     isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
                   )}
                 />
               </div>
-              <span className="text-xs font-medium text-center w-full">{item.label}</span>
+              <span className="text-[10px] font-medium text-center w-full">{item.label}</span>
             </Link>
           );
         })}
         
-        {/* Enhanced Center Action Button */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-5">
+        {/* Enhanced Center Action Button - Centered horizontally */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-3.5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 transition-all border-4 border-primary text-white shadow-md hover:-translate-y-1 active:translate-y-0 group">
-                <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 transition-all border-3 border-primary text-white shadow-md hover:-translate-y-1 active:translate-y-0 group">
+                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="center" className="w-56 mb-2 border-2 rounded-xl animate-in">
@@ -99,19 +99,19 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110 min-w-[60px] text-center",
+                "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110 min-w-[50px] text-center",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
               <div className="flex justify-center w-full">
                 <item.icon
                   className={cn(
-                    "w-5 h-5 mb-0.5 transition-all",
+                    "w-4 h-4 mb-0.5 transition-all",
                     isActive ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
                   )}
                 />
               </div>
-              <span className="text-xs font-medium text-center w-full">{item.label}</span>
+              <span className="text-[10px] font-medium text-center w-full">{item.label}</span>
             </Link>
           );
         })}
