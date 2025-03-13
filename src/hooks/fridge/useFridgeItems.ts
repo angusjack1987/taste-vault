@@ -32,12 +32,16 @@ export const useFridgeItems = (user: User | null) => {
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
       // Filter out any null or non-object items
-      const validItems = items.filter((item): item is { id: string, [key: string]: any } => 
-        item !== null && typeof item === 'object' && 'id' in item);
+      // Using a simpler, more direct filtering approach
+      const validItems = items.filter(item => 
+        item !== null && typeof item === 'object' && 'id' in item
+      );
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
-        // At this point, item is guaranteed to be a valid object with an id property
+        if (!item || typeof item !== 'object') {
+          return null; // Skip invalid items
+        }
         
         const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
           ? userPrefs.preferences 
@@ -47,22 +51,24 @@ export const useFridgeItems = (user: User | null) => {
           ? (prefsObj as Record<string, any>).fridge_items || {} 
           : {};
           
-        // We already checked that the item has an id property in our filter
-        const itemId = item.id || '';
+        const itemId = 'id' in item && item.id ? item.id : '';
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
+        
+        // Use type assertion after checking 'id' existence
+        const validItem = item as unknown as Record<string, any>;
             
         return {
-          ...item,
+          ...validItem,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 
             itemPrefs.always_available
           )
         } as FridgeItem;
-      });
+      }).filter(Boolean) as FridgeItem[]; // Filter out any null items
       
       return itemsWithPrefs;
     },

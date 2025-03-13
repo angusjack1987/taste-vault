@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -220,19 +219,19 @@ export const useFridgeMutations = (user: User | null) => {
       
       // Delete all items that are not marked as always available
       if (Array.isArray(fridgeItems)) {
-        // Safely filter items and extract IDs for deletion
-        const itemsToDelete = fridgeItems
-          .filter(item => {
-            return item !== null && 
-                   typeof item === 'object' && 
-                   'id' in item && 
-                   typeof item.id === 'string' &&
-                   !alwaysAvailableIds.includes(item.id);
-          })
-          .map(item => {
-            // TypeScript now knows this is a valid object with an id property
-            return (item as { id: string }).id;
-          });
+        // Create a safe list of IDs to delete
+        const itemsToDelete: string[] = [];
+        
+        // Safely iterate through items
+        fridgeItems.forEach(item => {
+          if (item && 
+              typeof item === 'object' && 
+              'id' in item && 
+              typeof item.id === 'string' && 
+              !alwaysAvailableIds.includes(item.id)) {
+            itemsToDelete.push(item.id);
+          }
+        });
         
         if (itemsToDelete.length > 0) {
           const { error: deleteError } = await supabase
