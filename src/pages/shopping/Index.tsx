@@ -21,7 +21,7 @@ import {
   Egg,
   Carrot,
   Package,
-  Flask,
+  Wine,
   Refrigerator,
   Candy,
   Flame
@@ -45,7 +45,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   "GRAINS": <Wheat size={16} className="text-amber-300" />,
   "CANNED": <Package size={16} className="text-gray-400" />,
   "BAKING": <Egg size={16} className="text-yellow-200" />,
-  "CONDIMENTS": <Flask size={16} className="text-yellow-500" />,
+  "CONDIMENTS": <Wine size={16} className="text-yellow-500" />,
   "SPICES": <Flame size={16} className="text-rose-300" />,
   "FROZEN": <Refrigerator size={16} className="text-blue-300" />,
   "SNACKS": <Candy size={16} className="text-pink-300" />,

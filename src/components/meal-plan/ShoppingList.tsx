@@ -13,7 +13,7 @@ import {
   Wheat,
   Package,
   Egg,
-  Flask,
+  Wine,
   Refrigerator,
   Pizza,
   Candy,
@@ -56,7 +56,7 @@ const getCategoryIcon = (category: string | null) => {
     case 'BAKING': 
       return <Egg size={14} className="text-yellow-200" />;
     case 'CONDIMENTS': 
-      return <Flask size={14} className="text-yellow-500" />;
+      return <Wine size={14} className="text-yellow-500" />;
     case 'SPICES': 
       return <Flame size={14} className="text-rose-300" />;
     case 'FROZEN': 
