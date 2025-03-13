@@ -1,3 +1,4 @@
+
 import React, { useState, KeyboardEvent, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,15 +47,16 @@ const TagInput = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    // Add tag on Enter or comma
-    if (e.key === 'Enter' || e.key === ',') {
+    // Add tag on Enter
+    if (e.key === 'Enter') {
       e.preventDefault(); // Prevent form submission
       e.stopPropagation(); // Stop event propagation
-      
-      if (inputValue.trim()) {
-        addTag(inputValue);
+
+      const value = inputValue.trim();
+      if (value) {
+        addTag(value);
       }
-      
+
       return false; // Ensure the event is fully canceled
     }
   };
@@ -69,12 +71,19 @@ const TagInput = ({
       
       // Ensure input keeps focus after adding tag
       if (inputRef.current) {
+        // We need to clear the input immediately to avoid it being submitted
+        inputRef.current.value = "";
         setTimeout(() => {
-          inputRef.current?.focus();
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
         }, 0);
       }
     } else {
       setInputValue("");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
     }
   };
 
@@ -96,8 +105,13 @@ const TagInput = ({
     if (formElement) {
       const handleFormSubmit = (e: Event) => {
         const activeElement = document.activeElement;
-        if (activeElement === inputRef.current && inputValue.trim()) {
+        if (activeElement === inputRef.current && (inputValue.trim() || inputRef.current?.value.trim())) {
           e.preventDefault();
+          // Add the tag if there's a value
+          const currentValue = inputRef.current?.value.trim() || inputValue.trim();
+          if (currentValue) {
+            addTag(currentValue);
+          }
         }
       };
       
@@ -107,7 +121,7 @@ const TagInput = ({
         formElement.removeEventListener('submit', handleFormSubmit);
       };
     }
-  }, [inputValue]);
+  }, [inputValue, tags]);
 
   return (
     <div className={cn("space-y-2", className)}>

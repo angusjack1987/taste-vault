@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -181,10 +182,12 @@ const FoodPreferences = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if the user is currently entering a tag
     const activeElement = document.activeElement as HTMLElement;
     if (activeElement?.tagName === 'INPUT') {
       const inputValue = (activeElement as HTMLInputElement).value.trim();
       if (inputValue) {
+        // Let the TagInput handle this
         return;
       }
     }
