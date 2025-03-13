@@ -18,12 +18,19 @@ interface GenerateRecipeParams {
   ingredients: string[];
 }
 
+interface UserFoodPreferences {
+  favoriteCuisines?: string;
+  favoriteChefs?: string;
+  ingredientsToAvoid?: string;
+  dietaryNotes?: string;
+}
+
 export const useAiRecipes = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const getUserFoodPreferences = async () => {
+  const getUserFoodPreferences = async (): Promise<UserFoodPreferences | null> => {
     if (!user) return null;
     
     try {
@@ -35,7 +42,12 @@ export const useAiRecipes = () => {
         
       if (error) throw error;
       
-      return data?.preferences?.food || null;
+      // Make sure we safely access the food preferences object
+      if (data?.preferences && typeof data.preferences === 'object') {
+        return data.preferences.food as UserFoodPreferences || null;
+      }
+      
+      return null;
     } catch (err) {
       console.error("Error fetching food preferences:", err);
       return null;

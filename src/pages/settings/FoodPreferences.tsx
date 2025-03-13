@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,11 +9,18 @@ import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+interface FoodPreferences {
+  favoriteCuisines: string;
+  favoriteChefs: string;
+  ingredientsToAvoid: string;
+  dietaryNotes: string;
+}
+
 const FoodPreferences = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [preferences, setPreferences] = useState({
+  const [preferences, setPreferences] = useState<FoodPreferences>({
     favoriteCuisines: "",
     favoriteChefs: "",
     ingredientsToAvoid: "",
@@ -36,7 +42,7 @@ const FoodPreferences = () => {
           
         if (error) throw error;
         
-        if (data) {
+        if (data && data.preferences && typeof data.preferences === 'object') {
           const foodPrefs = data.preferences.food || {};
           setPreferences({
             favoriteCuisines: foodPrefs.favoriteCuisines || "",
@@ -88,9 +94,12 @@ const FoodPreferences = () => {
       };
       
       if (existingPrefs) {
-        // Update existing preferences
+        // Update existing preferences with proper type checking
+        const currentPrefs = typeof existingPrefs.preferences === 'object' ? 
+          existingPrefs.preferences : {};
+          
         const updatedPreferences = {
-          ...existingPrefs.preferences,
+          ...currentPrefs,
           food: foodPreferences
         };
         

@@ -25,6 +25,9 @@ serve(async (req) => {
     const formatUserPreferences = (userFoodPreferences: any) => {
       if (!userFoodPreferences) return '';
       
+      // Ensure userFoodPreferences is an object
+      if (typeof userFoodPreferences !== 'object') return '';
+      
       let prefString = 'Based on these user preferences:';
       
       if (userFoodPreferences.favoriteCuisines) {
