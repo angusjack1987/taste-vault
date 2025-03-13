@@ -1,5 +1,5 @@
 
-import { Clock, Star } from "lucide-react";
+import { Clock, Star, ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +23,17 @@ const RecipeCard = ({
   return (
     <Link to={`/recipes/${id}`} className={cn("recipe-card block", className)}>
       <div className="aspect-[4/3] w-full relative overflow-hidden">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-        />
+        {image ? (
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full bg-muted flex items-center justify-center">
+            <ImageIcon className="h-12 w-12 text-muted-foreground opacity-40" />
+          </div>
+        )}
         {rating && (
           <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1 flex items-center text-xs">
             <Star className="w-3 h-3 mr-0.5 fill-current" />

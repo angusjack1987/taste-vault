@@ -99,11 +99,17 @@ const RecipeDetail = () => {
     >
       <div>
         <div className="relative">
-          <img 
-            src={recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600"} 
-            alt={recipe.title} 
-            className="w-full h-48 md:h-64 object-cover"
-          />
+          {recipe.image ? (
+            <img 
+              src={recipe.image} 
+              alt={recipe.title} 
+              className="w-full h-48 md:h-64 object-cover"
+            />
+          ) : (
+            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
+              <p className="text-muted-foreground">No image available</p>
+            </div>
+          )}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
             <h1 className="text-white text-xl font-semibold">{recipe.title}</h1>
           </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Search, Loader2, Download } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -43,7 +42,7 @@ const RecipesList = () => {
   const gridRecipes = filteredRecipes?.map(recipe => ({
     id: recipe.id,
     title: recipe.title,
-    image: recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600",
+    image: recipe.image || "",
     time: recipe.time || undefined,
     rating: undefined, // We don't have ratings yet
   })) || [];
