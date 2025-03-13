@@ -10,6 +10,12 @@ type SupabaseItem = {
   [key: string]: any;
 };
 
+// Define a type for the database row type
+type DatabaseItem = {
+  id: string;
+  [key: string]: any;
+};
+
 export const useFridgeItems = (user: User | null) => {
   return useQuery({
     queryKey: ["fridge-items", user?.id],
@@ -38,7 +44,7 @@ export const useFridgeItems = (user: User | null) => {
       const items = Array.isArray(fridgeItems) ? fridgeItems : [];
       
       // Filter out null or invalid items - using a proper type guard
-      const validItems = items.filter((item): item is SupabaseItem => 
+      const validItems = items.filter((item): item is DatabaseItem => 
         item !== null && typeof item === 'object' && 'id' in item
       );
       
@@ -60,7 +66,7 @@ export const useFridgeItems = (user: User | null) => {
         
         // Convert to FridgeItem type with proper object spreading
         return {
-          ...item as unknown as Record<string, any>,
+          ...item,
           always_available: Boolean(
             itemPrefs && 
             typeof itemPrefs === 'object' && 
