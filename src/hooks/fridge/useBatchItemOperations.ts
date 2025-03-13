@@ -13,7 +13,7 @@ const categorizeItem = (itemName: string): string => {
   
   // Common freezer items
   const freezerItems = [
-    'frozen', 'ice', 'ice cream', 'freezer', 
+    'frozen', 'ice', 'popsicle', 'ice cream', 'freezer', 
     'pizza', 'frozen meal', 'fish stick', 'fish fingers', 'frozen vegetable',
     'frozen fruit', 'icecream', 'peas', 'corn', 'berries'
   ];
@@ -43,6 +43,16 @@ const categorizeItem = (itemName: string): string => {
   // Default to Fridge for everything else
   return 'Fridge';
 };
+
+// Define a clear return type for the mutation function
+interface BatchAddResult {
+  addedItems: FridgeItem[];
+  stats: {
+    success: number;
+    duplicates: number;
+    failed: number;
+  };
+}
 
 export const useBatchItemOperations = (user: User | null) => {
   const queryClient = useQueryClient();
@@ -108,12 +118,15 @@ export const useBatchItemOperations = (user: User | null) => {
   };
 
   const batchAddItems = useMutation({
-    mutationFn: async (items: string[]) => {
+    mutationFn: async (items: string[]): Promise<BatchAddResult> => {
       if (!user) throw new Error("User not authenticated");
       
       if (!items || items.length === 0) {
         console.warn("No valid items to add");
-        return [];
+        return {
+          addedItems: [],
+          stats: { success: 0, duplicates: 0, failed: 0 }
+        };
       }
       
       console.log("Processing items:", items);

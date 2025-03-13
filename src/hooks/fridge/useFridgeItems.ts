@@ -38,6 +38,7 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map((item) => {
+        // Add an additional null check for TypeScript
         if (item === null || typeof item !== 'object' || !('id' in item)) {
           return null;
         }
@@ -54,13 +55,13 @@ export const useFridgeItems = (user: User | null) => {
           return null;
         }
         
-        const itemId = item.id;
+        const itemId = item.id as string;
           
         const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
           ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
           : {};
         
-        // Use explicit type assertion
+        // Use explicit type assertion for item
         const safeItem = item as Record<string, any>;
         
         return {
@@ -71,7 +72,7 @@ export const useFridgeItems = (user: User | null) => {
             itemPrefs.always_available
           )
         } as FridgeItem;
-      }).filter(Boolean) as FridgeItem[]; // Filter out any null items
+      }).filter((item): item is FridgeItem => item !== null); // Type guard to ensure non-null
       
       return itemsWithPrefs;
     },
