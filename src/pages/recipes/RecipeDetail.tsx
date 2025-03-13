@@ -11,7 +11,8 @@ import {
   Edit,
   Loader2,
   ShoppingBag,
-  Check
+  Check,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,18 +22,31 @@ import useRecipes from "@/hooks/useRecipes";
 import useShoppingList, { ShoppingListItemInput, categorizeIngredient } from "@/hooks/useShoppingList";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isFavorited, setIsFavorited] = useState(false);
   const [addingToShoppingList, setAddingToShoppingList] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const { useRecipe } = useRecipes();
+  const { useRecipe, useDeleteRecipe } = useRecipes();
   const { useAddManyShoppingListItems } = useShoppingList();
   
   const { data: recipe, isLoading, error } = useRecipe(id);
   const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
+  const { mutateAsync: deleteRecipe } = useDeleteRecipe();
   
   const handleAddToShoppingList = async () => {
     if (!recipe) return;
@@ -56,6 +70,23 @@ const RecipeDetail = () => {
       toast.error("Failed to add to shopping list");
     } finally {
       setAddingToShoppingList(false);
+    }
+  };
+  
+  const handleDeleteRecipe = async () => {
+    if (!recipe || !id) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      await deleteRecipe(id);
+      toast.success("Recipe deleted successfully");
+      navigate("/recipes");
+    } catch (error) {
+      console.error("Error deleting recipe:", error);
+      toast.error("Failed to delete recipe");
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -90,11 +121,45 @@ const RecipeDetail = () => {
       title={recipe.title} 
       showBackButton={true}
       action={
-        <Button variant="ghost" size="icon" asChild>
-          <a href={`/recipes/${id}/edit`}>
-            <Edit className="h-5 w-5" />
-          </a>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <a href={`/recipes/${id}/edit`}>
+              <Edit className="h-5 w-5" />
+            </a>
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this recipe? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleDeleteRecipe}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>Delete</>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       }
     >
       <div>

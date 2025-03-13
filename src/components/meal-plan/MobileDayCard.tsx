@@ -1,70 +1,20 @@
 
-import React from 'react';
 import { format } from 'date-fns';
-import { Plus, X, Lightbulb } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, Lightbulb, X } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
-
-interface MobileMealSlotProps {
-  mealType: MealType;
-  mealPlan: MealPlanWithRecipe | undefined;
-  onAddMeal: () => void;
-  onRemoveMeal: (id: string) => void;
-  onSuggestMeal: () => void;
-}
-
-const MobileMealSlot = ({ mealType, mealPlan, onAddMeal, onRemoveMeal, onSuggestMeal }: MobileMealSlotProps) => {
-  return (
-    <div className="text-left">
-      <div className="text-sm text-muted-foreground capitalize mb-1 flex justify-between items-center">
-        <span>{mealType}</span>
-        {!mealPlan && (
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-xs px-2"
-              onClick={onAddMeal}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-xs px-2"
-              onClick={onSuggestMeal}
-            >
-              <Lightbulb className="h-3 w-3" />
-            </Button>
-          </div>
-        )}
-      </div>
-      {mealPlan && (
-        <div className="flex items-center gap-3 bg-muted rounded-lg p-2 relative group">
-          {mealPlan.recipe?.image && (
-            <img
-              src={mealPlan.recipe.image}
-              alt={mealPlan.recipe.title}
-              className="w-12 h-12 rounded object-cover"
-            />
-          )}
-          <span className="text-sm flex-1">
-            {mealPlan.recipe?.title}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 p-0 absolute right-1 top-1"
-            onClick={() => onRemoveMeal(mealPlan.id)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface MobileDayCardProps {
   date: Date;
@@ -79,23 +29,78 @@ interface MobileDayCardProps {
 }
 
 const MobileDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: MobileDayCardProps) => {
+  const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+  
+  const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
+    if (!meal) {
+      return (
+        <div className="flex-1 border border-dashed border-border rounded-md p-2 flex justify-between items-center min-h-[48px]">
+          <div className="text-sm capitalize text-muted-foreground">{mealType}</div>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => onAddMeal(date, mealType)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 w-8 px-0" onClick={() => onSuggestMeal(date, mealType)}>
+              <Lightbulb className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex-1 border rounded-md p-2 bg-card relative">
+        <div className="flex justify-between items-center">
+          <div className="text-sm capitalize text-muted-foreground">{mealType}</div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove Meal</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to remove this meal from your plan?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => onRemoveMeal(meal.id)}
+                >
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+        <div className="font-medium mt-1">{meal.recipe?.title || 'No recipe selected'}</div>
+      </div>
+    );
+  };
+  
   return (
-    <div className="border border-border rounded-lg p-3">
-      <div className="text-base font-medium mb-3 pb-2 border-b">
-        {format(date, 'EEEE, MMM d')}
+    <div className={cn(
+      "border rounded-lg p-3 space-y-3",
+      isToday && "border-primary bg-primary/5"
+    )}>
+      <div className="font-medium">
+        {format(date, 'EEEE, MMMM d')}
+        {isToday && <span className="ml-2 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Today</span>}
       </div>
       
-      <div className="space-y-3">
-        {Object.entries(meals).map(([mealType, mealPlan]) => (
-          <MobileMealSlot
-            key={mealType}
-            mealType={mealType as MealType}
-            mealPlan={mealPlan}
-            onAddMeal={() => onAddMeal(date, mealType as MealType)}
-            onRemoveMeal={onRemoveMeal}
-            onSuggestMeal={() => onSuggestMeal(date, mealType as MealType)}
-          />
-        ))}
+      <div className="space-y-2">
+        {renderMealSlot('breakfast', meals.breakfast)}
+        {renderMealSlot('lunch', meals.lunch)}
+        {renderMealSlot('dinner', meals.dinner)}
       </div>
     </div>
   );
