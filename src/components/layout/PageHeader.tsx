@@ -1,5 +1,5 @@
 
-import { ArrowLeft, User, Settings, LogOut, Menu } from "lucide-react";
+import { ArrowLeft, User, Settings, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +51,7 @@ const PageHeader = ({
     <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm px-4 pt-6 pb-3">
       <div className="flex items-center justify-between max-w-5xl mx-auto">
         <div className="flex items-center gap-3">
-          {showBackButton ? (
+          {showBackButton && (
             <Button
               variant="ghost"
               size="icon"
@@ -60,14 +60,6 @@ const PageHeader = ({
               className="rounded-full"
             >
               <ArrowLeft className="h-5 w-5" />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-            >
-              <Menu className="h-5 w-5" />
             </Button>
           )}
           <h1 className="text-xl font-bold">{title}</h1>
