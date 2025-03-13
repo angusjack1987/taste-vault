@@ -1,21 +1,34 @@
+
 import { useState } from "react";
-import { Plus, Search, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Search, Loader2, Download } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MainLayout from "@/components/layout/MainLayout";
 import RecipeGrid from "@/components/recipes/RecipeGrid";
 import FiltersBar from "@/components/recipes/FiltersBar";
-import useRecipes from "@/hooks/useRecipes";
+import ImportRecipeDialog from "@/components/recipes/ImportRecipeDialog";
+import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
 
 const RecipesList = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { useAllRecipes } = useRecipes();
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const { useAllRecipes, useCreateRecipe } = useRecipes();
   const { data: recipes, isLoading, error } = useAllRecipes();
+  const { mutate: createRecipe } = useCreateRecipe();
+  const navigate = useNavigate();
   
   const handleShowFilters = () => {
     // This would show a filters dialog in a real implementation
     console.log("Show filters dialog");
+  };
+  
+  const handleImportRecipe = (recipeData: Partial<RecipeFormData>) => {
+    createRecipe(recipeData as RecipeFormData, {
+      onSuccess: (data) => {
+        navigate(`/recipes/${data.id}`);
+      }
+    });
   };
   
   // Filter recipes based on search query
@@ -39,11 +52,21 @@ const RecipesList = () => {
     <MainLayout 
       title="Recipes" 
       action={
-        <Link to="/recipes/new">
-          <Button size="icon" variant="ghost">
-            <Plus className="h-5 w-5" />
+        <div className="flex items-center space-x-1">
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            onClick={() => setImportDialogOpen(true)}
+            title="Import Recipe"
+          >
+            <Download className="h-5 w-5" />
           </Button>
-        </Link>
+          <Link to="/recipes/new">
+            <Button size="icon" variant="ghost" title="Create Recipe">
+              <Plus className="h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
       }
     >
       <div className="page-container">
@@ -80,6 +103,12 @@ const RecipesList = () => {
             />
           )}
         </div>
+        
+        <ImportRecipeDialog
+          open={importDialogOpen}
+          onClose={() => setImportDialogOpen(false)}
+          onImport={handleImportRecipe}
+        />
       </div>
     </MainLayout>
   );
