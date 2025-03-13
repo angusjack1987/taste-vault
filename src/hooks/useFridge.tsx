@@ -37,7 +37,7 @@ export const useFridge = () => {
           .order("created_at", { ascending: false });
         
         if (error) throw error;
-        return data as FridgeItem[];
+        return (data || []) as unknown as FridgeItem[];
       },
       enabled: !!user,
     });
@@ -60,7 +60,7 @@ export const useFridge = () => {
         .single();
       
       if (error) throw error;
-      return data as FridgeItem;
+      return data as unknown as FridgeItem;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
@@ -85,7 +85,7 @@ export const useFridge = () => {
         .single();
       
       if (error) throw error;
-      return data as FridgeItem;
+      return data as unknown as FridgeItem;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
@@ -142,7 +142,7 @@ export const useFridge = () => {
         .select();
       
       if (error) throw error;
-      return data as FridgeItem[];
+      return (data || []) as unknown as FridgeItem[];
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["fridge-items", user?.id] });
