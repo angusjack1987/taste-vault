@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -20,16 +19,13 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
   onRemove,
   onKeyDown
 }) => {
-  // Parse the preparation instructions (anything after a comma, semicolon, or "for")
   const parsePreparation = (ingredient: string): { mainText: string; preparation: string | null } => {
-    // Common separators for preparation instructions
     const separators = [', ', '; ', ' - ', ' for '];
     let mainText = ingredient;
     let preparation = null;
     
     for (const separator of separators) {
       if (ingredient.includes(separator)) {
-        // Fix: Remove the limit parameter from RegExp constructor
         const parts = ingredient.split(new RegExp(`(${separator})`));
         if (parts.length >= 3) {
           mainText = parts[0];
@@ -42,7 +38,6 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     return { mainText, preparation };
   };
 
-  // Function to determine the appropriate icon based on ingredient name
   const getIngredientIcon = (ingredientName: string) => {
     const lowerName = ingredientName.toLowerCase();
     
@@ -69,13 +64,11 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
         const { mainText, preparation } = parsePreparation(ingredient);
         const { name, amount } = parseIngredientAmount(mainText);
         
-        // Check if it's the last item (current input)
         const isLastItem = index === ingredients.length - 1;
         
         return (
           <div key={index} className="space-y-1">
             {isLastItem ? (
-              // Show input field for the current/last ingredient
               <div className="flex gap-2">
                 <Input
                   placeholder={`Ingredient ${index + 1} (e.g., 500g Chicken Breast, diced)`}
@@ -99,20 +92,23 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                 </Button>
               </div>
             ) : (
-              // Show parsed details for previous ingredients
-              <div className="flex items-center gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
-                <div className="flex-1 flex items-center gap-2">
-                  {amount && (
-                    <span className="font-mono text-sm">{amount}</span>
-                  )}
-                  
-                  <div className="flex items-center gap-1">
-                    {getIngredientIcon(name)}
-                    <span className="text-sm">{name}</span>
+              <div className="flex items-start gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    {amount && (
+                      <span className="font-mono text-sm">{amount}</span>
+                    )}
+                    
+                    <div className="flex items-center gap-1">
+                      {getIngredientIcon(name)}
+                      <span className="text-sm">{name}</span>
+                    </div>
                   </div>
                   
                   {preparation && (
-                    <span className="italic text-sm text-sage-700">{preparation}</span>
+                    <div className="mt-1 ml-6">
+                      <span className="text-xs text-gray-500 italic">{preparation}</span>
+                    </div>
                   )}
                 </div>
                 
@@ -121,14 +117,13 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={() => onRemove(index)}
-                  className="h-6 w-6 text-muted-foreground"
+                  className="h-6 w-6 text-muted-foreground mt-1"
                 >
                   <Scissors className="h-3 w-3" />
                 </Button>
               </div>
             )}
             
-            {/* Show parsed details for the current/last ingredient */}
             {isLastItem && ingredient && (
               <div className="grid grid-cols-3 gap-2 px-2 mt-1">
                 {amount && (
@@ -137,14 +132,19 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                   </div>
                 )}
                 
-                <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center gap-2 border border-sage-200">
-                  {getIngredientIcon(name)}
-                  <span>{name}</span>
+                <div className="bg-sage-50 rounded-md p-2 flex flex-col border border-sage-200">
+                  <div className="flex items-center gap-2">
+                    {getIngredientIcon(name)}
+                    <span className="text-sm">{name}</span>
+                  </div>
+                  {preparation && (
+                    <span className="text-xs text-gray-500 mt-1 italic">{preparation}</span>
+                  )}
                 </div>
                 
-                {preparation && (
-                  <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center border border-sage-200">
-                    <span className="italic text-sage-700">{preparation}</span>
+                {preparation && !amount && (
+                  <div className="bg-sage-50 rounded-md p-2 text-xs flex items-center border border-sage-200">
+                    <span className="italic text-gray-500">{preparation}</span>
                   </div>
                 )}
               </div>
