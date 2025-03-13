@@ -1,10 +1,16 @@
 
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, BookPlus, ShoppingCart, Refrigerator } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
 import CategorySection from "@/components/recipes/CategorySection";
 import useRecipes from "@/hooks/useRecipes";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Dashboard = () => {
   const { useAllRecipes } = useRecipes();
@@ -125,11 +131,47 @@ const Dashboard = () => {
         )}
         
         <div className="fixed bottom-24 right-6 z-20">
-          <Link to="/recipes/new">
-            <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
-              <Plus className="h-6 w-6" />
-            </Button>
-          </Link>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="lg" className="rounded-full h-14 w-14 shadow-lg">
+                  <Plus className="h-6 w-6" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="end" className="flex flex-col p-0 rounded-lg overflow-hidden">
+                <Link to="/recipes/new">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="justify-start w-full px-3 py-2 h-auto text-sm gap-2 rounded-none hover:bg-accent"
+                  >
+                    <BookPlus className="h-4 w-4" />
+                    Add Recipe
+                  </Button>
+                </Link>
+                <Link to="/fridge">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="justify-start w-full px-3 py-2 h-auto text-sm gap-2 rounded-none hover:bg-accent"
+                  >
+                    <Refrigerator className="h-4 w-4" />
+                    Fridge
+                  </Button>
+                </Link>
+                <Link to="/shopping">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="justify-start w-full px-3 py-2 h-auto text-sm gap-2 rounded-none hover:bg-accent"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Shopping List
+                  </Button>
+                </Link>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </MainLayout>
