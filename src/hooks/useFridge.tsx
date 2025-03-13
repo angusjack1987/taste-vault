@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -79,21 +78,26 @@ export const useFridge = () => {
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
-          
+        
+        if (prefsError && prefsError.code !== 'PGSQL_ERROR') {
+          console.error("Error fetching user preferences:", prefsError);
+        }
+        
         const itemsWithPrefs = (fridgeItems || []).map(item => {
-          // Safely access nested properties with optional chaining and type checking
-          const fridgeItemPrefs = userPrefs?.preferences && 
-                                typeof userPrefs.preferences === 'object' ? 
-                                (userPrefs.preferences as any).fridge_items : 
+          const prefsObj = userPrefs?.preferences || {};
+          const fridgeItemPrefs = typeof prefsObj === 'object' ? 
+                                (prefsObj as Record<string, any>).fridge_items || {} : 
                                 {};
           
-          const itemPrefs = fridgeItemPrefs && typeof fridgeItemPrefs === 'object' ? 
-                           fridgeItemPrefs[item.id] : 
-                           null;
+          const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs ? 
+                           (fridgeItemPrefs as Record<string, any>)[item.id] || {} : 
+                           {};
             
           return {
             ...item,
-            always_available: itemPrefs?.always_available || false
+            always_available: Boolean(itemPrefs && 
+                             typeof itemPrefs === 'object' && 
+                             itemPrefs.always_available)
           };
         });
         
@@ -107,7 +111,6 @@ export const useFridge = () => {
     mutationFn: async (item: Omit<FridgeItem, "id" | "user_id" | "created_at">) => {
       if (!user) throw new Error("User not authenticated");
       
-      // Remove the always_available property as it's not in the database table
       const { always_available, ...dbItem } = item;
       
       const { data, error } = await supabase
@@ -137,7 +140,6 @@ export const useFridge = () => {
     mutationFn: async (item: Partial<FridgeItem> & { id: string }) => {
       if (!user) throw new Error("User not authenticated");
       
-      // Remove the always_available property as it's not in the database table
       const { always_available, ...dbItem } = item;
       
       const { data, error } = await supabase
@@ -178,21 +180,26 @@ export const useFridge = () => {
           throw prefsError;
         }
         
-        // Safely handle the preferences object
         const existingPreferences = existingPrefs?.preferences || {};
-        const fridgeItemPrefs = (existingPreferences as any).fridge_items || {};
         
-        // Update the preference for this specific item
-        fridgeItemPrefs[id] = { 
-          ...(fridgeItemPrefs[id] || {}), 
+        const safePrefs = typeof existingPreferences === 'object' ? 
+                         existingPreferences as Record<string, any> : 
+                         {};
+                         
+        const safeFridgeItemPrefs = typeof safePrefs.fridge_items === 'object' ? 
+                                  safePrefs.fridge_items as Record<string, any> : 
+                                  {};
+        
+        safeFridgeItemPrefs[id] = { 
+          ...((typeof safeFridgeItemPrefs[id] === 'object' && safeFridgeItemPrefs[id]) || {}), 
           always_available 
         };
         
         const prefsToUpsert = {
           user_id: user.id,
           preferences: {
-            ...existingPreferences,
-            fridge_items: fridgeItemPrefs
+            ...safePrefs,
+            fridge_items: safeFridgeItemPrefs
           }
         };
         
