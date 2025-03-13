@@ -2,7 +2,7 @@
 import React, { useState, KeyboardEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X, Tag } from "lucide-react";
+import { X, Tag as TagIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TagInputProps {
@@ -73,14 +73,16 @@ const TagInput = ({
         {tags.map((tag, index) => (
           <div 
             key={index} 
-            className="flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded-full text-sm"
+            className="flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded-full text-sm 
+                     animate-in fade-in duration-300"
           >
-            <Tag className="h-3.5 w-3.5 mr-1" />
+            <TagIcon className="h-3.5 w-3.5 mr-1" />
             <span>{tag}</span>
             <button 
               type="button" 
               onClick={() => removeTag(tag)}
               className="ml-1 hover:text-destructive"
+              aria-label={`Remove ${tag}`}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -95,6 +97,7 @@ const TagInput = ({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
+          aria-label="Add tag"
         />
         <Button 
           type="button" 

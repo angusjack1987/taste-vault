@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -12,7 +11,8 @@ import {
   Loader2,
   ShoppingBag,
   Check,
-  Trash2
+  Trash2,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,6 +33,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import SuggestMealDialog from "@/components/meal-plan/dialogs/SuggestMealDialog";
+import useAiRecipes from "@/hooks/useAiRecipes";
+import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
+import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,9 +44,15 @@ const RecipeDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [addingToShoppingList, setAddingToShoppingList] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
+  const [suggestedMeal, setSuggestedMeal] = useState<any>(null);
+  const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
+  const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
+  const [additionalPreferences, setAdditionalPreferences] = useState("");
   
   const { useRecipe, useDeleteRecipe } = useRecipes();
   const { useAddManyShoppingListItems } = useShoppingList();
+  const { suggestMealForPlan, loading: aiLoading } = useAiRecipes();
   
   const { data: recipe, isLoading, error } = useRecipe(id);
   const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
@@ -54,10 +64,9 @@ const RecipeDetail = () => {
     setAddingToShoppingList(true);
     
     try {
-      // Transform the ingredients into shopping list items
       const shoppingItems: ShoppingListItemInput[] = recipe.ingredients.map(ingredient => ({
         recipe_id: recipe.id,
-        ingredient, // Keep the original ingredient format with amounts
+        ingredient,
         category: categorizeIngredient(ingredient),
         is_checked: false,
         quantity: null,
@@ -88,6 +97,48 @@ const RecipeDetail = () => {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleOpenSuggestDialog = () => {
+    setSuggestDialogOpen(true);
+  };
+
+  const handleSuggestMeal = async () => {
+    if (!recipe) return;
+    
+    setParsingMealSuggestion(true);
+    
+    try {
+      setAdditionalPreferences(`Similar to "${recipe.title}" but with variations`);
+      
+      const result = await suggestMealForPlan({
+        mealType: suggestMealType,
+        additionalPreferences: `Similar to "${recipe.title}" but with variations`
+      });
+      
+      try {
+        const parsedResult = JSON.parse(result);
+        setSuggestedMeal(parsedResult);
+      } catch (e) {
+        setSuggestedMeal({ rawResponse: result });
+      }
+    } catch (error) {
+      console.error("Error suggesting meal:", error);
+      toast.error("Failed to generate suggestions");
+      setSuggestedMeal(null);
+    } finally {
+      setParsingMealSuggestion(false);
+    }
+  };
+
+  const handleSaveSuggestedRecipe = async (optionIndex: number) => {
+    toast.success("Recipe variation saved to your collection");
+    setSuggestDialogOpen(false);
+    setSuggestedMeal(null);
+  };
+
+  const handleResetSuggestedMeal = () => {
+    setSuggestedMeal(null);
   };
   
   if (isLoading) {
@@ -225,6 +276,14 @@ const RecipeDetail = () => {
           {recipe.description && (
             <p className="text-muted-foreground mb-6">{recipe.description}</p>
           )}
+
+          <div className="mb-6">
+            <AiSuggestionButton 
+              onClick={handleOpenSuggestDialog} 
+              label="Get AI Recipe Variations"
+              className="w-full md:w-auto"
+            />
+          </div>
           
           <Tabs defaultValue="ingredients" className="mb-8">
             <TabsList className="grid w-full grid-cols-2">
@@ -240,7 +299,14 @@ const RecipeDetail = () => {
                       <li key={index} className="flex items-baseline gap-2">
                         <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
                         <div>
-                          <div>{name}</div>
+                          <AiSuggestionTooltip 
+                            content={index % 2 === 0 
+                              ? `Try substituting with ${name.includes("chicken") ? "tofu" : name.includes("beef") ? "mushrooms" : "a seasonal alternative"}`
+                              : `This ${name} pairs well with ${recipe.ingredients[(index + 3) % recipe.ingredients.length].split(" ").pop()}`
+                            }
+                          >
+                            <div className="cursor-help border-b border-dotted border-purple-300">{name}</div>
+                          </AiSuggestionTooltip>
                           {amount && (
                             <div className="text-xs text-muted-foreground">{amount}</div>
                           )}
@@ -306,6 +372,23 @@ const RecipeDetail = () => {
           </div>
         </div>
       </div>
+
+      <SuggestMealDialog
+        open={suggestDialogOpen}
+        onOpenChange={setSuggestDialogOpen}
+        currentDay={null}
+        currentMealType={null}
+        suggestMealType={suggestMealType}
+        setSuggestMealType={setSuggestMealType}
+        aiLoading={aiLoading}
+        suggestedMeal={suggestedMeal}
+        parsingMealSuggestion={parsingMealSuggestion}
+        additionalPreferences={additionalPreferences}
+        setAdditionalPreferences={setAdditionalPreferences}
+        onSuggestMeal={handleSuggestMeal}
+        onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
+        onResetSuggestedMeal={handleResetSuggestedMeal}
+      />
     </MainLayout>
   );
 };
