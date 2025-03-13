@@ -11,6 +11,7 @@ const corsHeaders = {
 
 // Process base64 in chunks to prevent memory issues
 function processBase64Chunks(base64String: string, chunkSize = 32768) {
+  console.log(`Processing base64 string of length: ${base64String.length}`);
   const chunks: Uint8Array[] = [];
   let position = 0;
   
@@ -36,6 +37,7 @@ function processBase64Chunks(base64String: string, chunkSize = 32768) {
     offset += chunk.length;
   }
 
+  console.log(`Processed ${chunks.length} chunks, total size: ${result.length} bytes`);
   return result;
 }
 
@@ -46,10 +48,19 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Received request for transcription");
     const { audio } = await req.json();
     
     if (!audio) {
+      console.error("No audio data provided");
       throw new Error('No audio data provided');
+    }
+
+    console.log(`Received audio data of length: ${audio.length}`);
+    
+    if (!openAIApiKey) {
+      console.error("OpenAI API key not configured");
+      throw new Error('OpenAI API key not configured');
     }
 
     // Process audio in chunks

@@ -158,6 +158,9 @@ export const useFridge = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
+      // Reset audio chunks when starting a new recording
+      setAudioChunks([]);
+      
       const recorder = new MediaRecorder(stream);
       setMediaRecorder(recorder);
       
@@ -168,55 +171,87 @@ export const useFridge = () => {
       });
       
       recorder.addEventListener("stop", async () => {
-        // Convert audio chunks to a single blob
-        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        
-        // Convert blob to base64
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-          const base64Audio = reader.result?.toString().split(",")[1];
-          if (base64Audio) {
+        try {
+          // Create audio blob from chunks
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          console.log("Audio blob created:", audioBlob.size, "bytes");
+          
+          // Convert blob to base64
+          const reader = new FileReader();
+          reader.onloadend = async () => {
             try {
+              const base64Audio = reader.result?.toString().split(",")[1];
+              
+              if (!base64Audio) {
+                throw new Error("Failed to convert audio to base64");
+              }
+              
+              console.log("Sending audio to transcription service...");
+              
               const response = await supabase.functions.invoke("transcribe-voice", {
                 body: { audio: base64Audio },
               });
+              
+              console.log("Transcription response:", response);
               
               if (response.error) {
                 throw new Error(response.error.message);
               }
               
-              if (response.data.text) {
+              if (response.data && response.data.text) {
+                console.log("Transcribed text:", response.data.text);
+                toast.success("Voice note transcribed successfully");
                 batchAddItems.mutate(response.data.text);
+              } else {
+                throw new Error("No transcription returned");
               }
             } catch (error: any) {
-              console.error("Transcription error:", error);
-              toast.error(`Failed to transcribe your voice note: ${error.message}`);
+              console.error("Error processing transcription:", error);
+              toast.error(`Failed to process voice note: ${error.message}`);
             }
-          }
-        };
+          };
+          
+          reader.onerror = (error) => {
+            console.error("FileReader error:", error);
+            toast.error("Failed to process audio recording");
+          };
+          
+          // Start the reading process
+          reader.readAsDataURL(audioBlob);
+        } catch (error: any) {
+          console.error("Error creating audio blob:", error);
+          toast.error(`Failed to process recording: ${error.message}`);
+        }
         
-        // Clear the audio chunks
-        setAudioChunks([]);
+        // Reset recording state
         setIsVoiceRecording(false);
       });
       
-      recorder.start();
+      // Start recording with small timeslice to get frequent dataavailable events
+      recorder.start(1000);
       setIsVoiceRecording(true);
+      toast.info("Recording started. Speak clearly to add items.");
     } catch (error: any) {
       console.error("Error starting voice recording:", error);
       toast.error(`Failed to access microphone: ${error.message}`);
+      setIsVoiceRecording(false);
     }
   };
 
   const stopVoiceRecording = () => {
-    if (mediaRecorder && isVoiceRecording) {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      console.log("Stopping voice recording...");
       mediaRecorder.stop();
       
       // Stop all audio tracks
       if (mediaRecorder.stream) {
-        mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+        mediaRecorder.stream.getTracks().forEach((track) => {
+          track.stop();
+          console.log("Audio track stopped");
+        });
       }
+    } else {
+      console.warn("No active recording to stop");
     }
   };
 
