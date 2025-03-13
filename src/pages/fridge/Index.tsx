@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Mic, Plus, Trash2, X, Star, Utensils } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -59,10 +58,8 @@ const FridgePage = () => {
       setIsGeneratingRecipe(true);
       setRecipeDialogOpen(true);
       
-      // Get all available ingredients (regular items and always available items)
       const availableIngredients = fridgeItems.map(item => item.name);
       
-      // Generate the recipe
       const recipe = await generateRecipe({
         title: "Recipe from fridge ingredients",
         ingredients: availableIngredients
@@ -100,7 +97,6 @@ const FridgePage = () => {
           {categories.map((category) => (
             <TabsContent key={category} value={category} className="mt-4">
               <div className="space-y-6">
-                {/* Add item form */}
                 <form onSubmit={handleAddItem} className="flex gap-2 items-start">
                   <div className="flex-1">
                     <Input
@@ -148,19 +144,15 @@ const FridgePage = () => {
                   </div>
                 )}
                 
-                {/* AI Recipe Generator Button */}
                 <div className="flex justify-center mt-4">
                   <AiSuggestionButton
                     onClick={generateRecipeFromFridge}
                     label="Generate Recipe from Fridge"
                     className="w-full max-w-sm"
                     isLoading={isGeneratingRecipe}
-                  >
-                    <Utensils className="h-4 w-4 mr-2" />
-                  </AiSuggestionButton>
+                  />
                 </div>
                 
-                {/* Items list */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-bold">
@@ -207,7 +199,6 @@ const FridgePage = () => {
           ))}
         </Tabs>
         
-        {/* Recipe Dialog */}
         <Dialog open={recipeDialogOpen} onOpenChange={setRecipeDialogOpen}>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
             <DialogHeader>
