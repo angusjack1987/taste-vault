@@ -19,12 +19,12 @@ const AiSuggestionTooltip = ({ children, content }: AiSuggestionTooltipProps) =>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent 
-          className="bg-secondary border-2 border-lemon-600 p-3 max-w-xs rounded-xl shadow-lg"
+          className="bg-sunshine-500 border-2 border-sunshine-600 p-3 max-w-xs rounded-xl shadow-vibrant"
           sideOffset={5}
         >
           <div className="flex items-start gap-2">
-            <Sparkles className="h-4 w-4 mt-0.5 text-primary animate-pulse" />
-            <p className="text-secondary-foreground text-sm font-medium">{content}</p>
+            <Sparkles className="h-4 w-4 mt-0.5 text-charcoal-800 animate-pulse" />
+            <p className="text-charcoal-800 text-sm font-medium">{content}</p>
           </div>
         </TooltipContent>
       </Tooltip>

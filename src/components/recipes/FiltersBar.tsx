@@ -19,16 +19,16 @@ const FiltersBar = ({ onFilterClick }: FiltersBarProps) => {
         Filters
       </Button>
       
-      <Button variant="outline" size="sm" className="whitespace-nowrap bg-lemon-100 text-charcoal-700 border border-lemon-300">All Recipes</Button>
-      <Button variant="outline" size="sm" className="whitespace-nowrap bg-cream-100 text-charcoal-700 border border-cream-300">Breakfast</Button>
-      <Button variant="outline" size="sm" className="whitespace-nowrap bg-sky-100 text-charcoal-700 border border-sky-300">Lunch</Button>
-      <Button variant="outline" size="sm" className="whitespace-nowrap bg-mint-100 text-charcoal-700 border border-mint-300">Dinner</Button>
-      <Button variant="outline" size="sm" className="whitespace-nowrap bg-lemon-100 text-charcoal-700 border border-lemon-300">Desserts</Button>
-      <Button variant="outline" size="sm" className="whitespace-nowrap bg-cream-100 text-charcoal-700 border border-cream-300">Snacks</Button>
+      <Button variant="sunshine" size="sm" className="whitespace-nowrap">All Recipes</Button>
+      <Button variant="outline" size="sm" className="whitespace-nowrap bg-sunshine-100 text-charcoal-700 border border-sunshine-300">Breakfast</Button>
+      <Button variant="outline" size="sm" className="whitespace-nowrap bg-ocean-100 text-charcoal-700 border border-ocean-300">Lunch</Button>
+      <Button variant="outline" size="sm" className="whitespace-nowrap bg-seafoam-100 text-charcoal-700 border border-seafoam-300">Dinner</Button>
+      <Button variant="outline" size="sm" className="whitespace-nowrap bg-berry-100 text-charcoal-700 border border-berry-300">Desserts</Button>
+      <Button variant="outline" size="sm" className="whitespace-nowrap bg-sunshine-100 text-charcoal-700 border border-sunshine-300">Snacks</Button>
       <Button 
         variant="outline" 
         size="sm" 
-        className="flex items-center whitespace-nowrap bg-mint-100 text-charcoal-700 border border-mint-300"
+        className="flex items-center whitespace-nowrap bg-seafoam-100 text-charcoal-700 border border-seafoam-300"
       >
         <Clock className="h-4 w-4 mr-1" />
         Quick (&lt; 30min)

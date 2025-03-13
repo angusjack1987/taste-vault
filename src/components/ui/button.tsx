@@ -10,17 +10,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow hover:shadow-md",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow hover:shadow-vibrant",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow hover:shadow-md",
         outline:
           "border-2 border-input bg-background hover:bg-accent/20 hover:text-accent-foreground shadow-sm hover:shadow",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow hover:shadow-yellow",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow hover:shadow-vibrant",
         ghost: "hover:bg-accent/10 hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        fun: "bg-gradient-to-r from-secondary via-secondary to-secondary/80 text-secondary-foreground shadow-sm hover:shadow-md hover:opacity-90",
-        mint: "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm hover:shadow-md",
+        fun: "bg-gradient-to-r from-sunshine-400 via-sunshine-500 to-sunshine-600 text-charcoal-800 shadow-sm hover:shadow-vibrant hover:opacity-90",
+        mint: "bg-seafoam-500 text-white hover:bg-seafoam-400 shadow-sm hover:shadow-vibrant",
+        ocean: "bg-ocean-500 text-white hover:bg-ocean-400 shadow-sm hover:shadow-vibrant",
+        berry: "bg-berry-500 text-white hover:bg-berry-400 shadow-sm hover:shadow-vibrant",
+        sunshine: "bg-sunshine-500 text-charcoal-800 hover:bg-sunshine-400 shadow-sm hover:shadow-vibrant",
       },
       size: {
         default: "h-10 px-4 py-2",

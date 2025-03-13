@@ -63,8 +63,8 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Updated color palette inspired by the mockup
-				cream: {
+				// Updated vibrant color palette
+				sunshine: {
 					50: '#FFFDF5',
 					100: '#FFFAEB',
 					200: '#FFF5D6',
@@ -85,7 +85,7 @@ export default {
 					800: '#121212',
 					900: '#0A0A0A',
 				},
-				lemon: {
+				citrus: {
 					50: '#FFFDE7',
 					100: '#FFF9C4',
 					300: '#FFF176',
@@ -95,7 +95,7 @@ export default {
 					800: '#F9A825',
 					900: '#F57F17',
 				},
-				mint: {
+				seafoam: {
 					50: '#E8F5E9',
 					100: '#C8E6C9',
 					300: '#81C784',
@@ -104,7 +104,16 @@ export default {
 					700: '#388E3C',
 					900: '#1B5E20',
 				},
-				sky: {
+				berry: {
+					50: '#F8E0EB',
+					100: '#F1C1D7',
+					300: '#E684AF',
+					500: '#E91E63',
+					600: '#D81B60',
+					700: '#C2185B',
+					900: '#880E4F',
+				},
+				ocean: {
 					50: '#E3F2FD',
 					100: '#BBDEFB',
 					300: '#64B5F6',
@@ -120,9 +129,10 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			boxShadow: {
-				'colorful': '0 4px 14px -4px rgba(255, 220, 72, 0.5)',
+				'vibrant': '0 4px 14px -4px rgba(255, 220, 72, 0.6)',
 				'neo': '8px 8px 0 0 #000',
-				'pastel': '0 4px 14px rgba(200, 200, 200, 0.5)',
+				'playful': '0 10px 25px -5px rgba(255, 189, 0, 0.25)',
+				'glow': '0 0 15px rgba(255, 220, 72, 0.5)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -148,12 +158,30 @@ export default {
 					'50%': {
 						boxShadow: '0 0 0 15px rgba(255, 220, 72, 0)'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'bounce-light': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pulse-shadow': 'pulse-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+				'pulse-shadow': 'pulse-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'float': 'float 5s ease-in-out infinite',
+				'bounce-light': 'bounce-light 2s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'gradient-sunshine': 'linear-gradient(135deg, #FFFDF5 0%, #FFDC72 100%)',
+				'gradient-citrus': 'linear-gradient(135deg, #FFFDE7 0%, #FFEB3B 100%)',
+				'gradient-seafoam': 'linear-gradient(135deg, #E8F5E9 0%, #4CAF50 100%)',
+				'gradient-ocean': 'linear-gradient(135deg, #E3F2FD 0%, #2196F3 100%)',
+				'gradient-berry': 'linear-gradient(135deg, #F8E0EB 0%, #E91E63 100%)',
 			}
 		}
 	},

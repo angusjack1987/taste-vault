@@ -27,7 +27,7 @@ const CategorySection = ({
         {viewAllLink && (
           <Link
             to={viewAllLink}
-            className="text-primary hover:text-secondary text-sm flex items-center transition-colors group"
+            className="text-secondary hover:text-secondary/80 text-sm flex items-center transition-colors group"
           >
             View all <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Link>
@@ -37,7 +37,7 @@ const CategorySection = ({
       {recipes.length === 0 ? (
         <div className="text-center py-10 px-6 text-muted-foreground bg-muted rounded-xl border-2 border-border">
           <div className="flex flex-col items-center">
-            <span className="text-4xl mb-3">🍽️</span>
+            <span className="text-4xl mb-3 animate-bounce-light">🍽️</span>
             {emptyMessage}
           </div>
         </div>
