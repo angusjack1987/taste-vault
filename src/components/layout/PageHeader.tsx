@@ -1,5 +1,5 @@
 
-import { ArrowLeft, User, Settings, LogOut } from "lucide-react";
+import { ArrowLeft, User, Settings, LogOut, Menu } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,21 +45,32 @@ const PageHeader = ({
     }
   };
 
+  const firstName = user?.user_metadata?.first_name || 'Chef';
+
   return (
-    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b border-border py-3 px-4">
+    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm px-4 pt-6 pb-3">
       <div className="flex items-center justify-between max-w-5xl mx-auto">
         <div className="flex items-center gap-3">
-          {showBackButton && (
+          {showBackButton ? (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
               aria-label="Go back"
+              className="rounded-full"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           )}
-          <h1 className="text-xl font-semibold">{title}</h1>
+          <h1 className="text-xl font-bold">{title}</h1>
         </div>
         
         <div className="flex items-center gap-2">
@@ -68,16 +79,27 @@ const PageHeader = ({
           {showUserMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="User menu">
-                  <User className="h-5 w-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  aria-label="User menu"
+                  className="rounded-full bg-muted h-9 w-9 p-0 overflow-hidden"
+                >
+                  {user?.user_metadata?.avatar_url ? (
+                    <img 
+                      src={user.user_metadata.avatar_url} 
+                      alt={firstName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {user && (
-                  <div className="px-2 py-1.5 text-sm font-medium">
-                    {user.email}
-                  </div>
-                )}
+              <DropdownMenuContent align="end" className="rounded-xl">
+                <div className="px-2 py-1.5 text-sm font-medium">
+                  Hi, {firstName}!
+                </div>
                 <DropdownMenuSeparator />
                 <Link to="/profile">
                   <DropdownMenuItem className="cursor-pointer">

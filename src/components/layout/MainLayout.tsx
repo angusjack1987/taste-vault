@@ -29,7 +29,7 @@ const MainLayout = ({
         action={action}
       />
       
-      <main className="flex-1 pb-20">
+      <main className="flex-1 pb-28">
         {children}
       </main>
       

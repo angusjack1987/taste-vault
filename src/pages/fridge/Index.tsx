@@ -45,9 +45,13 @@ const FridgePage = () => {
       <div className="page-container max-w-2xl mx-auto px-4 pb-20">
         <Tabs defaultValue="All" className="w-full">
           <div className="sticky top-[73px] z-10 bg-background pt-4 pb-2">
-            <TabsList className="w-full">
+            <TabsList className="w-full rounded-full bg-muted">
               {categories.map((category) => (
-                <TabsTrigger key={category} value={category} className="flex-1">
+                <TabsTrigger 
+                  key={category} 
+                  value={category} 
+                  className="flex-1 rounded-full data-[state=active]:bg-secondary data-[state=active]:text-primary"
+                >
                   {category}
                 </TabsTrigger>
               ))}
@@ -64,11 +68,16 @@ const FridgePage = () => {
                       placeholder="Add item to your fridge..."
                       value={newItemName}
                       onChange={(e) => setNewItemName(e.target.value)}
-                      className="w-full"
+                      className="w-full rounded-full"
                     />
                   </div>
                   
-                  <Button type="submit" size="icon" disabled={!newItemName.trim()}>
+                  <Button 
+                    type="submit" 
+                    size="icon" 
+                    disabled={!newItemName.trim()}
+                    className="rounded-full bg-primary text-primary-foreground h-10 w-10"
+                  >
                     <Plus className="h-5 w-5" />
                   </Button>
                   
@@ -77,7 +86,7 @@ const FridgePage = () => {
                     onClick={handleVoiceButton}
                     variant={isVoiceRecording ? "destructive" : "outline"}
                     size="icon"
-                    className="relative"
+                    className="relative rounded-full h-10 w-10"
                   >
                     <Mic className="h-5 w-5" />
                     {isVoiceRecording && (
@@ -87,13 +96,13 @@ const FridgePage = () => {
                 </form>
                 
                 {isVoiceRecording && (
-                  <div className="bg-muted p-4 rounded-lg text-center">
+                  <div className="bg-secondary/20 p-4 rounded-xl text-center">
                     <p className="mb-2 text-sm">Recording... Speak clearly to add items</p>
                     <Button 
                       variant="destructive" 
                       size="sm" 
                       onClick={stopVoiceRecording}
-                      className="gap-1"
+                      className="gap-1 rounded-full"
                     >
                       <X className="h-4 w-4" /> Stop Recording
                     </Button>
@@ -103,7 +112,7 @@ const FridgePage = () => {
                 {/* Items list */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-medium">
+                    <h2 className="text-lg font-bold">
                       {category === "All" ? "All Items" : `${category} Items`}
                     </h2>
                     <span className="text-sm text-muted-foreground">
@@ -156,16 +165,21 @@ const FridgeItemCard = ({
   onDelete: () => void;
 }) => {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-border rounded-xl hover:shadow-sm transition-all">
       <CardContent className="p-3 flex justify-between items-center">
         <div>
-          <p className="font-medium">{item.name}</p>
+          <p className="font-bold">{item.name}</p>
           {item.quantity && (
             <p className="text-sm text-muted-foreground">{item.quantity}</p>
           )}
         </div>
         
-        <Button variant="ghost" size="icon" onClick={onDelete}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onDelete}
+          className="rounded-full h-8 w-8"
+        >
           <Trash2 className="h-4 w-4 text-muted-foreground" />
         </Button>
       </CardContent>

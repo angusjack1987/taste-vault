@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Plus, Search, Loader2, Download } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -57,11 +58,17 @@ const RecipesList = () => {
             variant="ghost" 
             onClick={() => setImportDialogOpen(true)}
             title="Import Recipe"
+            className="rounded-full"
           >
             <Download className="h-5 w-5" />
           </Button>
           <Link to="/recipes/new">
-            <Button size="icon" variant="ghost" title="Create Recipe">
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              title="Create Recipe"
+              className="rounded-full bg-secondary text-primary h-9 w-9 flex items-center justify-center"
+            >
               <Plus className="h-5 w-5" />
             </Button>
           </Link>
@@ -69,15 +76,17 @@ const RecipesList = () => {
       }
     >
       <div className="page-container">
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            type="search"
-            placeholder="Search recipes..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="relative mb-5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="search"
+              placeholder="Search recipes..."
+              className="pl-9 rounded-full border-muted"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
         
         <FiltersBar onFilterClick={handleShowFilters} />

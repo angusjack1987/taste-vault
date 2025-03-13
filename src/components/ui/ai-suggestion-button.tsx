@@ -23,16 +23,15 @@ const AiSuggestionButton = ({
     <Button
       onClick={onClick}
       className={cn(
-        "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 relative overflow-hidden group",
+        "bg-secondary hover:bg-secondary/90 text-secondary-foreground relative overflow-hidden group rounded-full",
         className
       )}
       size={size}
       disabled={isLoading}
     >
       <span className="absolute inset-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-      <Sparkles className="h-4 w-4 mr-2 animate-pulse text-white" />
+      <Sparkles className="h-4 w-4 mr-2 text-primary" />
       {label}
-      <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-yellow-300 animate-ping opacity-75" />
     </Button>
   );
 };

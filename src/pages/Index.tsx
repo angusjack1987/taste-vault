@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/components/layout/MainLayout';
-import { Clock, ChefHat, User2, Calendar, Lightbulb, Sparkles, Loader2 } from 'lucide-react';
+import { Clock, ChefHat, Calendar, Sparkles, Utensils, ArrowRight } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import useRecipes from '@/hooks/useRecipes';
 import useMealPlans from '@/hooks/useMealPlans';
@@ -69,72 +69,107 @@ const IndexPage = () => {
     setSuggestedMeal(null);
   };
 
+  const firstName = user?.user_metadata?.first_name || 'friend';
+
   return (
-    <MainLayout title="Home">
-      <div className="space-y-8">
+    <MainLayout title="Flavor Librarian">
+      <div className="space-y-8 px-4">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-r from-sage-600 to-sage-800 rounded-lg overflow-hidden">
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
-          <div className="relative py-12 px-6 text-white space-y-4 z-10">
-            <h1 className="text-3xl font-bold mb-2">Welcome, {user?.user_metadata?.first_name || 'Chef'}!</h1>
-            <p className="text-white/80 max-w-md">Your digital kitchen companion for meal planning, recipe management, and cooking inspiration.</p>
+        <section className="mt-6">
+          <h1 className="text-2xl font-bold mb-1">Good day, {firstName}!</h1>
+          <p className="text-3xl font-bold mb-6">What shall we cook today?</p>
+          
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <Link to="/recipes" className="block">
+              <div className="stat-card stat-card-yellow rounded-2xl h-full">
+                <Utensils className="h-6 w-6 mb-2" />
+                <p className="stat-card-icon">{recipes.length}</p>
+                <p className="stat-card-label">Recipes</p>
+              </div>
+            </Link>
             
-            <div className="flex flex-col sm:flex-row gap-3 mt-6">
-              <Button asChild className="bg-white hover:bg-white/90 text-sage-800">
-                <Link to="/meal-plan">Plan Your Week</Link>
-              </Button>
-              
-              <AiSuggestionButton
-                onClick={handleOpenSuggestDialog}
-                label="Get AI Recipe Ideas"
-              />
-            </div>
+            <Link to="/meal-plan" className="block">
+              <div className="stat-card stat-card-green rounded-2xl h-full">
+                <Calendar className="h-6 w-6 mb-2" />
+                <p className="stat-card-icon">{todaysMeals.length}</p>
+                <p className="stat-card-label">Today's Meals</p>
+              </div>
+            </Link>
           </div>
           
-          {/* Decorative Elements */}
-          <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-sage-300/20 rounded-full blur-2xl"></div>
-          <div className="absolute right-1/4 -top-12 w-40 h-40 bg-sage-100/20 rounded-full blur-xl"></div>
+          <div className="grid grid-cols-2 gap-3">
+            <Link to="/recipes" className="block">
+              <div className="stat-card stat-card-blue rounded-2xl h-full">
+                <Clock className="h-6 w-6 mb-2" />
+                <p className="stat-card-icon">
+                  {recipes.length > 0 
+                    ? Math.round(recipes.reduce((acc, r) => acc + (r.time || 0), 0) / recipes.length) 
+                    : 0}
+                </p>
+                <p className="stat-card-label">Avg. Cook Time</p>
+              </div>
+            </Link>
+            
+            <button onClick={handleOpenSuggestDialog} className="block w-full">
+              <div className="stat-card stat-card-black rounded-2xl h-full">
+                <Sparkles className="h-6 w-6 mb-2" />
+                <p className="stat-card-icon">AI</p>
+                <p className="stat-card-label">Recipe Ideas</p>
+              </div>
+            </button>
+          </div>
         </section>
         
-        {/* Quick Stats */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex flex-col items-center justify-center text-center hover-scale">
-            <div className="bg-sage-100 dark:bg-sage-900/30 p-3 rounded-full mb-3">
-              <ChefHat className="text-sage-500 h-5 w-5" />
+        {/* Today's Meals */}
+        {todaysMeals.length > 0 && (
+          <section className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xl font-bold">Today's Meals</h2>
+              <Link to="/meal-plan" className="text-sm font-medium flex items-center">
+                View all <ArrowRight className="h-4 w-4 ml-1" />
+              </Link>
             </div>
-            <p className="text-2xl font-semibold">{recipes.length}</p>
-            <p className="text-muted-foreground text-sm">Recipes</p>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex flex-col items-center justify-center text-center hover-scale">
-            <div className="bg-sage-100 dark:bg-sage-900/30 p-3 rounded-full mb-3">
-              <Calendar className="text-sage-500 h-5 w-5" />
+            
+            <div className="playful-card">
+              {todaysMeals.map((meal) => (
+                <div key={meal.id} className="mb-3 last:mb-0">
+                  <h3 className="font-medium text-sm text-muted-foreground capitalize mb-1">
+                    {meal.meal_type}
+                  </h3>
+                  {meal.recipe ? (
+                    <Link to={`/recipes/${meal.recipe.id}`} className="block">
+                      <div className="flex items-center gap-3">
+                        {meal.recipe.image ? (
+                          <img 
+                            src={meal.recipe.image} 
+                            alt={meal.recipe.title}
+                            className="w-12 h-12 rounded-lg object-cover" 
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                            <ChefHat className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold">{meal.recipe.title}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <Link to="/meal-plan" className="block">
+                      <div className="rounded-lg p-3 border border-dashed border-border flex items-center justify-center">
+                        <Button variant="ghost" size="sm" className="rounded-full">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add {meal.meal_type}
+                        </Button>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              ))}
             </div>
-            <p className="text-2xl font-semibold">{todaysMeals.length}</p>
-            <p className="text-muted-foreground text-sm">Today's Meals</p>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex flex-col items-center justify-center text-center hover-scale">
-            <div className="bg-sage-100 dark:bg-sage-900/30 p-3 rounded-full mb-3">
-              <Clock className="text-sage-500 h-5 w-5" />
-            </div>
-            <p className="text-2xl font-semibold">
-              {recipes.length > 0 
-                ? Math.round(recipes.reduce((acc, r) => acc + (r.time || 0), 0) / recipes.length) 
-                : 0}
-            </p>
-            <p className="text-muted-foreground text-sm">Avg. Cook Time</p>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex flex-col items-center justify-center text-center relative overflow-hidden hover-scale">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-600/10 animate-pulse"></div>
-            <div className="z-10 bg-gradient-to-r from-purple-500 to-indigo-600 p-3 rounded-full mb-3">
-              <Sparkles className="text-white h-5 w-5" />
-            </div>
-            <p className="text-2xl font-semibold relative z-10">AI</p>
-            <p className="text-muted-foreground text-sm relative z-10">Recipe Suggestions</p>
-          </div>
-        </section>
+          </section>
+        )}
         
         {/* Recipe Sections */}
         <CategorySection 
@@ -150,6 +185,25 @@ const IndexPage = () => {
           viewAllLink="/recipes"
           emptyMessage="Explore more recipes to see popular ones!"
         />
+        
+        {/* AI Chef Section */}
+        <section className="mb-10">
+          <div className="playful-card bg-secondary/10 border-secondary/30">
+            <div className="flex flex-col items-center text-center">
+              <Sparkles className="h-10 w-10 text-secondary mb-3" />
+              <h2 className="text-xl font-bold mb-2">AI Recipe Assistant</h2>
+              <p className="text-muted-foreground mb-4">
+                Need inspiration? Let our AI chef suggest personalized recipes based on your preferences.
+              </p>
+              
+              <AiSuggestionButton
+                onClick={handleOpenSuggestDialog}
+                label="Get Recipe Ideas"
+                className="rounded-full"
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
       <SuggestMealDialog
@@ -171,5 +225,24 @@ const IndexPage = () => {
     </MainLayout>
   );
 };
+
+// Missing import fixed
+const Plus = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={className}
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M5 12h14" />
+    <path d="M12 5v14" />
+  </svg>
+);
 
 export default IndexPage;

@@ -20,8 +20,8 @@ const BottomNav = () => {
   const pathname = location.pathname;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-30">
-      <div className="flex items-center justify-between px-2 py-3 max-w-5xl mx-auto">
+    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
+      <div className="flex items-center bg-primary text-primary-foreground rounded-full px-4 py-2 shadow-lg">
         {navItems.map((item) => {
           const isActive = pathname === item.to || 
                           (item.to !== "/" && pathname.startsWith(item.to));
@@ -31,17 +31,17 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "nav-item p-2",
-                isActive ? "nav-item-active" : "text-muted-foreground"
+                "flex flex-col items-center px-4 py-1",
+                isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
               <item.icon
                 className={cn(
                   "w-5 h-5 mb-1",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isActive ? "text-secondary" : "text-primary-foreground"
                 )}
               />
-              <span>{item.label}</span>
+              <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );
         })}
