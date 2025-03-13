@@ -14,7 +14,7 @@ const Dashboard = () => {
   const formattedRecipes = recipes?.map(recipe => ({
     id: recipe.id,
     title: recipe.title,
-    image: recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600",
+    image: recipe.image || "",
     time: recipe.time || undefined,
     rating: undefined, // No ratings yet
   })) || [];
