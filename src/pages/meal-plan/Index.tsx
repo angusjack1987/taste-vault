@@ -1,17 +1,18 @@
-
 import { useState, useEffect } from "react";
-import { Calendar, Plus, X, Sparkles, Loader2 } from "lucide-react";
+import { Calendar, Plus, X, Sparkles, Loader2, Lightbulb } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
 import useRecipes from "@/hooks/useRecipes";
 import useMealPlans from "@/hooks/useMealPlans";
 import useAiRecipes from "@/hooks/useAiRecipes"; 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const MealPlan = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -24,14 +25,22 @@ const MealPlan = () => {
   const [preferences, setPreferences] = useState("");
   const [dietaryRestrictions, setDietaryRestrictions] = useState("");
   const [suggestions, setSuggestions] = useState<string | null>(null);
+  
+  // New meal suggestion state
+  const [suggestMealOpen, setSuggestMealOpen] = useState(false);
+  const [suggestedMeal, setSuggestedMeal] = useState<any>(null);
+  const [additionalPreferences, setAdditionalPreferences] = useState("");
+  const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
+  const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
 
   // Get the start of the current week
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
   
   // Fetch recipes and meal plans
-  const { useAllRecipes } = useRecipes();
+  const { useAllRecipes, useCreateRecipe } = useRecipes();
   const { data: recipes, isLoading: recipesLoading } = useAllRecipes();
+  const { mutateAsync: createRecipe } = useCreateRecipe();
   
   const { 
     useMealPlansForRange, 
@@ -48,7 +57,7 @@ const MealPlan = () => {
   const { mutateAsync: deleteMealPlan } = useDeleteMealPlan();
   
   // AI recipe suggestions hook
-  const { suggestRecipes, analyzeMealPlan, loading: aiLoading } = useAiRecipes();
+  const { suggestRecipes, analyzeMealPlan, suggestMealForPlan, loading: aiLoading } = useAiRecipes();
   
   // Generate an array of 7 days starting from weekStart
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -123,19 +132,115 @@ const MealPlan = () => {
     }
   };
   
+  const handleSuggestMeal = async () => {
+    setSuggestedMeal(null);
+    
+    try {
+      const result = await suggestMealForPlan({
+        mealType: suggestMealType,
+        additionalPreferences
+      });
+      
+      if (result) {
+        setParsingMealSuggestion(true);
+        try {
+          let cleanJson = result;
+          if (result.includes("```json")) {
+            cleanJson = result.split("```json")[1].split("```")[0].trim();
+          } else if (result.includes("```")) {
+            cleanJson = result.split("```")[1].split("```")[0].trim();
+          }
+          
+          const parsedMeal = JSON.parse(cleanJson);
+          setSuggestedMeal(parsedMeal);
+        } catch (parseError) {
+          console.error("Error parsing suggestion:", parseError);
+          setSuggestedMeal({ 
+            title: "Parsing Error", 
+            description: "Could not parse the suggestion properly. Here's the raw response:", 
+            rawResponse: result 
+          });
+        }
+        setParsingMealSuggestion(false);
+      }
+    } catch (error) {
+      console.error("Error getting meal suggestion:", error);
+      setParsingMealSuggestion(false);
+    }
+  };
+  
+  const handleSaveSuggestedRecipe = async () => {
+    if (!suggestedMeal) return;
+    
+    try {
+      const newRecipe = await createRecipe({
+        title: suggestedMeal.title,
+        description: suggestedMeal.description,
+        ingredients: suggestedMeal.ingredients || [],
+        instructions: suggestedMeal.instructions || [],
+        time: suggestedMeal.time || null,
+        servings: suggestedMeal.servings || null,
+        image: null,
+        difficulty: null,
+        tags: []
+      });
+      
+      if (currentDay && currentMealType) {
+        await createMealPlan({
+          date: currentDay,
+          meal_type: currentMealType,
+          recipe_id: newRecipe.id,
+        });
+        
+        toast.success("Recipe saved and added to meal plan");
+      } else {
+        toast.success("Recipe saved to your collection");
+      }
+      
+      setSuggestMealOpen(false);
+    } catch (error) {
+      console.error("Error saving suggested recipe:", error);
+      toast.error("Failed to save the recipe");
+    }
+  };
+  
+  const openSuggestMealDialog = (date?: Date, mealType?: "breakfast" | "lunch" | "dinner") => {
+    setSuggestedMeal(null);
+    setAdditionalPreferences("");
+    
+    if (date) setCurrentDay(date);
+    if (mealType) {
+      setSuggestMealType(mealType);
+      setCurrentMealType(mealType);
+    }
+    
+    setSuggestMealOpen(true);
+  };
+  
   const isLoading = recipesLoading || mealPlansLoading;
   
   return (
     <MainLayout 
       title="Meal Plan" 
       action={
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => setAiSuggestionsOpen(true)}
-        >
-          <Sparkles className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => openSuggestMealDialog()}
+            title="Suggest a meal"
+          >
+            <Lightbulb className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setAiSuggestionsOpen(true)}
+            title="AI recipe suggestions"
+          >
+            <Sparkles className="h-5 w-5" />
+          </Button>
+        </div>
       }
     >
       <div className="page-container">
@@ -187,15 +292,25 @@ const MealPlan = () => {
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full h-8 text-xs"
-                        onClick={() => handleAddMeal(day.date, mealType as "breakfast" | "lunch" | "dinner")}
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full h-8 text-xs"
+                          onClick={() => handleAddMeal(day.date, mealType as "breakfast" | "lunch" | "dinner")}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs px-2"
+                          onClick={() => openSuggestMealDialog(day.date, mealType as "breakfast" | "lunch" | "dinner")}
+                        >
+                          <Lightbulb className="h-3 w-3" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -221,15 +336,25 @@ const MealPlan = () => {
                     <div className="text-sm text-muted-foreground capitalize mb-1 flex justify-between items-center">
                       <span>{mealType}</span>
                       {!mealPlan && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-xs px-2"
-                          onClick={() => handleAddMeal(day.date, mealType as "breakfast" | "lunch" | "dinner")}
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Add
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs px-2"
+                            onClick={() => handleAddMeal(day.date, mealType as "breakfast" | "lunch" | "dinner")}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs px-2"
+                            onClick={() => openSuggestMealDialog(day.date, mealType as "breakfast" | "lunch" | "dinner")}
+                          >
+                            <Lightbulb className="h-3 w-3" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                     {mealPlan && (
@@ -405,8 +530,146 @@ const MealPlan = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Meal Suggestion Dialog */}
+      <Dialog open={suggestMealOpen} onOpenChange={setSuggestMealOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              AI Meal Suggestion
+            </DialogTitle>
+            <DialogDescription>
+              Get an AI-generated recipe suggestion based on your preferences.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {!suggestedMeal ? (
+            <div className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label htmlFor="meal-type">Meal Type</Label>
+                <Select 
+                  value={suggestMealType} 
+                  onValueChange={(value) => setSuggestMealType(value as "breakfast" | "lunch" | "dinner")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select meal type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="breakfast">Breakfast</SelectItem>
+                    <SelectItem value="lunch">Lunch</SelectItem>
+                    <SelectItem value="dinner">Dinner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="preferences">Additional Preferences</Label>
+                <Textarea
+                  id="preferences"
+                  placeholder="e.g., quick, vegetarian, Italian, etc."
+                  value={additionalPreferences}
+                  onChange={(e) => setAdditionalPreferences(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              
+              <Button 
+                onClick={handleSuggestMeal} 
+                disabled={aiLoading}
+                className="w-full"
+              >
+                {aiLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Getting Suggestion...
+                  </>
+                ) : (
+                  <>
+                    <Lightbulb className="mr-2 h-4 w-4" />
+                    Get Suggestion
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {parsingMealSuggestion ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">{suggestedMeal.title}</h3>
+                    <p className="text-sm text-muted-foreground">{suggestedMeal.description}</p>
+                    
+                    {suggestedMeal.rawResponse ? (
+                      <div className="mt-4 p-3 bg-muted rounded-md text-sm whitespace-pre-line">
+                        {suggestedMeal.rawResponse}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium mb-1">Ingredients:</h4>
+                          <ul className="list-disc pl-5 text-sm space-y-1">
+                            {suggestedMeal.ingredients?.map((ingredient: string, idx: number) => (
+                              <li key={idx}>{ingredient}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium mb-1">Instructions:</h4>
+                          <ol className="list-decimal pl-5 text-sm space-y-2">
+                            {suggestedMeal.instructions?.map((step: string, idx: number) => (
+                              <li key={idx}>{step}</li>
+                            ))}
+                          </ol>
+                        </div>
+                        
+                        <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                          {suggestedMeal.time && (
+                            <div>
+                              <span className="font-medium">Time:</span> {suggestedMeal.time} minutes
+                            </div>
+                          )}
+                          {suggestedMeal.servings && (
+                            <div>
+                              <span className="font-medium">Servings:</span> {suggestedMeal.servings}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  
+                  <DialogFooter className="flex flex-col sm:flex-row gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setSuggestedMeal(null)}
+                      className="sm:flex-1"
+                    >
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={handleSaveSuggestedRecipe}
+                      className="sm:flex-1"
+                      disabled={!!suggestedMeal.rawResponse}
+                    >
+                      {currentDay && currentMealType 
+                        ? "Save & Add to Plan" 
+                        : "Save Recipe"}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
 
 export default MealPlan;
+

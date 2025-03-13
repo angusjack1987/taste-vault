@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -70,6 +69,25 @@ serve(async (req) => {
       prompt = `Create a complete recipe for "${title}" using these main ingredients: ${ingredients}. ${userPrefsString} Include detailed instructions, cooking time, and serving size.`;
       
       console.log("Recipe generation prompt:", prompt);
+    } else if (type === 'suggest-meal-for-plan') {
+      const { mealType, season, additionalPreferences, userFoodPreferences } = data;
+      
+      // Include user's stored food preferences in the prompt
+      const userPrefsString = formatUserPreferences(userFoodPreferences);
+      
+      prompt = `Suggest ONE specific recipe for ${mealType} that would be appropriate for the ${season} season. ${additionalPreferences ? `Additional preferences: ${additionalPreferences}.` : ''} ${userPrefsString}
+
+Return the response in this JSON format:
+{
+  "title": "Recipe Title",
+  "description": "Brief description",
+  "ingredients": ["ingredient 1", "ingredient 2", ...],
+  "instructions": ["step 1", "step 2", ...],
+  "time": estimated_minutes_to_prepare,
+  "servings": number_of_servings
+}`;
+      
+      console.log("Meal suggestion prompt:", prompt);
     } else {
       return new Response(
         JSON.stringify({ error: 'Invalid request type' }),
