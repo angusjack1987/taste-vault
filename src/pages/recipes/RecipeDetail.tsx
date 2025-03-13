@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { 
   Clock, 
   Users, 
@@ -8,50 +8,49 @@ import {
   Bookmark, 
   Heart, 
   Share2, 
-  Edit 
+  Edit,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MainLayout from "@/components/layout/MainLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-// Mock recipe data
-const mockRecipe = {
-  id: "1",
-  title: "Classic Spaghetti Carbonara",
-  image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&q=80&w=1200",
-  time: 25,
-  servings: 4,
-  difficulty: "Medium",
-  rating: 4.8,
-  description: "A traditional Italian pasta dish made with eggs, cheese, pancetta, and black pepper.",
-  ingredients: [
-    "350g spaghetti",
-    "150g pancetta or guanciale, diced",
-    "3 large eggs",
-    "50g pecorino romano, grated (plus extra for serving)",
-    "50g parmesan, grated",
-    "Freshly ground black pepper",
-    "Salt, to taste",
-  ],
-  instructions: [
-    "Bring a large pot of salted water to a boil and cook the spaghetti according to package instructions until al dente.",
-    "Meanwhile, in a large skillet, cook the pancetta over medium heat until crispy, about 5-7 minutes.",
-    "In a bowl, whisk together the eggs, grated cheeses, and a generous amount of black pepper.",
-    "When the pasta is cooked, reserve 1/2 cup of the pasta water, then drain.",
-    "Working quickly, add the hot pasta to the skillet with the pancetta, tossing to combine.",
-    "Remove the skillet from the heat and pour in the egg and cheese mixture, tossing constantly to create a creamy sauce. If needed, add a splash of the reserved pasta water to loosen the sauce.",
-    "Serve immediately with additional grated cheese and black pepper."
-  ],
-  tags: ["Italian", "Pasta", "Quick", "Dinner"]
-};
+import useRecipes from "@/hooks/useRecipes";
+import { toast } from "sonner";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [isFavorited, setIsFavorited] = useState(false);
   
-  // In a real implementation, this would fetch the recipe by ID
-  const recipe = mockRecipe;
+  const { useRecipe } = useRecipes();
+  const { data: recipe, isLoading, error } = useRecipe(id);
+  
+  if (isLoading) {
+    return (
+      <MainLayout title="Loading Recipe..." showBackButton={true}>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+  
+  if (error || !recipe) {
+    toast.error("Failed to load recipe");
+    return (
+      <MainLayout title="Recipe Not Found" showBackButton={true}>
+        <div className="flex flex-col justify-center items-center h-64">
+          <p className="text-muted-foreground mb-4">
+            The recipe you're looking for couldn't be found.
+          </p>
+          <Button onClick={() => navigate("/recipes")}>
+            Return to Recipes
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
   
   return (
     <MainLayout 
@@ -68,7 +67,7 @@ const RecipeDetail = () => {
       <div>
         <div className="relative">
           <img 
-            src={recipe.image} 
+            src={recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600"} 
             alt={recipe.title} 
             className="w-full h-48 md:h-64 object-cover"
           />
@@ -80,18 +79,24 @@ const RecipeDetail = () => {
         <div className="page-container">
           <div className="flex items-center justify-between mb-6">
             <div className="flex gap-4">
-              <div className="flex items-center text-muted-foreground">
-                <Clock className="w-4 h-4 mr-1" />
-                <span className="text-sm">{recipe.time} min</span>
-              </div>
-              <div className="flex items-center text-muted-foreground">
-                <Users className="w-4 h-4 mr-1" />
-                <span className="text-sm">{recipe.servings} servings</span>
-              </div>
-              <div className="flex items-center text-muted-foreground">
-                <ChefHat className="w-4 h-4 mr-1" />
-                <span className="text-sm">{recipe.difficulty}</span>
-              </div>
+              {recipe.time && (
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="w-4 h-4 mr-1" />
+                  <span className="text-sm">{recipe.time} min</span>
+                </div>
+              )}
+              {recipe.servings && (
+                <div className="flex items-center text-muted-foreground">
+                  <Users className="w-4 h-4 mr-1" />
+                  <span className="text-sm">{recipe.servings} servings</span>
+                </div>
+              )}
+              {recipe.difficulty && (
+                <div className="flex items-center text-muted-foreground">
+                  <ChefHat className="w-4 h-4 mr-1" />
+                  <span className="text-sm">{recipe.difficulty}</span>
+                </div>
+              )}
             </div>
             
             <div className="flex gap-2">
@@ -113,7 +118,9 @@ const RecipeDetail = () => {
             </div>
           </div>
           
-          <p className="text-muted-foreground mb-6">{recipe.description}</p>
+          {recipe.description && (
+            <p className="text-muted-foreground mb-6">{recipe.description}</p>
+          )}
           
           <Tabs defaultValue="ingredients" className="mb-8">
             <TabsList className="grid w-full grid-cols-2">
@@ -148,19 +155,21 @@ const RecipeDetail = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="mb-6">
-            <h3 className="font-medium mb-2">Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              {recipe.tags.map((tag) => (
-                <span 
-                  key={tag} 
-                  className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm"
-                >
-                  {tag}
-                </span>
-              ))}
+          {recipe.tags && recipe.tags.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-medium mb-2">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {recipe.tags.map((tag) => (
+                  <span 
+                    key={tag} 
+                    className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           
           <div className="mt-8 flex gap-3 justify-center">
             <Button 
