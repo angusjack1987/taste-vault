@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -163,15 +164,15 @@
   
   /* Colorful highlights */
   .highlight-yellow {
-    @apply bg-lemon-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-cream-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
   }
   
   .highlight-green {
-    @apply bg-mint-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-mint-100 px-1 py-0.5 rounded text-charcoal-800 font-medium;
   }
   
   .highlight-blue {
-    @apply bg-sky-200 px-1 py-0.5 rounded text-charcoal-800 font-medium;
+    @apply bg-sky-100 px-1 py-0.5 rounded text-charcoal-800 font-medium;
   }
   
   /* Bold outlines for interactive elements */
