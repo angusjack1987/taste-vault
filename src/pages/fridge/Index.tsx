@@ -281,6 +281,22 @@ const FridgeItemCard = ({
   onDelete: () => void;
   onToggleAlwaysAvailable: (always_available: boolean) => void;
 }) => {
+  // Track if toggle is in progress to prevent double-clicks
+  const [isToggling, setIsToggling] = useState(false);
+  
+  const handleToggleAlwaysAvailable = (checked: boolean) => {
+    // Prevent multiple rapid toggles
+    if (isToggling) return;
+    
+    setIsToggling(true);
+    
+    // Call the parent handler with the new value
+    onToggleAlwaysAvailable(checked);
+    
+    // Reset the toggling state after a short delay
+    setTimeout(() => setIsToggling(false), 500);
+  };
+  
   return (
     <Card className={`overflow-hidden border-border rounded-xl hover:shadow-sm transition-all ${item.always_available ? 'border-yellow-300 bg-yellow-50/30 dark:bg-yellow-950/10' : ''}`}>
       <CardContent className="p-3 flex justify-between items-center">
@@ -301,9 +317,10 @@ const FridgeItemCard = ({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 mr-2">
             <Switch 
-              checked={item.always_available || false}
-              onCheckedChange={onToggleAlwaysAvailable}
+              checked={!!item.always_available}
+              onCheckedChange={handleToggleAlwaysAvailable}
               id={`always-available-${item.id}`}
+              disabled={isToggling}
             />
             <span className="text-xs text-muted-foreground hidden sm:inline">Always</span>
           </div>

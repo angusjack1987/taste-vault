@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,13 +25,11 @@ export const useFridge = () => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
   
-  // Audio analyzer for visualizations
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Clean up audio processing on unmount
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {
@@ -44,20 +41,16 @@ export const useFridge = () => {
     };
   }, []);
 
-  // Audio level analyzer function
   const analyzeAudioLevel = () => {
     if (analyserRef.current && dataArrayRef.current) {
       analyserRef.current.getByteFrequencyData(dataArrayRef.current);
       
-      // Calculate average volume level from frequency data
       const average = dataArrayRef.current.reduce((sum, value) => sum + value, 0) / 
                      dataArrayRef.current.length;
       
-      // Normalize to 0-1 range and update state
       const normalizedLevel = average / 255;
       setAudioLevel(normalizedLevel);
       
-      // Continue analyzing if still recording
       if (isVoiceRecording) {
         animationFrameRef.current = requestAnimationFrame(analyzeAudioLevel);
       } else {
@@ -66,14 +59,12 @@ export const useFridge = () => {
     }
   };
 
-  // Fetch fridge items
   const useFridgeItems = () => {
     return useQuery({
       queryKey: ["fridge-items", user?.id],
       queryFn: async () => {
         if (!user) return [];
         
-        // Using type assertion to fix TypeScript error
         const { data, error } = await supabase
           .from('fridge_items' as any)
           .select("*")
@@ -87,7 +78,6 @@ export const useFridge = () => {
     });
   };
 
-  // Add item
   const addItem = useMutation({
     mutationFn: async (item: Omit<FridgeItem, "id" | "user_id" | "created_at">) => {
       if (!user) throw new Error("User not authenticated");
@@ -115,7 +105,6 @@ export const useFridge = () => {
     },
   });
 
-  // Update item
   const updateItem = useMutation({
     mutationFn: async (item: Partial<FridgeItem> & { id: string }) => {
       if (!user) throw new Error("User not authenticated");
@@ -140,20 +129,25 @@ export const useFridge = () => {
     },
   });
 
-  // Toggle "always available" status
   const toggleAlwaysAvailable = useMutation({
     mutationFn: async ({ id, always_available }: { id: string; always_available: boolean }) => {
       if (!user) throw new Error("User not authenticated");
       
+      console.log(`Toggling item ${id} always_available to: ${always_available}`);
+      
       const { data, error } = await supabase
-        .from('fridge_items' as any)
+        .from('fridge_items')
         .update({ always_available })
         .eq("id", id)
         .eq("user_id", user.id)
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating always_available:", error);
+        throw error;
+      }
+      
       return data as unknown as FridgeItem;
     },
     onSuccess: (data) => {
@@ -162,11 +156,11 @@ export const useFridge = () => {
       toast.success(`"${data.name}" ${status}`);
     },
     onError: (error) => {
+      console.error("Failed to update always_available:", error);
       toast.error(`Failed to update item: ${error.message}`);
     },
   });
 
-  // Delete item
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
       if (!user) throw new Error("User not authenticated");
@@ -189,7 +183,6 @@ export const useFridge = () => {
     },
   });
 
-  // Check if item already exists in fridge
   const checkItemExists = async (itemName: string): Promise<boolean> => {
     if (!user) return false;
     
@@ -207,16 +200,13 @@ export const useFridge = () => {
     return (data && data.length > 0);
   };
 
-  // Process and add items from the ingredient text, considering duplicates
   const processAndAddItem = async (itemText: string): Promise<boolean> => {
     if (!itemText.trim()) return false;
     
-    // Parse the ingredient to separate name and quantity
     const { name, amount } = parseIngredientAmount(itemText);
     
     if (!name) return false;
     
-    // Check if the item already exists in the fridge
     const exists = await checkItemExists(name);
     
     if (exists) {
@@ -224,18 +214,16 @@ export const useFridge = () => {
       return false;
     }
     
-    // If it doesn't exist, prepare the item for addition
     const newItem = {
       name: name,
       quantity: amount || undefined,
-      category: 'Fridge' // Default category
+      category: 'Fridge'
     };
     
     await addItem.mutateAsync(newItem);
     return true;
   };
 
-  // Batch add items (from voice input)
   const batchAddItems = useMutation({
     mutationFn: async (items: string[]) => {
       if (!user) throw new Error("User not authenticated");
@@ -246,7 +234,6 @@ export const useFridge = () => {
       
       console.log("Processing items:", items);
       
-      // Process each item, checking for duplicates
       const addedItems: FridgeItem[] = [];
       const duplicates: string[] = [];
       
@@ -261,7 +248,6 @@ export const useFridge = () => {
         }
       }
       
-      // Show message about duplicates if any
       if (duplicates.length > 0) {
         console.log("Duplicate items not added:", duplicates);
         if (duplicates.length === items.length) {
@@ -284,17 +270,14 @@ export const useFridge = () => {
     },
   });
 
-  // Voice recording functions
   const startVoiceRecording = async () => {
     try {
-      // Reset audio state for new recording
       setAudioChunks([]);
       setIsVoiceRecording(true);
       setAudioLevel(0);
       
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Set up audio analyzer for visualizations
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
       }
@@ -308,7 +291,6 @@ export const useFridge = () => {
       const source = audioContextRef.current.createMediaStreamSource(stream);
       source.connect(analyserRef.current);
       
-      // Start audio level analysis
       analyzeAudioLevel();
       
       const recorder = new MediaRecorder(stream, {
@@ -329,13 +311,11 @@ export const useFridge = () => {
           setIsVoiceRecording(false);
           setIsProcessingVoice(true);
           
-          // Stop audio visualization
           if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
             animationFrameRef.current = null;
           }
           
-          // Get the latest audio chunks
           const currentChunks = audioChunks;
           console.log(`Processing ${currentChunks.length} audio chunks`);
           
@@ -346,7 +326,6 @@ export const useFridge = () => {
             return;
           }
           
-          // Create audio blob from chunks
           const audioBlob = new Blob(currentChunks, { type: "audio/webm" });
           console.log("Audio blob created:", audioBlob.size, "bytes");
           
@@ -357,7 +336,6 @@ export const useFridge = () => {
             return;
           }
           
-          // Convert blob to base64
           const reader = new FileReader();
           
           reader.onloadend = async () => {
@@ -401,7 +379,6 @@ export const useFridge = () => {
                   toast.success("Voice note transcribed successfully");
                   batchAddItems.mutate(foodItems);
                 } else if (transcribedText) {
-                  // Fallback to using the full text if no food items were extracted
                   toast.info("Processing full transcription as no specific items were detected");
                   batchAddItems.mutate([transcribedText]);
                 } else {
@@ -414,7 +391,6 @@ export const useFridge = () => {
               console.error("Error processing transcription:", error);
               toast.error(`Failed to process voice note: ${error.message}`);
             } finally {
-              // Clear audio chunks after processing to prevent reuse
               setAudioChunks([]);
               setIsProcessingVoice(false);
             }
@@ -427,7 +403,6 @@ export const useFridge = () => {
             setIsProcessingVoice(false);
           };
           
-          // Start the reading process
           reader.readAsDataURL(audioBlob);
         } catch (error: any) {
           console.error("Error creating audio blob:", error);
@@ -437,8 +412,7 @@ export const useFridge = () => {
         }
       });
       
-      // Start recording with small timeslice to get frequent dataavailable events
-      recorder.start(500); // Get data every 500ms for more reliable chunking
+      recorder.start(500);
       toast.info("Recording started. Speak clearly to add items.");
     } catch (error: any) {
       console.error("Error starting voice recording:", error);
@@ -449,7 +423,6 @@ export const useFridge = () => {
   };
 
   const stopVoiceRecording = () => {
-    // Stop audio level visualization
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -461,7 +434,6 @@ export const useFridge = () => {
       console.log("Stopping voice recording...");
       mediaRecorder.stop();
       
-      // Stop all audio tracks
       if (mediaRecorder.stream) {
         mediaRecorder.stream.getTracks().forEach((track) => {
           track.stop();
@@ -485,7 +457,7 @@ export const useFridge = () => {
     isProcessingVoice,
     startVoiceRecording,
     stopVoiceRecording,
-    audioLevel, // Export audio level for visualization
+    audioLevel,
   };
 };
 
