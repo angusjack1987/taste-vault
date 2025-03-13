@@ -1,11 +1,43 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, ShoppingBag } from 'lucide-react';
+import { 
+  Loader2, 
+  ShoppingBag,
+  Apple,
+  Milk,
+  Beef,
+  Wheat,
+  Package,
+  Egg,
+  Droplet,
+  SaltShaker,
+  Pizza,
+  Candy,
+  Coffee
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useShoppingList from '@/hooks/useShoppingList';
 import useAuth from '@/hooks/useAuth';
 import { parseIngredientAmount } from '@/lib/ingredient-parser';
+
+// Map categories to icons (simplified version for the preview)
+const getCategoryIcon = (category: string | null) => {
+  switch (category) {
+    case 'PRODUCE': return <Apple size={14} className="text-green-500" />;
+    case 'DAIRY': return <Milk size={14} className="text-blue-100" />;
+    case 'MEAT': return <Beef size={14} className="text-red-400" />;
+    case 'GRAINS': return <Wheat size={14} className="text-amber-300" />;
+    case 'CANNED': return <Package size={14} className="text-gray-400" />;
+    case 'BAKING': return <Egg size={14} className="text-yellow-200" />;
+    case 'CONDIMENTS': return <Droplet size={14} className="text-yellow-500" />;
+    case 'SPICES': return <SaltShaker size={14} className="text-rose-300" />;
+    case 'FROZEN': return <Pizza size={14} className="text-blue-300" />;
+    case 'SNACKS': return <Candy size={14} className="text-pink-300" />;
+    case 'BEVERAGES': return <Coffee size={14} className="text-brown-400" />;
+    default: return <Package size={14} className="text-gray-400" />;
+  }
+};
 
 const ShoppingList = () => {
   const navigate = useNavigate();
@@ -13,7 +45,11 @@ const ShoppingList = () => {
   const { useShoppingListItems } = useShoppingList();
   const { data: shoppingItems, isLoading } = useShoppingListItems();
   
-  const [previewItems, setPreviewItems] = useState<Array<{name: string, amount: string | null}>>([]);
+  const [previewItems, setPreviewItems] = useState<Array<{
+    name: string;
+    amount: string | null;
+    category: string | null;
+  }>>();
   
   useEffect(() => {
     if (shoppingItems && shoppingItems.length > 0) {
@@ -23,7 +59,7 @@ const ShoppingList = () => {
         .slice(0, 5)
         .map(item => {
           const { name, amount } = parseIngredientAmount(item.ingredient);
-          return { name, amount };
+          return { name, amount, category: item.category };
         });
       
       setPreviewItems(uncheckedItems);
@@ -75,9 +111,11 @@ const ShoppingList = () => {
           {uncheckedItems} items remaining on your shopping list:
         </p>
         <ul className="space-y-2">
-          {previewItems.map((item, index) => (
+          {previewItems?.map((item, index) => (
             <li key={index} className="flex items-start gap-2 text-sm">
-              <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5"></span>
+              <span className="mt-1 flex-shrink-0">
+                {getCategoryIcon(item.category)}
+              </span>
               <div>
                 <div>{item.name}</div>
                 {item.amount && (

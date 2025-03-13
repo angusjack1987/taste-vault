@@ -6,7 +6,20 @@ import {
   Plus, 
   Check, 
   X,
-  Search
+  Search,
+  Apple,
+  Milk,
+  Beef,
+  Wheat,
+  Pizza,
+  Coffee,
+  Egg,
+  Carrot,
+  Package,
+  SprayCan,
+  Droplet,
+  Candy,
+  SaltShaker
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,6 +30,31 @@ import MainLayout from "@/components/layout/MainLayout";
 import useShoppingList, { ShoppingListItem, ShoppingListItemInput } from "@/hooks/useShoppingList";
 import useAuth from "@/hooks/useAuth";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
+
+const categoryIcons: Record<string, React.ReactNode> = {
+  "PRODUCE": <Apple size={16} className="text-green-500" />,
+  "DAIRY": <Milk size={16} className="text-blue-100" />,
+  "MEAT": <Beef size={16} className="text-red-400" />,
+  "GRAINS": <Wheat size={16} className="text-amber-300" />,
+  "CANNED": <Package size={16} className="text-gray-400" />,
+  "BAKING": <Egg size={16} className="text-yellow-200" />,
+  "CONDIMENTS": <Droplet size={16} className="text-yellow-500" />,
+  "SPICES": <SaltShaker size={16} className="text-rose-300" />,
+  "FROZEN": <Pizza size={16} className="text-blue-300" />,
+  "SNACKS": <Candy size={16} className="text-pink-300" />,
+  "BEVERAGES": <Coffee size={16} className="text-brown-400" />,
+  "OTHER": <Package size={16} className="text-gray-400" />
+};
+
+const getItemIcon = (item: ShoppingListItem) => {
+  const category = item.category || "OTHER";
+  
+  const lowerName = item.ingredient.toLowerCase();
+  if (lowerName.includes("carrot")) return <Carrot size={16} className="text-orange-500" />;
+  if (lowerName.includes("spray") || lowerName.includes("cleaner")) return <SprayCan size={16} className="text-cyan-400" />;
+  
+  return categoryIcons[category] || categoryIcons["OTHER"];
+};
 
 const ShoppingListPage = () => {
   const { user } = useAuth();
@@ -48,12 +86,14 @@ const ShoppingListPage = () => {
     setIsAdding(true);
     
     try {
+      const { name, amount } = parseIngredientAmount(newItem.trim());
+      
       const item: ShoppingListItemInput = {
         recipe_id: null,
         ingredient: newItem.trim(),
-        category: null, // Will be auto-categorized in the hook
+        category: null,
         is_checked: false,
-        quantity: null,
+        quantity: amount,
       };
       
       await addItem(item);
@@ -61,6 +101,7 @@ const ShoppingListPage = () => {
       toast.success("Item added to shopping list");
     } catch (error) {
       console.error("Error adding item:", error);
+      toast.error("Failed to add to shopping list");
     } finally {
       setIsAdding(false);
     }
@@ -234,8 +275,8 @@ const ShoppingListPage = () => {
                   
                   return (
                     <div key={category} className="mb-6">
-                      <h3 className="font-medium mb-2 text-sm text-muted-foreground">
-                        {category}
+                      <h3 className="font-medium mb-2 text-sm text-muted-foreground flex items-center gap-2">
+                        {categoryIcons[category]} {category}
                       </h3>
                       <ul className="space-y-2">
                         {items.map(item => {
@@ -253,18 +294,21 @@ const ShoppingListPage = () => {
                                   id={`item-${item.id}`}
                                   className="mt-1"
                                 />
-                                <div>
-                                  <label 
-                                    htmlFor={`item-${item.id}`}
-                                    className={`flex-1 cursor-pointer ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
-                                  >
-                                    {name}
-                                  </label>
-                                  {amount && (
-                                    <div className={`text-xs ${item.is_checked ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                                      {amount}
-                                    </div>
-                                  )}
+                                <div className="flex items-center gap-2">
+                                  <span className="flex-shrink-0">{getItemIcon(item)}</span>
+                                  <div>
+                                    <label 
+                                      htmlFor={`item-${item.id}`}
+                                      className={`flex-1 cursor-pointer ${item.is_checked ? 'line-through text-muted-foreground' : ''}`}
+                                    >
+                                      {name}
+                                    </label>
+                                    {amount && (
+                                      <div className={`text-xs ${item.is_checked ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                        {amount}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                               <Button 
