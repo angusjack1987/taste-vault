@@ -220,9 +220,19 @@ export const useFridgeMutations = (user: User | null) => {
       
       // Delete all items that are not marked as always available
       if (Array.isArray(fridgeItems)) {
+        // Safely filter items and extract IDs for deletion
         const itemsToDelete = fridgeItems
-          .filter(item => item && typeof item === 'object' && 'id' in item && !alwaysAvailableIds.includes(item.id))
-          .map(item => (item as Record<string, any>).id);
+          .filter(item => {
+            return item !== null && 
+                   typeof item === 'object' && 
+                   'id' in item && 
+                   typeof item.id === 'string' &&
+                   !alwaysAvailableIds.includes(item.id);
+          })
+          .map(item => {
+            // TypeScript now knows this is a valid object with an id property
+            return (item as { id: string }).id;
+          });
         
         if (itemsToDelete.length > 0) {
           const { error: deleteError } = await supabase
