@@ -32,7 +32,7 @@ const BottomNav = () => {
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
-      <div className="flex items-center justify-between bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-6 py-3 shadow-vibrant relative max-w-[90%] w-fit mx-auto">
+      <div className="flex items-center justify-between bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-8 py-3 shadow-vibrant relative w-fit mx-auto">
         {navItems.slice(0, 2).map((item) => {
           const isActive = pathname === item.to || 
                           (item.to !== "/" && pathname.startsWith(item.to));
@@ -42,7 +42,7 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center px-3 py-1 transition-all hover:scale-110",
+                "flex flex-col items-center px-2 py-1 transition-all hover:scale-110 min-w-[60px]",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
@@ -58,7 +58,7 @@ const BottomNav = () => {
         })}
         
         {/* Enhanced Center Action Button */}
-        <div className="mx-0">
+        <div className="mx-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 transition-all border-4 border-primary text-white shadow-md -mt-8 hover:-translate-y-1 active:translate-y-0 group">
@@ -97,7 +97,7 @@ const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center px-3 py-1 transition-all hover:scale-110",
+                "flex flex-col items-center px-2 py-1 transition-all hover:scale-110 min-w-[60px]",
                 isActive ? "text-secondary" : "text-primary-foreground"
               )}
             >
