@@ -9,7 +9,6 @@ import {
   BookPlus, 
   ShoppingCart, 
   Refrigerator,
-  ChefHat
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -33,7 +32,7 @@ const BottomNav = () => {
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
-      <div className="flex items-center bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-6 py-3 shadow-lg relative">
+      <div className="flex items-center bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full px-6 py-3 shadow-vibrant relative">
         {navItems.slice(0, 2).map((item) => {
           const isActive = pathname === item.to || 
                           (item.to !== "/" && pathname.startsWith(item.to));
@@ -58,11 +57,11 @@ const BottomNav = () => {
           );
         })}
         
-        {/* Center Plus Button - Integrated better with the nav */}
+        {/* Enhanced Center Action Button */}
         <div className="mx-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 transition-all border-4 border-primary text-white shadow-md -mt-8 hover:-translate-y-1 active:translate-y-0 group">
+              <button className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 transition-all border-4 border-primary text-white shadow-md -mt-8 hover:-translate-y-1 active:translate-y-0 group">
                 <Plus className="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
               </button>
             </DropdownMenuTrigger>

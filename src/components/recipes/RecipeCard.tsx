@@ -22,7 +22,7 @@ const RecipeCard = ({
 }: RecipeCardProps) => {
   return (
     <Link to={`/recipes/${id}`} className={cn("block group", className)}>
-      <div className="rounded-2xl overflow-hidden border-2 border-border shadow-sm bg-background transition-all duration-300 hover:shadow-vibrant hover:-translate-y-1 hover:border-sunshine-500">
+      <div className="rounded-2xl overflow-hidden border-2 border-border shadow-sm bg-gradient-to-br from-background to-muted/30 transition-all duration-300 hover:shadow-vibrant hover:-translate-y-1 hover:border-sunshine-500">
         <div className="aspect-[4/3] w-full relative overflow-hidden">
           {image ? (
             <img
@@ -31,7 +31,7 @@ const RecipeCard = ({
               className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full bg-muted flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center">
               <Utensils className="h-16 w-16 text-muted-foreground opacity-40 group-hover:animate-spin-slow" />
             </div>
           )}
