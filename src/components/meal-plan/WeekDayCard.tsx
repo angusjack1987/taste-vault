@@ -1,6 +1,6 @@
 
 import { format } from 'date-fns';
-import { Plus, Lightbulb, X, Utensils } from 'lucide-react';
+import { Plus, Lightbulb, X, Utensils, Coffee, Salad, ChefHat } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
@@ -28,6 +28,19 @@ interface WeekDayCardProps {
   onSuggestMeal: (date: Date, mealType: MealType) => void;
 }
 
+const getMealIcon = (mealType: MealType) => {
+  switch (mealType) {
+    case 'breakfast':
+      return <Coffee className="h-3.5 w-3.5 mr-1" />;
+    case 'lunch':
+      return <Salad className="h-3.5 w-3.5 mr-1" />;
+    case 'dinner':
+      return <ChefHat className="h-3.5 w-3.5 mr-1" />;
+    default:
+      return <Utensils className="h-3.5 w-3.5 mr-1" />;
+  }
+};
+
 const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekDayCardProps) => {
   const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
   
@@ -35,23 +48,25 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
     if (!meal) {
       return (
         <div className="border border-dashed border-border rounded p-2 flex justify-center items-center gap-1.5 min-h-[60px] bg-background/50 hover:bg-background transition-colors">
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onAddMeal(date, mealType)}>
-            <Plus className="h-3.5 w-3.5 mr-1" />
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs group" onClick={() => onAddMeal(date, mealType)}>
+            <Plus className="h-3.5 w-3.5 mr-1 group-hover:animate-spin-slow" />
+            {getMealIcon(mealType)}
             Add
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50" onClick={() => onSuggestMeal(date, mealType)}>
-            <Lightbulb className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" onClick={() => onSuggestMeal(date, mealType)}>
+            <Lightbulb className="h-3.5 w-3.5 group-hover:animate-pulse-slow" />
           </Button>
         </div>
       );
     }
     
     return (
-      <div className="border rounded p-2 bg-card min-h-[60px] relative hover:shadow-sm transition-shadow">
-        <div className="text-xs font-medium line-clamp-2 pr-6">
+      <div className="border rounded p-2 bg-card min-h-[60px] relative hover:shadow-sm transition-shadow group">
+        <div className="text-xs font-medium line-clamp-2 pr-6 flex items-center">
+          {getMealIcon(mealType)}
           {meal.recipe?.title || (
             <span className="flex items-center text-muted-foreground">
-              <Utensils className="h-3 w-3 mr-1" /> No recipe selected
+              <Utensils className="h-3 w-3 mr-1 group-hover:animate-pulse-slow" /> No recipe selected
             </span>
           )}
         </div>
