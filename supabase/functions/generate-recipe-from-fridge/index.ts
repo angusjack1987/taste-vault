@@ -23,6 +23,7 @@ serve(async (req) => {
     }
 
     console.log("Generating recipes with ingredients:", ingredients);
+    console.log("User preferences:", userFoodPreferences || "None provided");
     
     // Format user preferences if provided
     const userPrefsString = formatUserPreferences(userFoodPreferences);
@@ -42,13 +43,17 @@ For EACH recipe, provide the following in JSON format:
   "servings": number_of_servings
 }
 
-Return your response as a JSON array with exactly two recipe objects:
-[
-  {first recipe object},
-  {second recipe object}
-]
+Return your response as a JSON object with the following structure:
+{
+  "options": [
+    {first recipe object},
+    {second recipe object}
+  ]
+}
 
 Not all ingredients need to be used in each recipe, but use as many as possible to create delicious, cohesive dishes. Make the recipes distinct from each other - different cuisines or cooking methods.`;
+
+    console.log("Sending prompt to OpenAI API");
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -78,29 +83,37 @@ Not all ingredients need to be used in each recipe, but use as many as possible 
     }
 
     const recipeContent = data.choices[0].message.content;
-    console.log("Recipes generated successfully");
+    console.log("Raw recipe content:", recipeContent.substring(0, 200) + "...");
     
     // Parse the JSON response and ensure it's in the correct format
     let recipeOptions = [];
     try {
       const parsedContent = JSON.parse(recipeContent);
-      if (Array.isArray(parsedContent) && parsedContent.length > 0) {
-        recipeOptions = parsedContent;
-      } else if (typeof parsedContent === 'object' && parsedContent.options && Array.isArray(parsedContent.options)) {
-        // Handle the case where it returns {options: [...]} format (like in meal planner)
+      
+      if (parsedContent.options && Array.isArray(parsedContent.options)) {
+        // If we got the expected format with options array
         recipeOptions = parsedContent.options;
+        console.log(`Successfully parsed ${recipeOptions.length} recipe options`);
+      } else if (Array.isArray(parsedContent) && parsedContent.length > 0) {
+        // If we got a direct array (no options wrapper)
+        recipeOptions = parsedContent;
+        console.log(`Parsed ${recipeOptions.length} recipe options from direct array`);
       } else {
-        // Fall back if we didn't get an array
-        recipeOptions = [{ rawContent: recipeContent }];
+        // If we got an unexpected format
+        console.log("Unexpected response format, wrapping raw content");
+        recipeOptions = [{ title: "Recipe Suggestion", rawContent: recipeContent }];
       }
     } catch (e) {
       console.error("Error parsing recipe JSON:", e);
       // If parsing fails, return the raw text
-      recipeOptions = [{ rawContent: recipeContent }];
+      recipeOptions = [{ title: "Recipe Suggestion", rawContent: recipeContent }];
     }
 
+    const result = { recipes: recipeOptions };
+    console.log(`Returning ${recipeOptions.length} recipe options`);
+    
     return new Response(
-      JSON.stringify({ recipes: recipeOptions }),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     
