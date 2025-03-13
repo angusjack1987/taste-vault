@@ -12,6 +12,12 @@ const corsHeaders = {
 // Process base64 in chunks to prevent memory issues
 function processBase64Chunks(base64String: string, chunkSize = 32768) {
   console.log(`Processing base64 string of length: ${base64String.length}`);
+  
+  // Check if we actually have data
+  if (!base64String || base64String.length === 0) {
+    throw new Error("Empty audio data provided");
+  }
+  
   const chunks: Uint8Array[] = [];
   let position = 0;
   
@@ -62,9 +68,21 @@ serve(async (req) => {
       console.error("OpenAI API key not configured");
       throw new Error('OpenAI API key not configured');
     }
+    
+    // Add validation to ensure we have valid base64 data
+    if (audio.trim() === "") {
+      console.error("Empty audio data");
+      throw new Error('Empty audio data provided');
+    }
 
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(audio);
+    
+    // Additional validation for processed audio
+    if (!binaryAudio || binaryAudio.length === 0) {
+      console.error("Failed to process audio data");
+      throw new Error('Failed to process audio data');
+    }
     
     // Prepare form data
     const formData = new FormData();

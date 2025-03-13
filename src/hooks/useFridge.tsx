@@ -158,32 +158,62 @@ export const useFridge = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Reset audio chunks when starting a new recording
+      // Reset audio chunks state
       setAudioChunks([]);
       
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm',
+        audioBitsPerSecond: 128000
+      });
       setMediaRecorder(recorder);
       
       recorder.addEventListener("dataavailable", (event) => {
-        if (event.data.size > 0) {
-          setAudioChunks((chunks) => [...chunks, event.data]);
+        if (event.data && event.data.size > 0) {
+          console.log(`Received audio chunk: ${event.data.size} bytes`);
+          setAudioChunks((previousChunks) => [...previousChunks, event.data]);
         }
       });
       
       recorder.addEventListener("stop", async () => {
         try {
+          // Verify we have audio data
+          if (audioChunks.length === 0) {
+            console.error("No audio chunks recorded");
+            toast.error("No audio recorded. Please try again and speak clearly.");
+            setIsVoiceRecording(false);
+            return;
+          }
+          
           // Create audio blob from chunks
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
           console.log("Audio blob created:", audioBlob.size, "bytes");
           
+          if (audioBlob.size === 0) {
+            console.error("Empty audio blob created");
+            toast.error("No audio recorded. Please try again and speak clearly.");
+            setIsVoiceRecording(false);
+            return;
+          }
+          
           // Convert blob to base64
           const reader = new FileReader();
+          
           reader.onloadend = async () => {
             try {
-              const base64Audio = reader.result?.toString().split(",")[1];
+              if (!reader.result) {
+                throw new Error("FileReader result is null");
+              }
+              
+              const base64Audio = reader.result.toString().split(",")[1];
               
               if (!base64Audio) {
                 throw new Error("Failed to convert audio to base64");
+              }
+              
+              console.log("Base64 audio length:", base64Audio.length);
+              
+              if (base64Audio.length === 0) {
+                throw new Error("Empty base64 audio data");
               }
               
               console.log("Sending audio to transcription service...");
@@ -195,25 +225,34 @@ export const useFridge = () => {
               console.log("Transcription response:", response);
               
               if (response.error) {
-                throw new Error(response.error.message);
+                throw new Error(response.error.message || "Transcription failed");
               }
               
               if (response.data && response.data.text) {
-                console.log("Transcribed text:", response.data.text);
-                toast.success("Voice note transcribed successfully");
-                batchAddItems.mutate(response.data.text);
+                const transcribedText = response.data.text.trim();
+                console.log("Transcribed text:", transcribedText);
+                
+                if (transcribedText) {
+                  toast.success("Voice note transcribed successfully");
+                  batchAddItems.mutate(transcribedText);
+                } else {
+                  toast.error("Could not understand speech. Please try again and speak clearly.");
+                }
               } else {
                 throw new Error("No transcription returned");
               }
             } catch (error: any) {
               console.error("Error processing transcription:", error);
               toast.error(`Failed to process voice note: ${error.message}`);
+            } finally {
+              setIsVoiceRecording(false);
             }
           };
           
           reader.onerror = (error) => {
             console.error("FileReader error:", error);
             toast.error("Failed to process audio recording");
+            setIsVoiceRecording(false);
           };
           
           // Start the reading process
@@ -221,14 +260,12 @@ export const useFridge = () => {
         } catch (error: any) {
           console.error("Error creating audio blob:", error);
           toast.error(`Failed to process recording: ${error.message}`);
+          setIsVoiceRecording(false);
         }
-        
-        // Reset recording state
-        setIsVoiceRecording(false);
       });
       
       // Start recording with small timeslice to get frequent dataavailable events
-      recorder.start(1000);
+      recorder.start(500); // Get data every 500ms for more reliable chunking
       setIsVoiceRecording(true);
       toast.info("Recording started. Speak clearly to add items.");
     } catch (error: any) {
@@ -252,6 +289,7 @@ export const useFridge = () => {
       }
     } else {
       console.warn("No active recording to stop");
+      setIsVoiceRecording(false);
     }
   };
 
