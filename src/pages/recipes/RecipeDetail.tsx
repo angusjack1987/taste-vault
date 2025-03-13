@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MainLayout from "@/components/layout/MainLayout";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Mock recipe data
 const mockRecipe = {
@@ -120,26 +121,30 @@ const RecipeDetail = () => {
               <TabsTrigger value="instructions">Instructions</TabsTrigger>
             </TabsList>
             <TabsContent value="ingredients" className="mt-4">
-              <ul className="space-y-2">
-                {recipe.ingredients.map((ingredient, index) => (
-                  <li key={index} className="flex items-baseline gap-2">
-                    <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
-                    <span>{ingredient}</span>
-                  </li>
-                ))}
-              </ul>
+              <ScrollArea className="max-h-[400px]">
+                <ul className="space-y-2">
+                  {recipe.ingredients.map((ingredient, index) => (
+                    <li key={index} className="flex items-baseline gap-2">
+                      <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
+                      <span>{ingredient}</span>
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
             </TabsContent>
             <TabsContent value="instructions" className="mt-4">
-              <ol className="space-y-4">
-                {recipe.instructions.map((step, index) => (
-                  <li key={index} className="flex gap-3">
-                    <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
-                      {index + 1}
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
+              <ScrollArea className="max-h-[400px]">
+                <ol className="space-y-4">
+                  {recipe.instructions.map((step, index) => (
+                    <li key={index} className="flex gap-3">
+                      <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
+                        {index + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </ScrollArea>
             </TabsContent>
           </Tabs>
           
