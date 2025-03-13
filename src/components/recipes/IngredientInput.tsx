@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils } from "lucide-react";
+import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
@@ -50,6 +50,8 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
       return <Beef className="h-4 w-4 text-sage-500" />;
     } else if (/fish|salmon|tuna|cod|tilapia|shrimp|prawn|seafood/i.test(lowerName)) {
       return <Fish className="h-4 w-4 text-sage-500" />;
+    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|strawberry|blueberry|raspberry/i.test(lowerName)) {
+      return <Apple className="h-4 w-4 text-sage-500" />;
     } else if (/egg|eggs/i.test(lowerName)) {
       return <Egg className="h-4 w-4 text-sage-500" />;
     } else if (/flour|bread|rice|pasta|grain|wheat|cereal|oat/i.test(lowerName)) {
