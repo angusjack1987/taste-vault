@@ -86,6 +86,10 @@ export const useFridge = () => {
         const items = Array.isArray(fridgeItems) ? fridgeItems : [];
         
         const itemsWithPrefs = items.map(item => {
+          if (!item || typeof item !== 'object') {
+            return null;
+          }
+          
           const prefsObj = userPrefs && typeof userPrefs === 'object' && userPrefs.preferences 
             ? userPrefs.preferences 
             : {};
@@ -94,20 +98,21 @@ export const useFridge = () => {
             ? (prefsObj as Record<string, any>).fridge_items || {} 
             : {};
           
-          const itemId = typeof item === 'object' && item !== null ? item.id : '';
+          const itemId = item.id || '';
+          
           const itemPrefs = typeof fridgeItemPrefs === 'object' && fridgeItemPrefs !== null
             ? (fridgeItemPrefs as Record<string, any>)[itemId] || {}
             : {};
             
           return {
-            ...(typeof item === 'object' ? item : {}),
+            ...item,
             always_available: Boolean(
               itemPrefs && 
               typeof itemPrefs === 'object' && 
               itemPrefs.always_available
             )
           } as FridgeItem;
-        });
+        }).filter(Boolean) as FridgeItem[];
         
         return itemsWithPrefs;
       },
