@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,19 +21,42 @@ export type ShoppingListItemInput = Omit<
   "id" | "user_id" | "created_at" | "updated_at"
 >;
 
-// Common food categories to help categorize ingredients
+// Common food categories to help categorize ingredients with expanded terms
 const FOOD_CATEGORIES = {
-  PRODUCE: ["vegetable", "fruit", "salad", "apple", "banana", "carrot", "tomato", "onion", "potato", "lettuce", "avocado", "orange", "garlic", "lemon", "lime"],
-  DAIRY: ["milk", "cheese", "butter", "yogurt", "cream", "ice cream", "sour cream", "egg", "parmesan", "mozzarella", "cheddar"],
-  MEAT: ["chicken", "beef", "pork", "lamb", "bacon", "sausage", "fish", "salmon", "tuna", "turkey", "ham", "steak", "ground beef"],
-  GRAINS: ["rice", "pasta", "bread", "flour", "cereal", "oat", "noodle", "spaghetti", "tortilla", "bagel", "pita"],
-  CANNED: ["can", "canned", "beans", "tomato sauce", "soup", "tuna", "corn", "olives", "chickpeas"],
-  BAKING: ["sugar", "baking", "flour", "vanilla", "chocolate", "cocoa", "baking powder", "baking soda", "yeast"],
-  CONDIMENTS: ["oil", "vinegar", "sauce", "ketchup", "mustard", "mayonnaise", "salsa", "dressing", "soy sauce", "hot sauce"],
-  SPICES: ["salt", "pepper", "spice", "oregano", "basil", "paprika", "cumin", "cinnamon", "garlic powder", "seasoning"],
-  FROZEN: ["frozen", "ice cream", "pizza", "vegetables", "waffles"],
-  SNACKS: ["chip", "cookie", "cracker", "popcorn", "nuts", "candy", "chocolate", "snack"],
-  BEVERAGES: ["water", "juice", "soda", "coffee", "tea", "wine", "beer", "milk"],
+  PRODUCE: [
+    // Fruits
+    "strawberry", "strawberries", "apple", "banana", "orange", "lemon", "lime", "berry", "berries", 
+    "grape", "grapefruit", "melon", "watermelon", "cantaloupe", "kiwi", "mango", "peach", "pear", 
+    "pineapple", "plum", "raspberry", "raspberries", "blueberry", "blueberries", "blackberry", "blackberries",
+    "cherry", "cherries", "fruit", "fruits", 
+    // Vegetables
+    "vegetable", "vegetables", "salad", "lettuce", "carrot", "tomato", "onion", "potato", "garlic", 
+    "avocado", "cucumber", "zucchini", "broccoli", "cauliflower", "pepper", "bell pepper", "spinach", 
+    "kale", "cabbage", "asparagus", "eggplant", "corn", "celery", "mushroom", "green bean", "pea"
+  ],
+  DAIRY: ["milk", "cheese", "butter", "yogurt", "cream", "ice cream", "sour cream", "egg", "eggs", 
+    "parmesan", "mozzarella", "cheddar", "brie", "feta", "cottage cheese", "ricotta", "whipped cream"],
+  MEAT: ["chicken", "beef", "steak", "ground beef", "pork", "lamb", "bacon", "sausage", "fish", "salmon", 
+    "tuna", "shrimp", "turkey", "ham", "hot dog", "burger", "meatball", "meat", "ground turkey", "duck",
+    "shellfish", "lobster", "crab", "scallop", "prawn"],
+  GRAINS: ["rice", "pasta", "bread", "flour", "cereal", "oat", "oatmeal", "noodle", "spaghetti", "tortilla", 
+    "bagel", "pita", "pancake", "waffle", "muffin", "grain", "quinoa", "barley", "couscous"],
+  CANNED: ["can", "canned", "beans", "tomato sauce", "soup", "canned tuna", "canned corn", "olives", 
+    "chickpeas", "canned vegetables", "canned fruit", "jar", "preserved"],
+  BAKING: ["sugar", "brown sugar", "baking", "flour", "vanilla", "vanilla extract", "chocolate", "cocoa", 
+    "baking powder", "baking soda", "yeast", "cake mix", "cookie mix", "frosting", "sprinkles", "almond extract"],
+  CONDIMENTS: ["oil", "olive oil", "vinegar", "sauce", "ketchup", "mustard", "mayonnaise", "salsa", 
+    "dressing", "soy sauce", "hot sauce", "sriracha", "bbq sauce", "maple syrup", "honey", "jam", "jelly",
+    "peanut butter", "nutella"],
+  SPICES: ["salt", "pepper", "spice", "oregano", "basil", "paprika", "cumin", "cinnamon", "garlic powder", 
+    "onion powder", "seasoning", "thyme", "rosemary", "bay leaf", "curry powder", "turmeric", "ginger",
+    "chili powder", "red pepper flakes", "herbs", "herb"],
+  FROZEN: ["frozen", "ice cream", "pizza", "frozen vegetables", "frozen fruit", "waffles", "popsicle", 
+    "tv dinner", "frozen meal", "frozen yogurt", "frozen berries", "frozen pizza", "ice"],
+  SNACKS: ["chip", "chips", "cookie", "cookies", "cracker", "crackers", "popcorn", "nuts", "candy", "chocolate", 
+    "snack", "pretzel", "granola bar", "trail mix", "dried fruit", "cheese puffs", "potato chips"],
+  BEVERAGES: ["water", "juice", "soda", "pop", "coffee", "tea", "wine", "beer", "milk", "almond milk", 
+    "soymilk", "oat milk", "coconut water", "sparkling water", "energy drink", "sports drink", "drink"],
   OTHER: []
 };
 

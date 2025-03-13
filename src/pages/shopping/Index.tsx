@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Trash2, 
@@ -8,16 +9,20 @@ import {
   X,
   Search,
   Apple,
+  Banana,
+  Cherry,
+  Grape,
   Milk,
   Beef,
+  Fish,
   Wheat,
   Pizza,
   Coffee,
   Egg,
   Carrot,
   Package,
-  SprayCan,
-  Droplet,
+  Bottle,
+  Refrigerator,
   Candy,
   Flame
 } from "lucide-react";
@@ -31,28 +36,38 @@ import useShoppingList, { ShoppingListItem, ShoppingListItemInput } from "@/hook
 import useAuth from "@/hooks/useAuth";
 import { parseIngredientAmount } from "@/lib/ingredient-parser";
 
+// Enhanced category icons with better visual representation
 const categoryIcons: Record<string, React.ReactNode> = {
   "PRODUCE": <Apple size={16} className="text-green-500" />,
   "DAIRY": <Milk size={16} className="text-blue-100" />,
   "MEAT": <Beef size={16} className="text-red-400" />,
+  "SEAFOOD": <Fish size={16} className="text-blue-400" />,
   "GRAINS": <Wheat size={16} className="text-amber-300" />,
   "CANNED": <Package size={16} className="text-gray-400" />,
   "BAKING": <Egg size={16} className="text-yellow-200" />,
-  "CONDIMENTS": <Droplet size={16} className="text-yellow-500" />,
+  "CONDIMENTS": <Bottle size={16} className="text-yellow-500" />,
   "SPICES": <Flame size={16} className="text-rose-300" />,
-  "FROZEN": <Pizza size={16} className="text-blue-300" />,
+  "FROZEN": <Refrigerator size={16} className="text-blue-300" />,
   "SNACKS": <Candy size={16} className="text-pink-300" />,
   "BEVERAGES": <Coffee size={16} className="text-brown-400" />,
   "OTHER": <Package size={16} className="text-gray-400" />
 };
 
+// Get more specific icon for each item based on its name
 const getItemIcon = (item: ShoppingListItem) => {
   const category = item.category || "OTHER";
-  
   const lowerName = item.ingredient.toLowerCase();
-  if (lowerName.includes("carrot")) return <Carrot size={16} className="text-orange-500" />;
-  if (lowerName.includes("spray") || lowerName.includes("cleaner")) return <SprayCan size={16} className="text-cyan-400" />;
   
+  // Fruit-specific icons
+  if (lowerName.includes("banana")) return <Banana size={16} className="text-yellow-400" />;
+  if (lowerName.includes("strawberry") || lowerName.includes("strawberries")) 
+    return <Cherry size={16} className="text-red-500" />;
+  if (lowerName.includes("grape")) return <Grape size={16} className="text-purple-500" />;
+  
+  // Vegetable-specific icon
+  if (lowerName.includes("carrot")) return <Carrot size={16} className="text-orange-500" />;
+  
+  // Default to category icon
   return categoryIcons[category] || categoryIcons["OTHER"];
 };
 

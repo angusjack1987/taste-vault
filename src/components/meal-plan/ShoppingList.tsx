@@ -5,12 +5,16 @@ import {
   Loader2, 
   ShoppingBag,
   Apple,
+  Banana,
+  Cherry,
   Milk,
   Beef,
+  Fish,
   Wheat,
   Package,
   Egg,
-  Droplet,
+  Bottle,
+  Refrigerator,
   Pizza,
   Candy,
   Coffee,
@@ -21,21 +25,48 @@ import useShoppingList from '@/hooks/useShoppingList';
 import useAuth from '@/hooks/useAuth';
 import { parseIngredientAmount } from '@/lib/ingredient-parser';
 
-// Map categories to icons (simplified version for the preview)
+// Get more specific icons for each ingredient
+const getIngredientIcon = (ingredient: string, category: string | null) => {
+  const lowerName = ingredient.toLowerCase();
+  
+  // Fruit-specific icons
+  if (lowerName.includes("banana")) return <Banana size={14} className="text-yellow-400" />;
+  if (lowerName.includes("cherry") || lowerName.includes("cherries")) return <Cherry size={14} className="text-red-500" />;
+  
+  // For other ingredients, use category icons
+  return getCategoryIcon(category);
+};
+
+// Map categories to icons (enhanced version)
 const getCategoryIcon = (category: string | null) => {
   switch (category) {
-    case 'PRODUCE': return <Apple size={14} className="text-green-500" />;
-    case 'DAIRY': return <Milk size={14} className="text-blue-100" />;
-    case 'MEAT': return <Beef size={14} className="text-red-400" />;
-    case 'GRAINS': return <Wheat size={14} className="text-amber-300" />;
-    case 'CANNED': return <Package size={14} className="text-gray-400" />;
-    case 'BAKING': return <Egg size={14} className="text-yellow-200" />;
-    case 'CONDIMENTS': return <Droplet size={14} className="text-yellow-500" />;
-    case 'SPICES': return <Flame size={14} className="text-rose-300" />;
-    case 'FROZEN': return <Pizza size={14} className="text-blue-300" />;
-    case 'SNACKS': return <Candy size={14} className="text-pink-300" />;
-    case 'BEVERAGES': return <Coffee size={14} className="text-brown-400" />;
-    default: return <Package size={14} className="text-gray-400" />;
+    case 'PRODUCE': 
+      return <Apple size={14} className="text-green-500" />;
+    case 'DAIRY': 
+      return <Milk size={14} className="text-blue-100" />;
+    case 'MEAT': 
+      return <Beef size={14} className="text-red-400" />;
+    case 'FISH':
+    case 'SEAFOOD': 
+      return <Fish size={14} className="text-blue-400" />;
+    case 'GRAINS': 
+      return <Wheat size={14} className="text-amber-300" />;
+    case 'CANNED': 
+      return <Package size={14} className="text-gray-400" />;
+    case 'BAKING': 
+      return <Egg size={14} className="text-yellow-200" />;
+    case 'CONDIMENTS': 
+      return <Bottle size={14} className="text-yellow-500" />;
+    case 'SPICES': 
+      return <Flame size={14} className="text-rose-300" />;
+    case 'FROZEN': 
+      return <Refrigerator size={14} className="text-blue-300" />;
+    case 'SNACKS': 
+      return <Candy size={14} className="text-pink-300" />;
+    case 'BEVERAGES': 
+      return <Coffee size={14} className="text-brown-400" />;
+    default: 
+      return <Package size={14} className="text-gray-400" />;
   }
 };
 
@@ -47,6 +78,7 @@ const ShoppingList = () => {
   
   const [previewItems, setPreviewItems] = useState<Array<{
     name: string;
+    originalText: string;
     category: string | null;
   }>>();
   
@@ -58,7 +90,11 @@ const ShoppingList = () => {
         .slice(0, 5)
         .map(item => {
           const { name } = parseIngredientAmount(item.ingredient);
-          return { name, category: item.category };
+          return { 
+            name, 
+            originalText: item.ingredient,
+            category: item.category 
+          };
         });
       
       setPreviewItems(uncheckedItems);
@@ -113,7 +149,7 @@ const ShoppingList = () => {
           {previewItems?.map((item, index) => (
             <li key={index} className="flex items-center gap-2 text-sm">
               <span className="flex-shrink-0">
-                {getCategoryIcon(item.category)}
+                {getIngredientIcon(item.originalText, item.category)}
               </span>
               <div>{item.name}</div>
             </li>
