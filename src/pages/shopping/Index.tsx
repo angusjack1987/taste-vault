@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Trash2, 
@@ -19,7 +20,7 @@ import {
   SprayCan,
   Droplet,
   Candy,
-  SaltShaker
+  Pepper
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   "CANNED": <Package size={16} className="text-gray-400" />,
   "BAKING": <Egg size={16} className="text-yellow-200" />,
   "CONDIMENTS": <Droplet size={16} className="text-yellow-500" />,
-  "SPICES": <SaltShaker size={16} className="text-rose-300" />,
+  "SPICES": <Pepper size={16} className="text-rose-300" />,
   "FROZEN": <Pizza size={16} className="text-blue-300" />,
   "SNACKS": <Candy size={16} className="text-pink-300" />,
   "BEVERAGES": <Coffee size={16} className="text-brown-400" />,
