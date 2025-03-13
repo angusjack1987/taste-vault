@@ -1,12 +1,12 @@
 
-import { FridgeItem } from "./types";
 import { useFridgeItems } from "./useFridgeItems";
 import { useFridgeMutations } from "./useFridgeMutations";
 import { useVoiceInput } from "./useVoiceInput";
 import { useBatchItemOperations } from "./useBatchItemOperations";
 import useAuth from "@/hooks/useAuth";
 
-export { FridgeItem };
+// Use 'export type' for TypeScript interfaces when isolatedModules is enabled
+export type { FridgeItem } from "./types";
 
 export const useFridge = () => {
   const { user } = useAuth();
