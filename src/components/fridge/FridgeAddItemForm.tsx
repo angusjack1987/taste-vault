@@ -29,6 +29,7 @@ const FridgeAddItemForm = ({
           value={newItemName}
           onChange={(e) => onNewItemNameChange(e.target.value)}
           className="w-full rounded-full"
+          autoComplete="off"
         />
       </div>
       

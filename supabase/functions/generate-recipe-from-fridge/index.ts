@@ -86,6 +86,9 @@ Not all ingredients need to be used in each recipe, but use as many as possible 
       const parsedContent = JSON.parse(recipeContent);
       if (Array.isArray(parsedContent) && parsedContent.length > 0) {
         recipeOptions = parsedContent;
+      } else if (typeof parsedContent === 'object' && parsedContent.options && Array.isArray(parsedContent.options)) {
+        // Handle the case where it returns {options: [...]} format (like in meal planner)
+        recipeOptions = parsedContent.options;
       } else {
         // Fall back if we didn't get an array
         recipeOptions = [{ rawContent: recipeContent }];
