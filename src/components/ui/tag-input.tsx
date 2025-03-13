@@ -1,4 +1,3 @@
-
 import React, { useState, KeyboardEvent, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,7 @@ const TagInput = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    // Add tag on Enter
+    // Add tag on Enter - exactly like comma
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent form submission
       e.stopPropagation(); // Stop event propagation
@@ -66,23 +65,24 @@ const TagInput = ({
     if (trimmedValue && !tags.includes(trimmedValue)) {
       const newTags = [...tags, trimmedValue];
       setTags(newTags);
+      
+      // Immediately clear the input state
       setInputValue("");
+      
       if (onTagsChange) onTagsChange(newTags);
       
       // Ensure input keeps focus after adding tag
       if (inputRef.current) {
         // We need to clear the input immediately to avoid it being submitted
         inputRef.current.value = "";
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-          }
-        }, 0);
+        // Force focus to stay in the input
+        inputRef.current.focus();
       }
     } else {
       setInputValue("");
       if (inputRef.current) {
         inputRef.current.value = "";
+        inputRef.current.focus();
       }
     }
   };
