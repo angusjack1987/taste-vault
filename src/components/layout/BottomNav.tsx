@@ -20,11 +20,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navItems = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/recipes", label: "Recipes", icon: Book },
+  { to: "/", label: "Home", Icon: Home },
+  { to: "/recipes", label: "Recipes", Icon: Book },
   // Plus button will go here in the UI, but not in this array
-  { to: "/meal-plan", label: "Meal Plan", icon: Calendar },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/meal-plan", label: "Meal Plan", Icon: Calendar },
+  { to: "/settings", label: "Settings", Icon: Settings },
 ];
 
 const BottomNav = () => {
@@ -33,9 +33,9 @@ const BottomNav = () => {
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
-      <div className="flex items-center justify-between bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full py-1 shadow-vibrant mx-auto max-w-md">
-        {/* First two navigation items */}
-        <div className="flex justify-center w-1/5">
+      <div className="grid grid-cols-5 items-center bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full py-1 shadow-vibrant mx-auto max-w-md">
+        {/* First navigation item */}
+        <div className="flex justify-center">
           <Link
             to={navItems[0].to}
             className={cn(
@@ -44,18 +44,19 @@ const BottomNav = () => {
             )}
           >
             <div className="flex justify-center w-full">
-              <navItems[0].icon
-                className={cn(
+              {React.createElement(navItems[0].Icon, { 
+                className: cn(
                   "w-4 h-4 mb-0.5 transition-all",
                   pathname === navItems[0].to ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
-                )}
-              />
+                )
+              })}
             </div>
             <span className="text-[10px] font-medium">{navItems[0].label}</span>
           </Link>
         </div>
 
-        <div className="flex justify-center w-1/5">
+        {/* Second navigation item */}
+        <div className="flex justify-center">
           <Link
             to={navItems[1].to}
             className={cn(
@@ -66,21 +67,21 @@ const BottomNav = () => {
             )}
           >
             <div className="flex justify-center w-full">
-              <navItems[1].icon
-                className={cn(
+              {React.createElement(navItems[1].Icon, { 
+                className: cn(
                   "w-4 h-4 mb-0.5 transition-all",
                   (pathname === navItems[1].to || (navItems[1].to !== "/" && pathname.startsWith(navItems[1].to)))
                     ? "text-secondary animate-pulse-slow" 
                     : "text-primary-foreground"
-                )}
-              />
+                )
+              })}
             </div>
             <span className="text-[10px] font-medium">{navItems[1].label}</span>
           </Link>
         </div>
 
         {/* Center Action Button */}
-        <div className="flex justify-center w-1/5 relative">
+        <div className="flex justify-center relative">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 transition-all border-3 border-primary text-white shadow-md hover:-translate-y-1 active:translate-y-0 group">
@@ -110,8 +111,8 @@ const BottomNav = () => {
           </DropdownMenu>
         </div>
 
-        {/* Last two navigation items */}
-        <div className="flex justify-center w-1/5">
+        {/* Third navigation item */}
+        <div className="flex justify-center">
           <Link
             to={navItems[2].to}
             className={cn(
@@ -122,20 +123,21 @@ const BottomNav = () => {
             )}
           >
             <div className="flex justify-center w-full">
-              <navItems[2].icon
-                className={cn(
+              {React.createElement(navItems[2].Icon, { 
+                className: cn(
                   "w-4 h-4 mb-0.5 transition-all",
                   (pathname === navItems[2].to || (navItems[2].to !== "/" && pathname.startsWith(navItems[2].to)))
                     ? "text-secondary animate-pulse-slow" 
                     : "text-primary-foreground"
-                )}
-              />
+                )
+              })}
             </div>
             <span className="text-[10px] font-medium">{navItems[2].label}</span>
           </Link>
         </div>
 
-        <div className="flex justify-center w-1/5">
+        {/* Fourth navigation item */}
+        <div className="flex justify-center">
           <Link
             to={navItems[3].to}
             className={cn(
@@ -146,14 +148,14 @@ const BottomNav = () => {
             )}
           >
             <div className="flex justify-center w-full">
-              <navItems[3].icon
-                className={cn(
+              {React.createElement(navItems[3].Icon, { 
+                className: cn(
                   "w-4 h-4 mb-0.5 transition-all",
                   (pathname === navItems[3].to || (navItems[3].to !== "/" && pathname.startsWith(navItems[3].to)))
                     ? "text-secondary animate-pulse-slow" 
                     : "text-primary-foreground"
-                )}
-              />
+                )
+              })}
             </div>
             <span className="text-[10px] font-medium">{navItems[3].label}</span>
           </Link>
