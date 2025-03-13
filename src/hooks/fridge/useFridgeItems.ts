@@ -37,6 +37,11 @@ export const useFridgeItems = (user: User | null) => {
       
       // Now map the valid items with preferences
       const itemsWithPrefs = validItems.map(item => {
+        // Ensure item is not null before proceeding (this addresses the TypeScript error)
+        if (item === null) {
+          return null; // This will be filtered out later
+        }
+        
         // We've confirmed item is an object with an id
         const itemObject = item as Record<string, any>;
         
@@ -63,7 +68,7 @@ export const useFridgeItems = (user: User | null) => {
             itemPrefs.always_available
           )
         } as FridgeItem;
-      });
+      }).filter((item): item is FridgeItem => item !== null); // Remove any null items that might have been introduced
       
       return itemsWithPrefs;
     },
