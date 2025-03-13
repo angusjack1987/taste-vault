@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Trash2, 
@@ -163,7 +164,17 @@ const ShoppingListPage = () => {
   const categorizeItems = () => {
     if (!shoppingItems) return {};
     
-    return shoppingItems.reduce((acc, item) => {
+    // First sort items to move checked items to the bottom within each category
+    const sortedItems = [...shoppingItems].sort((a, b) => {
+      // If one is checked and the other isn't, put the checked one last
+      if (a.is_checked !== b.is_checked) {
+        return a.is_checked ? 1 : -1;
+      }
+      // If both checked or both unchecked, maintain original order
+      return 0;
+    });
+    
+    return sortedItems.reduce((acc, item) => {
       const category = item.category || "OTHER";
       if (!acc[category]) {
         acc[category] = [];
@@ -282,14 +293,14 @@ const ShoppingListPage = () => {
                       <h3 className="font-medium mb-1 text-sm text-muted-foreground flex items-center gap-2">
                         {categoryIcons[category]} {category}
                       </h3>
-                      <ul className="space-y-1">
+                      <ul className="space-y-1" style={{ transition: "all 0.3s ease" }}>
                         {items.map(item => {
                           const { name } = parseIngredientAmount(item.ingredient);
                           
                           return (
                             <li 
                               key={item.id} 
-                              className="flex items-start justify-between gap-2 py-1 px-2 rounded-md hover:bg-muted/50 transition-colors"
+                              className="flex items-start justify-between gap-2 py-1 px-2 rounded-md hover:bg-muted/50 transition-all duration-300"
                             >
                               <div className="flex items-start gap-2 flex-1">
                                 <Checkbox 
