@@ -1,0 +1,22 @@
+
+project_id = "ylqhmufqrrprgklflgiw"
+
+[[functions]]
+name = "ai-recipe-suggestions"
+verify_jwt = true
+
+[[functions]]
+name = "generate-recipe-from-fridge"
+verify_jwt = true
+
+[[functions]]
+name = "scrape-recipe"
+verify_jwt = true
+
+[[functions]]
+name = "transcribe-voice"
+verify_jwt = true
+
+[[functions]]
+name = "ai-memory-insights"
+verify_jwt = true

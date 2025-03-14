@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
-import { Sparkles, Lightbulb } from "lucide-react";
+import { Sparkles, Lightbulb, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
 import useRecipes from "@/hooks/useRecipes";
@@ -16,6 +16,7 @@ import AddMealDialog from "@/components/meal-plan/dialogs/AddMealDialog";
 import AiSuggestionsDialog from "@/components/meal-plan/dialogs/AiSuggestionsDialog";
 import SuggestMealDialog from "@/components/meal-plan/dialogs/SuggestMealDialog";
 import QuickAddMealDialog from "@/components/meal-plan/dialogs/QuickAddMealDialog";
+import AiMemoryDialog from "@/components/meal-plan/dialogs/AiMemoryDialog";
 
 const MealPlan = () => {
   const isMobile = useIsMobile();
@@ -26,6 +27,7 @@ const MealPlan = () => {
   const [currentMealType, setCurrentMealType] = useState<MealType | null>(null);
   
   const [aiSuggestionsOpen, setAiSuggestionsOpen] = useState(false);
+  const [aiMemoryOpen, setAiMemoryOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<string | null>(null);
   
   const [suggestMealOpen, setSuggestMealOpen] = useState(false);
@@ -294,6 +296,14 @@ const MealPlan = () => {
           >
             <Sparkles className="h-5 w-5" />
           </Button>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => setAiMemoryOpen(true)}
+            title="AI Memory Insights"
+          >
+            <Brain className="h-5 w-5" />
+          </Button>
         </div>
       }
     >
@@ -350,6 +360,11 @@ const MealPlan = () => {
         onSuggestMeal={handleSuggestMeal}
         onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
         onResetSuggestedMeal={() => setSuggestedMeal(null)}
+      />
+
+      <AiMemoryDialog
+        open={aiMemoryOpen}
+        onOpenChange={setAiMemoryOpen}
       />
     </MainLayout>
   );
