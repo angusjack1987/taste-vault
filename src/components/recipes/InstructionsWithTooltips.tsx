@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Info } from "lucide-react";
 import {
@@ -146,32 +147,31 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       });
     });
 
-    // Look for cooking techniques that would benefit from ingredient tooltips
-    const techniquesToMatch = [
-      "mix", "combine", "stir", "whisk", "blend", "fold", "add", 
-      "pour", "drizzle", "sprinkle", "top with", "garnish with"
+    // Look for composite ingredients that might be referred to in the instructions
+    const compositeTerms = [
+      "dressing", "sauce", "marinade", "mixture", "seasoning", "spice mix"
     ];
     
-    techniquesToMatch.forEach(technique => {
-      const techniqueRegex = new RegExp(`\\b${technique}\\b`, "gi");
-      let matchTech;
+    compositeTerms.forEach(term => {
+      const termRegex = new RegExp(`\\b${term}\\b`, "gi");
+      let matchTerm;
       
-      while ((matchTech = techniqueRegex.exec(text)) !== null) {
-        // Find which ingredients this technique might apply to
-        const contextEnd = Math.min(text.length, matchTech.index + technique.length + 40);
-        const forwardContext = text.substring(matchTech.index, contextEnd).toLowerCase();
+      while ((matchTerm = termRegex.exec(text)) !== null) {
+        // Find related ingredients for this composite term
+        const relatedIngredients = ingredients.filter(ing => 
+          ing.toLowerCase().includes(term) || 
+          // Also check if any ingredient is specifically for this composite
+          ing.toLowerCase().includes(`for ${term}`) ||
+          ing.toLowerCase().includes(`${term} ingredient`)
+        );
         
-        ingredientKeywords.forEach(({ fullIngredient, mainName }) => {
-          if (mainName.length < 3) return;
-          
-          if (forwardContext.includes(mainName.toLowerCase())) {
-            matches.push({
-              ingredient: fullIngredient,
-              index: matchTech.index,
-              length: technique.length,
-            });
-          }
-        });
+        if (relatedIngredients.length > 0) {
+          matches.push({
+            ingredient: `${term.charAt(0).toUpperCase() + term.slice(1)} (${relatedIngredients.join(", ")})`,
+            index: matchTerm.index,
+            length: matchTerm[0].length,
+          });
+        }
       }
     });
 
@@ -185,7 +185,8 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         return match.index >= prevMatch.index + prevMatch.length;
       });
 
-    return filteredMatches;
+    // Only return the first match to maintain the one-tooltip-per-line requirement
+    return filteredMatches.length > 0 ? [filteredMatches[0]] : [];
   };
 
   // Function to render text with tooltips
@@ -243,7 +244,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
 
       // Only process if we have tooltips
       if (step.tooltips && step.tooltips.length > 0) {
-        // We only use the first tooltip as per our new limit
+        // We only use the first tooltip as per our limit
         const tooltip = step.tooltips[0];
         
         if (tooltip && tooltip.text) {
@@ -264,7 +265,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
                       {tooltipText}
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
+                  <TooltipContent className="max-w-xs bg-white">
                     <div className="flex items-start gap-2">
                       <Info className="h-4 w-4 mt-0.5 text-primary" />
                       <div>
@@ -290,7 +291,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       }
 
       return (
-        <li key={index} className="flex gap-3">
+        <li key={index} className="flex gap-3 mb-4">
           <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
             {index + 1}
           </span>
@@ -306,9 +307,10 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         renderEnhancedInstructions()
       ) : (
         instructions.map((step, index) => {
+          // Get only one match per instruction for consistency with enhanced mode
           const matches = findIngredientMatches(step);
           return (
-            <li key={index} className="flex gap-3">
+            <li key={index} className="flex gap-3 mb-4">
               <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
                 {index + 1}
               </span>

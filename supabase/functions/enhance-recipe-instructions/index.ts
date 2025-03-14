@@ -36,9 +36,10 @@ serve(async (req) => {
     console.log("Instructions count:", instructions.length);
     console.log("Ingredients count:", ingredients.length);
 
-    // Use the AI settings from the request if available, otherwise use defaults
+    // Always use temperature=1 as requested
+    const temperature = 1.0;
+    // Use the AI model from settings if available, otherwise use default
     const model = aiSettings?.model || 'gpt-4o-mini';
-    const temperature = aiSettings?.temperature || 0.7;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -57,12 +58,17 @@ serve(async (req) => {
               
               IMPORTANT: Add a MAXIMUM of ONE tooltip per instruction step.
               
-              For each instruction step, identify the MOST IMPORTANT term that would benefit from a tooltip.
+              For each instruction step, identify any reference to an ingredient or a preparation that directly relates to the ingredients list.
+              
+              Focus on:
+              1. References to composite ingredients like "dressing," "sauce," or "mixture" - explain what ingredients make them up
+              2. References to cooking techniques that relate to specific ingredients
+              3. References to ingredients that might be difficult to identify in the instructions
               
               For each tooltip, provide:
               1. The exact text in the instruction that needs a tooltip
               2. The ingredient it relates to (if applicable)
-              3. A brief explanation of the technique, why it's important, or tips for success
+              3. A brief, helpful explanation about the ingredient components
               
               Your response must be VALID JSON without any markdown formatting, code blocks, or backticks.
               Format your response as a JSON array where each object has:
@@ -81,7 +87,8 @@ serve(async (req) => {
               Ingredients:
               ${ingredients.map(ing => `- ${ing}`).join('\n')}
               
-              Create ONE concise, helpful tooltip for the most important term in each instruction step.
+              Create ONE concise, helpful tooltip for each instruction step that relates back to the ingredients list. 
+              For composite items like "dressing" or "sauce", explain what ingredients make them up.
             `
           }
         ],
