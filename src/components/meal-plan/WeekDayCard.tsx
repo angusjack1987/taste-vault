@@ -32,13 +32,13 @@ interface WeekDayCardProps {
 const getMealIcon = (mealType: MealType) => {
   switch (mealType) {
     case 'breakfast':
-      return <Coffee className="h-3.5 w-3.5 mr-1" />;
+      return <Coffee className="h-3.5 w-3.5 mr-1.5" />;
     case 'lunch':
-      return <Salad className="h-3.5 w-3.5 mr-1" />;
+      return <Salad className="h-3.5 w-3.5 mr-1.5" />;
     case 'dinner':
-      return <ChefHat className="h-3.5 w-3.5 mr-1" />;
+      return <ChefHat className="h-3.5 w-3.5 mr-1.5" />;
     default:
-      return <Utensils className="h-3.5 w-3.5 mr-1" />;
+      return <Utensils className="h-3.5 w-3.5 mr-1.5" />;
   }
 };
 
@@ -55,33 +55,39 @@ const WeekDayCard = ({
   const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
     if (!meal) {
       return (
-        <div className="border border-dashed border-border rounded-md p-2 flex justify-between items-center min-h-[48px] bg-background/50 hover:bg-background transition-colors">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 px-1.5 text-xs group flex-1 justify-start" 
-            onClick={() => onAddMeal(date, mealType)}
-          >
-            <Plus className="h-3 w-3 mr-1 group-hover:animate-spin-slow" />
+        <div className="border border-dashed border-border rounded-md p-2 flex flex-col bg-background/50 hover:bg-background transition-colors min-h-[60px]">
+          <div className="flex items-center text-xs font-medium text-muted-foreground mb-1.5">
             {getMealIcon(mealType)}
             <span className="capitalize">{mealType}</span>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 w-7 px-0 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" 
-            onClick={() => onSuggestMeal(date, mealType)}
-            title="Get AI suggestion"
-            type="button"
-          >
-            <Lightbulb className="h-3 w-3 group-hover:animate-pulse-slow" />
-          </Button>
+          </div>
+          
+          <div className="flex items-center gap-1.5">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 px-1.5 text-xs group flex-1 justify-center" 
+              onClick={() => onAddMeal(date, mealType)}
+            >
+              <Plus className="h-3 w-3 group-hover:animate-spin-slow" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 w-7 px-0 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" 
+              onClick={() => onSuggestMeal(date, mealType)}
+              title="Get AI suggestion"
+              type="button"
+            >
+              <Lightbulb className="h-3 w-3 group-hover:animate-pulse-slow" />
+            </Button>
+          </div>
         </div>
       );
     }
     
     return (
-      <div className="border rounded-md p-2 bg-card min-h-[48px] relative hover:shadow-sm transition-shadow group">
+      <div className="border rounded-md p-2 bg-card min-h-[60px] relative hover:shadow-sm transition-shadow group">
         <div className="text-xs font-medium flex items-center">
           {getMealIcon(mealType)}
           <span className="capitalize text-muted-foreground">{mealType}</span>

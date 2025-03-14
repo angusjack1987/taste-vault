@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import WeekDayCard from './WeekDayCard';
 import MobileDayCard from './MobileDayCard';
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
@@ -31,6 +31,27 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
   const weekEnd = weekDays.length > 0 ? weekDays[weekDays.length - 1].date : new Date();
   
   const weekLabel = `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
+  
+  // Ref for the today card in mobile view
+  const todayCardRef = useRef<HTMLDivElement>(null);
+  
+  // Find today's index in weekDays
+  const todayIndex = weekDays.findIndex(day => 
+    format(new Date(), 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd')
+  );
+  
+  // Scroll to today's card on initial render for mobile view
+  useEffect(() => {
+    if (isMobile && todayCardRef.current && todayIndex !== -1) {
+      // Use a small timeout to ensure the DOM is fully rendered
+      setTimeout(() => {
+        todayCardRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 300);
+    }
+  }, [isMobile, todayIndex]);
   
   return (
     <div className="space-y-4">
@@ -78,16 +99,24 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
       
       {/* Mobile view */}
       <div className="md:hidden space-y-4">
-        {weekDays.map((day) => (
-          <MobileDayCard
-            key={`${day.date.toString()}-mobile`}
-            date={day.date}
-            meals={day.meals}
-            onAddMeal={onAddMeal}
-            onRemoveMeal={onRemoveMeal}
-            onSuggestMeal={onSuggestMeal}
-          />
-        ))}
+        {weekDays.map((day, index) => {
+          const isToday = format(new Date(), 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd');
+          
+          return (
+            <div 
+              key={`${day.date.toString()}-mobile`}
+              ref={isToday ? todayCardRef : null}
+            >
+              <MobileDayCard
+                date={day.date}
+                meals={day.meals}
+                onAddMeal={onAddMeal}
+                onRemoveMeal={onRemoveMeal}
+                onSuggestMeal={onSuggestMeal}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
