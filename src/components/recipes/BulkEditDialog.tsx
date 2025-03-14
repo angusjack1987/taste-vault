@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { TagInput } from "@/components/ui/tag-input";
+import TagInput from "@/components/ui/tag-input";
 import useRecipes from "@/hooks/useRecipes";
 
 type BulkEditDialogProps = {
@@ -49,7 +49,7 @@ const BulkEditDialog = ({
   const [servings, setServings] = useState<string>("4");
   
   const { useBulkUpdateRecipes } = useRecipes();
-  const { mutate: updateRecipes, isLoading } = useBulkUpdateRecipes();
+  const { mutate: updateRecipes, isPending: isLoading } = useBulkUpdateRecipes();
   
   const handleToggleField = (field: keyof FieldSelection) => {
     setFieldSelection(prev => ({
