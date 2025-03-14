@@ -82,21 +82,25 @@ export function cleanIngredientString(ingredient: string): string {
   }
   
   // First check for preparation instructions in parentheses and preserve them
-  const prepInParentheses = /\((chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered)/i;
+  const prepInParentheses = /\((chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered|finely|roughly|to taste|for garnish)/i;
   if (prepInParentheses.test(ingredient)) {
     // Keep the first set of parentheses that has preparation instructions
-    const parenthesesMatch = ingredient.match(/\(([^)]*)\)/);
+    const parenthesesMatch = ingredient.match(/\(([^)]*(?:chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered|finely|roughly|to taste|for garnish)[^)]*)\)/i);
     if (parenthesesMatch) {
-      const prepContent = parenthesesMatch[1];
-      // Remove all parentheses first
-      let cleaned = ingredient.replace(/\([^)]*\)/g, '');
-      // Then add back the preparation instruction as a comma-separated clause
-      cleaned = cleaned.trim() + ', ' + prepContent;
-      // Fix double commas
-      cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
-      // Remove any trailing commas
-      cleaned = cleaned.replace(/,\s*$/, '');
-      return cleaned;
+      const prepContent = parenthesesMatch[1].trim();
+      
+      // Only extract if it doesn't contain measurement notes like "about 1/2 cup"
+      if (!/(about|cup|note)/i.test(prepContent)) {
+        // Remove all parentheses first
+        let cleaned = ingredient.replace(/\([^)]*\)/g, '');
+        // Then add back the preparation instruction as a comma-separated clause
+        cleaned = cleaned.trim() + ', ' + prepContent;
+        // Fix double commas
+        cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+        // Remove any trailing commas
+        cleaned = cleaned.replace(/,\s*$/, '');
+        return cleaned;
+      }
     }
   }
   
@@ -158,7 +162,8 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     'for garnish'
   ];
   
-  // Check for "ingredient, preparation" format (e.g., "chicken, diced")
+  // First, check for comma-separated preparation instructions
+  // As in "1/2 small onion, finely chopped"
   const commaPattern = /^(.+?),\s*(.+)$/;
   const commaMatch = ingredient.match(commaPattern);
   
@@ -166,17 +171,7 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     const potentialPrep = commaMatch[2].trim();
     
     // Check if what follows the comma is actually a preparation instruction
-    // by looking for common preparation words at the beginning
-    for (const prep of prepWords) {
-      if (potentialPrep.toLowerCase().startsWith(prep.toLowerCase())) {
-        return {
-          mainText: commaMatch[1].trim(),
-          preparation: potentialPrep
-        };
-      }
-    }
-    
-    // If no preparation word is found, check if any prep word appears in the text
+    // by looking for common preparation words
     for (const prep of prepWords) {
       if (potentialPrep.toLowerCase().includes(prep.toLowerCase())) {
         return {

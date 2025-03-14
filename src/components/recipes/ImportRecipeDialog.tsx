@@ -294,13 +294,21 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
               <h4 className="font-medium mb-2">Ingredients</h4>
               <ul className="list-disc pl-5 space-y-1">
                 {(editedRecipe.ingredients || []).map((ingredient, index) => {
+                  // Process each ingredient to separate amount, name, and preparation
                   const { mainText, preparation } = parsePreparation(ingredient);
                   const { name, amount } = parseIngredientAmount(mainText);
                   
                   return (
                     <li key={index} className="text-sm">
-                      <span className="font-medium">{amount ? `${amount} ` : ''}{name}</span>
-                      {preparation && <span className="text-muted-foreground italic ml-1">({preparation})</span>}
+                      {amount && <span className="font-medium">{amount} </span>}
+                      <span>{name}</span>
+                      {preparation && (
+                        <span className="text-muted-foreground italic ml-1">
+                          {preparation.includes("finely chopped") || preparation.includes("about") ? 
+                            `, ${preparation}` : 
+                            ` (${preparation})`}
+                        </span>
+                      )}
                     </li>
                   );
                 })}

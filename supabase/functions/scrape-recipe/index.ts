@@ -23,19 +23,33 @@ function handleCors(req: Request): Response | null {
 function cleanIngredient(ingredient: string): string {
   if (!ingredient) return '';
   
-  // Don't remove parentheses if they appear to contain preparation instructions
-  const prepInParentheses = /\((chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered)/i;
+  // Extract preparation instructions in italics if present
+  // This regex looks for text in between common italic markers like <i>, <em>, or even CSS styling
+  const italicPattern = /<(?:i|em)[^>]*>([^<]+)<\/(?:i|em)>|<span[^>]*style="[^"]*font-style:\s*italic[^"]*"[^>]*>([^<]+)<\/span>/i;
+  const italicMatch = ingredient.match(italicPattern);
+  let prepInstruction = '';
+  
+  if (italicMatch) {
+    // Capture the instruction from either the first or second capture group
+    prepInstruction = (italicMatch[1] || italicMatch[2]).trim();
+    
+    // Remove the italic element from the ingredient
+    ingredient = ingredient.replace(italicMatch[0], '').trim();
+  }
+  
+  // Check for preparation instructions in parentheses
+  const prepInParentheses = /\((chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered|finely|roughly|to taste|for garnish)/i;
   if (prepInParentheses.test(ingredient)) {
     // Keep the first set of parentheses that has preparation instructions
-    const parenthesesMatch = ingredient.match(/\(([^)]*)\)/);
+    const parenthesesMatch = ingredient.match(/\(([^)]*(?:chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered|finely|roughly|to taste|for garnish)[^)]*)\)/i);
     if (parenthesesMatch) {
-      const prepContent = parenthesesMatch[1];
-      // Remove all parentheses first
-      let cleaned = ingredient.replace(/\([^)]*\)/g, '');
-      // Then add back the preparation instruction as a comma-separated clause
-      cleaned = cleaned.trim() + ', ' + prepContent;
-      // Fix double commas
-      return cleaned.replace(/,\s*,/g, ',').trim();
+      const extractedPrep = parenthesesMatch[1].trim();
+      
+      // Only extract as prep instruction if it doesn't contain "note" or numbers that look like measurements
+      if (!/(note|cup|about)/i.test(extractedPrep)) {
+        // Save the prep instruction
+        prepInstruction = prepInstruction ? `${prepInstruction}, ${extractedPrep}` : extractedPrep;
+      }
     }
   }
   
@@ -63,6 +77,13 @@ function cleanIngredient(ingredient: string): string {
   
   // Normalize spaces
   cleaned = cleaned.trim();
+  
+  // Add back the preparation instruction if we extracted one
+  if (prepInstruction) {
+    // Make sure we don't have a trailing comma before adding the prep instruction
+    cleaned = cleaned.replace(/,\s*$/, '');
+    cleaned = `${cleaned}, ${prepInstruction}`;
+  }
   
   return cleaned;
 }
@@ -223,6 +244,46 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
 
   // Fallback methods if structured data wasn't found or was incomplete
   
+  // If ingredients weren't found or have HTML in them, try finding them in the DOM
+  if (recipe.ingredients.length === 0 || recipe.ingredients.some(ing => /<[a-z][\s\S]*>/i.test(ing))) {
+    const ingredientLists = doc.querySelectorAll('.ingredients, .ingredient-list, ul[class*="ingredient"]')
+    for (let i = 0; i < ingredientLists.length; i++) {
+      const listItems = ingredientLists[i].querySelectorAll('li')
+      if (listItems.length > 3) {  // Assume a list with at least 3 items could be ingredients
+        recipe.ingredients = Array.from(listItems)
+          .map(item => cleanIngredient(item.innerHTML || item.textContent || ''))
+          .filter(Boolean)
+        break
+      }
+    }
+    
+    // If still no ingredients, try another fallback approach
+    if (recipe.ingredients.length === 0) {
+      const allLists = doc.querySelectorAll('ul')
+      for (let i = 0; i < allLists.length; i++) {
+        const listItems = allLists[i].querySelectorAll('li')
+        if (listItems.length > 3) {  // Assume a list with at least 3 items could be ingredients
+          const potentialIngredients = Array.from(listItems)
+            .map(item => item.innerHTML || item.textContent || '')
+            .filter(Boolean)
+          
+          // Check if at least half of the items might be ingredients (contain measurements or common food words)
+          const ingredientPattern = /\d+\s*(?:g|kg|ml|l|oz|lb|cup|tbsp|tsp|teaspoon|tablespoon|pinch|dash)/i
+          const foodWords = /\b(?:salt|pepper|oil|butter|sugar|flour|water|milk|egg|garlic|onion|chicken|beef|pork|fish)\b/i
+          
+          const ingredientCount = potentialIngredients.filter(item => 
+            ingredientPattern.test(item) || foodWords.test(item)
+          ).length
+          
+          if (ingredientCount >= potentialIngredients.length / 2) {
+            recipe.ingredients = potentialIngredients.map(item => cleanIngredient(item))
+            break
+          }
+        }
+      }
+    }
+  }
+  
   // Title fallback
   if (!recipe.title) {
     const titleElement = doc.querySelector('h1')
@@ -263,20 +324,6 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
         break
       } else if (dataSrc && !dataSrc.includes('logo') && !dataSrc.includes('icon')) {
         recipe.image = new URL(dataSrc, url).href
-        break
-      }
-    }
-  }
-  
-  // Try to identify ingredients
-  if (recipe.ingredients.length === 0) {
-    const ingredientLists = doc.querySelectorAll('ul')
-    for (let i = 0; i < ingredientLists.length; i++) {
-      const listItems = ingredientLists[i].querySelectorAll('li')
-      if (listItems.length > 3) {  // Assume a list with at least 3 items could be ingredients
-        recipe.ingredients = Array.from(listItems)
-          .map(item => cleanIngredient(item.textContent?.trim() || ''))
-          .filter(Boolean)
         break
       }
     }
