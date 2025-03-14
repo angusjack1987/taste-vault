@@ -10,7 +10,7 @@ import {
   useBulkDeleteRecipes
 } from "./mutations";
 
-export { Recipe, RecipeFormData } from "./types";
+export type { Recipe, RecipeFormData } from "./types";
 
 const useRecipes = () => {
   const queryClient = useQueryClient();

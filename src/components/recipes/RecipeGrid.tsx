@@ -58,7 +58,7 @@ const RecipeGrid = ({
               className="cursor-pointer"
             >
               <RecipeCard
-                id={recipe.id}
+                id={recipe.id} // Ensure id is always passed
                 title={recipe.title}
                 image={recipe.image}
                 time={recipe.time}
@@ -68,7 +68,7 @@ const RecipeGrid = ({
           ) : (
             <Link to={`/recipes/${recipe.id}`}>
               <RecipeCard
-                id={recipe.id}
+                id={recipe.id} // Ensure id is always passed
                 title={recipe.title}
                 image={recipe.image}
                 time={recipe.time}

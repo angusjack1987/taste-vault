@@ -34,7 +34,7 @@ const RecipesList = () => {
   const { useAllRecipes, useCreateRecipe, useBulkDeleteRecipes } = useRecipes();
   const { data: recipes, isLoading, error } = useAllRecipes();
   const { mutate: createRecipe } = useCreateRecipe();
-  const { mutate: bulkDeleteRecipes, isLoading: isDeleting } = useBulkDeleteRecipes();
+  const { mutate: bulkDeleteRecipes, isPending: isDeleting } = useBulkDeleteRecipes();
   const navigate = useNavigate();
   
   const handleShowFilters = () => {

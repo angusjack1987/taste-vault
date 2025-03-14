@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { 
@@ -59,7 +58,6 @@ const BulkEditDialog = ({
   };
   
   const handleSubmit = () => {
-    // Create update object only with selected fields
     const updates: Record<string, any> = {};
     
     if (fieldSelection.tags) {
@@ -78,7 +76,6 @@ const BulkEditDialog = ({
       updates.servings = parseInt(servings, 10) || null;
     }
     
-    // Apply updates to all selected recipes
     const recipeUpdates = selectedRecipeIds.map(id => ({
       id,
       updates
