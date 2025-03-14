@@ -10,6 +10,7 @@ interface MemoryInsightsSectionProps {
   isMemoryEnabled: boolean;
   onOpenMemoryDialog: () => void;
   onGenerateInsights: () => void;
+  lastUpdated: string | null;
 }
 
 const MemoryInsightsSection = ({
@@ -17,7 +18,8 @@ const MemoryInsightsSection = ({
   memoryPreview,
   isMemoryEnabled,
   onOpenMemoryDialog,
-  onGenerateInsights
+  onGenerateInsights,
+  lastUpdated
 }: MemoryInsightsSectionProps) => {
   // Always render the component regardless of isMemoryEnabled
   
@@ -49,6 +51,11 @@ const MemoryInsightsSection = ({
             <>
               <div className="text-base prose prose-sm max-w-none" 
                    dangerouslySetInnerHTML={{ __html: memoryPreview }} />
+              {lastUpdated && (
+                <div className="text-xs text-muted-foreground mt-2">
+                  Last updated: {new Date(lastUpdated).toLocaleString()}
+                </div>
+              )}
               <Button 
                 variant="secondary" 
                 size="sm" 

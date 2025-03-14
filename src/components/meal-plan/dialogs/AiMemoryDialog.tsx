@@ -13,7 +13,7 @@ interface AiMemoryDialogProps {
 }
 
 const AiMemoryDialog = ({ open, onOpenChange }: AiMemoryDialogProps) => {
-  const { loading, insights, getMemoryInsights, isMemoryEnabled } = useAiMemory();
+  const { loading, insights, getMemoryInsights, isMemoryEnabled, lastUpdated } = useAiMemory();
 
   useEffect(() => {
     if (open && !insights && !loading && isMemoryEnabled) {
@@ -31,6 +31,11 @@ const AiMemoryDialog = ({ open, onOpenChange }: AiMemoryDialogProps) => {
           </DialogTitle>
           <DialogDescription>
             Personalized cooking insights based on your recipe history and preferences
+            {lastUpdated && (
+              <span className="block text-xs text-muted-foreground mt-1">
+                Last updated: {new Date(lastUpdated).toLocaleString()}
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
         
@@ -52,12 +57,10 @@ const AiMemoryDialog = ({ open, onOpenChange }: AiMemoryDialogProps) => {
               <p className="text-muted-foreground">Analyzing your cooking journey...</p>
             </div>
           ) : insights ? (
-            <div className="mt-2 space-y-4 prose prose-sm max-w-none">
-              {insights.split('\n\n').map((paragraph, idx) => (
-                <div key={idx} 
-                     className="text-base"
-                     dangerouslySetInnerHTML={{ __html: paragraph.replace(/\n/g, '<br />') }} />
-              ))}
+            <div className="mt-2 prose prose-sm max-w-none">
+              <div 
+                className="text-base"
+                dangerouslySetInnerHTML={{ __html: insights }} />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 gap-4">

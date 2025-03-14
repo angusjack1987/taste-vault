@@ -18,9 +18,59 @@ export const useAiMemory = () => {
   const { useAISettingsQuery } = useAISettings();
   const { data: aiSettings } = useAISettingsQuery();
 
-  // Load insights from local storage on initial load
+  // Load insights from Supabase first, then fallback to local storage
   useEffect(() => {
     if (user) {
+      fetchStoredInsights();
+    }
+  }, [user]);
+
+  // Fetch stored insights from Supabase
+  const fetchStoredInsights = async () => {
+    if (!user) return;
+
+    try {
+      // Try to get insights from Supabase first
+      const { data, error } = await supabase
+        .from('ai_memory_insights')
+        .select('insights, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data) {
+        // We found insights in the database, use these
+        const parsedInsights = parseMarkdownToHtml(data.insights);
+        setInsights(parsedInsights);
+        setLastUpdated(data.created_at);
+        
+        // Also update local storage for quick access
+        const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
+        const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
+        localStorage.setItem(storageKey, parsedInsights);
+        localStorage.setItem(timestampKey, data.created_at);
+        return;
+      }
+      
+      // Fallback to local storage if no database record found
+      const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
+      const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
+      
+      const storedInsights = localStorage.getItem(storageKey);
+      const storedTimestamp = localStorage.getItem(timestampKey);
+      
+      if (storedInsights) {
+        setInsights(storedInsights);
+      }
+      
+      if (storedTimestamp) {
+        setLastUpdated(storedTimestamp);
+      }
+    } catch (err) {
+      console.error("Error fetching stored insights:", err);
+      
+      // Fallback to local storage if there's an error
       const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
       const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
       
@@ -35,7 +85,7 @@ export const useAiMemory = () => {
         setLastUpdated(storedTimestamp);
       }
     }
-  }, [user]);
+  };
 
   const getMemoryInsights = async () => {
     if (!user) {
@@ -82,6 +132,9 @@ export const useAiMemory = () => {
         
         localStorage.setItem(storageKey, parsedInsights);
         localStorage.setItem(timestampKey, now);
+        
+        // Also store in Supabase for persistence
+        await storeInsightsInSupabase(rawInsights);
       }
       
       return parsedInsights;
@@ -91,6 +144,28 @@ export const useAiMemory = () => {
       return null;
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Store insights in Supabase database
+  const storeInsightsInSupabase = async (rawInsights: string) => {
+    if (!user) return;
+    
+    try {
+      // Store the raw markdown in Supabase
+      const { error } = await supabase
+        .from('ai_memory_insights')
+        .insert({
+          user_id: user.id,
+          insights: rawInsights,
+          created_at: new Date().toISOString()
+        });
+        
+      if (error) {
+        console.error("Error storing insights in database:", error);
+      }
+    } catch (err) {
+      console.error("Failed to persist insights to database:", err);
     }
   };
 
