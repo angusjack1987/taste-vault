@@ -66,113 +66,35 @@ async function extractMainContent(html: string, url: string): Promise<{content: 
   // Strip excessive whitespace
   mainContent = mainContent.replace(/\s+/g, ' ').trim();
   
-  // Improved hero image finding logic
+  // Find a suitable image
   let imageUrl = null;
   
-  // Helper function to score an image
-  const scoreImage = (img: Element): number => {
-    let score = 0;
-    const src = img.getAttribute('src') || img.getAttribute('data-src') || '';
-    
-    // Skip tracking pixels, icons, etc.
-    if (!src || 
-        src.includes('tracking') || 
-        src.includes('pixel') || 
-        src.includes('icon') || 
-        src.includes('logo') || 
-        src.includes('avatar') ||
-        src.length < 20) {
-      return -1;
-    }
-    
-    // Score based on attributes
-    const alt = img.getAttribute('alt') || '';
-    const className = img.getAttribute('class') || '';
-    const id = img.getAttribute('id') || '';
-    
-    // Score based on size attributes
-    const width = parseInt(img.getAttribute('width') || '0', 10);
-    const height = parseInt(img.getAttribute('height') || '0', 10);
-    
-    if (width > 400 || height > 400) score += 20;
-    if (width > 200 || height > 200) score += 10;
-    
-    // Score based on position in document
-    const isInHeader = !!img.closest('header');
-    const isInArticle = !!img.closest('article');
-    
-    if (isInArticle) score += 15;
-    if (isInHeader) score += 10;
-    
-    // Score based on naming and content that suggest a featured image
-    if (alt.includes('recipe') || alt.includes('dish') || alt.includes('food')) score += 25;
-    if (className.includes('hero') || className.includes('featured') || className.includes('main')) score += 25;
-    if (id.includes('hero') || id.includes('featured') || id.includes('main')) score += 25;
-    
-    // Higher score for image names that include common food photo terms
-    if (src.includes('hero') || src.includes('featured') || src.includes('main')) score += 15;
-    if (src.includes('recipe') || src.includes('dish') || src.includes('food')) score += 15;
-    
-    // Look for schema.org recipe image attributes
-    if (img.getAttribute('itemprop') === 'image') score += 30;
-    
-    return score;
-  };
-  
-  // First, try to find a specific recipe-related images with schema.org markup
-  let schemaImages = doc.querySelectorAll('img[itemprop="image"], [class*="hero"], [class*="featured"], [id*="hero"], [id*="featured"]');
-  if (schemaImages.length > 0) {
-    // Score all schema-tagged images and use the best one
-    const scoredImages = Array.from(schemaImages)
-      .map(img => ({ 
-        element: img, 
-        score: scoreImage(img),
-        src: img.getAttribute('src') || img.getAttribute('data-src') || ''
-      }))
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score);
-    
-    if (scoredImages.length > 0) {
-      const bestImage = scoredImages[0];
-      console.log(`Found schema-marked hero image with score ${bestImage.score}: ${bestImage.src}`);
-      const src = bestImage.src;
-      if (src) {
-        imageUrl = new URL(src, url).href;
-      }
+  // First, try to find an image with recipe or food-related attributes
+  const potentialImages = doc.querySelectorAll('img[itemprop="image"], img.recipe-image, img.hero-image');
+  if (potentialImages.length > 0) {
+    const src = potentialImages[0].getAttribute('src');
+    if (src) {
+      imageUrl = new URL(src, url).href;
     }
   }
   
-  // If no schema image was found, score all images on the page
+  // If no specific recipe image was found, look for any large image
   if (!imageUrl) {
     const allImages = doc.querySelectorAll('img');
-    const scoredImages = Array.from(allImages)
-      .map(img => ({ 
-        element: img, 
-        score: scoreImage(img),
-        src: img.getAttribute('src') || img.getAttribute('data-src') || ''
-      }))
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score);
-    
-    if (scoredImages.length > 0) {
-      const bestImage = scoredImages[0];
-      console.log(`Found best hero image with score ${bestImage.score}: ${bestImage.src}`);
-      const src = bestImage.src;
-      if (src) {
-        imageUrl = new URL(src, url).href;
-      }
-    }
-  }
-  
-  // If still no image found, try common high-res image attributes as fallback
-  if (!imageUrl) {
-    const allImages = doc.querySelectorAll('img[data-src], img[data-lazy-src], img[data-srcset]');
     for (const img of Array.from(allImages)) {
-      const src = img.getAttribute('data-src') || img.getAttribute('data-lazy-src') || img.getAttribute('src');
-      if (src && !src.includes('logo') && !src.includes('icon') && !src.includes('avatar')) {
-        imageUrl = new URL(src, url).href;
-        console.log('Found image using data attribute fallback:', imageUrl);
-        break;
+      // Skip small icons, logos, etc.
+      const src = img.getAttribute('src');
+      if (src && 
+          !src.includes('logo') && 
+          !src.includes('icon') && 
+          !src.includes('avatar') &&
+          !src.includes('badge')) {
+        // Try to get high-res images by looking for attributes like data-src
+        const highResSrc = img.getAttribute('data-src') || img.getAttribute('data-lazy-src') || src;
+        if (highResSrc) {
+          imageUrl = new URL(highResSrc, url).href;
+          break;
+        }
       }
     }
   }

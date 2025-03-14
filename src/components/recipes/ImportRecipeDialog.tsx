@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { X, Loader2, Link, Check, Save, Edit, Sparkles, UploadCloud } from "lucide-react";
+import { X, Loader2, Link, Check, Save, Edit, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +18,6 @@ import { RecipeFormData } from "@/hooks/useRecipes";
 import { cleanIngredientString, parsePreparation, parseIngredientAmount, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import IngredientInput from "./IngredientInput";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -45,6 +45,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
         onSuccess: (data) => {
           console.log("Raw scraped ingredients:", data.ingredients);
           
+          // Enhanced cleaning of ingredients with better preservation of prep instructions
           const cleanedIngredients = data.ingredients?.map(ingredient => {
             const cleaned = cleanIngredientString(ingredient);
             console.log(`Cleaned ingredient: "${ingredient}" -> "${cleaned}"`);
@@ -207,37 +208,16 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
               />
             </div>
             
-            <div className="space-y-2">
-              <Label>Image</Label>
-              {editedRecipe.image ? (
-                <div className="relative">
-                  <img 
-                    src={editedRecipe.image} 
-                    alt={editedRecipe.title || "Recipe"} 
-                    className="w-full h-48 object-cover rounded-md"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleInputChange('image', '')}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div 
-                  className="w-full h-48 border-2 border-dashed rounded-md flex flex-col items-center justify-center bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
-                  onClick={() => {
-                    toast.info("You can upload an image after saving the recipe");
-                  }}
-                >
-                  <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">No image available</p>
-                </div>
-              )}
-            </div>
+            {editedRecipe.image && (
+              <div className="space-y-2">
+                <Label>Image</Label>
+                <img 
+                  src={editedRecipe.image} 
+                  alt={editedRecipe.title || "Recipe"} 
+                  className="w-full h-48 object-cover rounded-md"
+                />
+              </div>
+            )}
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -328,16 +308,12 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
               {editedRecipe.description && <p className="text-muted-foreground mt-1">{editedRecipe.description}</p>}
             </div>
             
-            {editedRecipe.image ? (
+            {editedRecipe.image && (
               <img 
                 src={editedRecipe.image} 
                 alt={editedRecipe.title || "Recipe"} 
                 className="w-full h-48 object-cover rounded-md"
               />
-            ) : (
-              <div className="w-full h-48 bg-muted rounded-md flex items-center justify-center">
-                <p className="text-muted-foreground">No image available</p>
-              </div>
             )}
             
             <div className="flex gap-4 text-sm">
@@ -351,8 +327,10 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
                 {(editedRecipe.ingredients || []).map((ingredient, index) => {
                   console.log(`Processing ingredient for display: "${ingredient}"`);
                   
+                  // First try to extract direct preparation instructions
                   const preparationInstructions = extractPreparationInstructions(ingredient);
                   
+                  // If that doesn't work, fall back to the standard parsing approach
                   const { mainText, preparation } = parsePreparation(ingredient);
                   const { name, amount } = parseIngredientAmount(mainText);
                   

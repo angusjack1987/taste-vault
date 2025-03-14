@@ -8,68 +8,6 @@ import { RecipeFormData } from "./useRecipes";
 export const useScrapedRecipes = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Function to download and upload an image URL to Supabase storage
-  const downloadAndUploadImage = async (imageUrl: string | null): Promise<string | null> => {
-    if (!imageUrl) return null;
-    
-    try {
-      console.log("Attempting to download image from:", imageUrl);
-      
-      // Fetch the image
-      const imgResponse = await fetch(imageUrl);
-      if (!imgResponse.ok) {
-        console.error("Failed to fetch image:", imgResponse.status, imgResponse.statusText);
-        throw new Error("Failed to fetch image");
-      }
-      
-      const blob = await imgResponse.blob();
-      console.log("Image downloaded successfully, size:", blob.size, "type:", blob.type);
-      
-      // Only proceed if we actually got an image
-      if (blob.size < 1000) {
-        console.warn("Image is too small, may be a tracking pixel. Skipping upload.");
-        return null;
-      }
-      
-      // Generate a unique file name
-      const fileExt = imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
-      const randomId = Math.random().toString(36).substring(2, 15);
-      const fileName = `scraped-${Date.now()}-${randomId}.${fileExt}`;
-      const filePath = `recipe-images/${fileName}`;
-      
-      console.log("Uploading image to storage path:", filePath);
-      
-      // Upload to Supabase storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('recipes')
-        .upload(filePath, blob, {
-          contentType: blob.type,
-          cacheControl: '3600'
-        });
-      
-      if (uploadError) {
-        console.error("Error uploading to storage:", uploadError);
-        throw uploadError;
-      }
-      
-      console.log("Image uploaded successfully:", uploadData);
-      
-      // Get the public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('recipes')
-        .getPublicUrl(filePath);
-      
-      const finalImageUrl = publicUrlData.publicUrl;
-      console.log("Image public URL:", finalImageUrl);
-      return finalImageUrl;
-      
-    } catch (imgError) {
-      console.error("Error processing image:", imgError);
-      // Continue without image if there's an error
-      return null;
-    }
-  };
-
   // Function to scrape recipe using direct web scraper
   const scrapeRecipeWithWebScraper = async (url: string): Promise<Partial<RecipeFormData>> => {
     setIsLoading(true);
@@ -93,7 +31,53 @@ export const useScrapedRecipes = () => {
       // Download and upload the image if it exists
       let imageUrl = null;
       if (scrapedRecipe.image) {
-        imageUrl = await downloadAndUploadImage(scrapedRecipe.image);
+        try {
+          console.log("Attempting to download image from:", scrapedRecipe.image);
+          
+          // Fetch the image
+          const imgResponse = await fetch(scrapedRecipe.image);
+          if (!imgResponse.ok) {
+            console.error("Failed to fetch image:", imgResponse.status, imgResponse.statusText);
+            throw new Error("Failed to fetch image");
+          }
+          
+          const blob = await imgResponse.blob();
+          console.log("Image downloaded successfully, size:", blob.size, "type:", blob.type);
+          
+          // Generate a unique file name
+          const fileExt = scrapedRecipe.image.split('.').pop()?.split('?')[0] || 'jpg';
+          const randomId = Math.random().toString(36).substring(2, 15);
+          const fileName = `scraped-${Date.now()}-${randomId}.${fileExt}`;
+          const filePath = `recipe-images/${fileName}`;
+          
+          console.log("Uploading image to storage path:", filePath);
+          
+          // Upload to Supabase storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('recipes')
+            .upload(filePath, blob, {
+              contentType: blob.type,
+              cacheControl: '3600'
+            });
+          
+          if (uploadError) {
+            console.error("Error uploading to storage:", uploadError);
+            throw uploadError;
+          }
+          
+          console.log("Image uploaded successfully:", uploadData);
+          
+          // Get the public URL
+          const { data: publicUrlData } = supabase.storage
+            .from('recipes')
+            .getPublicUrl(filePath);
+          
+          imageUrl = publicUrlData.publicUrl;
+          console.log("Image public URL:", imageUrl);
+        } catch (imgError) {
+          console.error("Error uploading image:", imgError);
+          // Continue without image if there's an error
+        }
       }
       
       // Clean the data and format it for the form
@@ -141,10 +125,56 @@ export const useScrapedRecipes = () => {
       // Process the AI-parsed recipe data
       const parsedRecipe = data.data;
       
-      // Download and upload the image if it exists
+      // Download and upload the image if it exists (same process as the web scraper)
       let imageUrl = null;
       if (parsedRecipe.image) {
-        imageUrl = await downloadAndUploadImage(parsedRecipe.image);
+        try {
+          console.log("Attempting to download image from:", parsedRecipe.image);
+          
+          // Fetch the image
+          const imgResponse = await fetch(parsedRecipe.image);
+          if (!imgResponse.ok) {
+            console.error("Failed to fetch image:", imgResponse.status, imgResponse.statusText);
+            throw new Error("Failed to fetch image");
+          }
+          
+          const blob = await imgResponse.blob();
+          console.log("Image downloaded successfully, size:", blob.size, "type:", blob.type);
+          
+          // Generate a unique file name
+          const fileExt = parsedRecipe.image.split('.').pop()?.split('?')[0] || 'jpg';
+          const randomId = Math.random().toString(36).substring(2, 15);
+          const fileName = `ai-scraped-${Date.now()}-${randomId}.${fileExt}`;
+          const filePath = `recipe-images/${fileName}`;
+          
+          console.log("Uploading image to storage path:", filePath);
+          
+          // Upload to Supabase storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('recipes')
+            .upload(filePath, blob, {
+              contentType: blob.type,
+              cacheControl: '3600'
+            });
+          
+          if (uploadError) {
+            console.error("Error uploading to storage:", uploadError);
+            throw uploadError;
+          }
+          
+          console.log("Image uploaded successfully:", uploadData);
+          
+          // Get the public URL
+          const { data: publicUrlData } = supabase.storage
+            .from('recipes')
+            .getPublicUrl(filePath);
+          
+          imageUrl = publicUrlData.publicUrl;
+          console.log("Image public URL:", imageUrl);
+        } catch (imgError) {
+          console.error("Error uploading image:", imgError);
+          // Continue without image if there's an error
+        }
       }
       
       // Format the data for the form
