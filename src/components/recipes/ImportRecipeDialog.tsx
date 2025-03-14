@@ -38,7 +38,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     
     scrapeRecipe(url, {
       onSuccess: (data) => {
-        // Clean the ingredients when importing
+        // Clean the ingredients when importing, ensuring trailing brackets and parentheses are removed
         const cleanedIngredients = data.ingredients?.map(ingredient => 
           cleanIngredientString(ingredient)
         ) || [];

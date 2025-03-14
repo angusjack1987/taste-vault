@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -27,7 +26,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
       return <Beef className="h-4 w-4 text-sage-500" />;
     } else if (/fish|salmon|tuna|cod|tilapia|shrimp|prawn|seafood/i.test(lowerName)) {
       return <Fish className="h-4 w-4 text-sage-500" />;
-    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|cherries|strawberry|blueberry|raspberry|blackberry|blackberries/i.test(lowerName)) {
+    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|cherries|strawberry|blueberry|raspberry|blackberry|blackberries|cherry|cherries/i.test(lowerName)) {
       return <Apple className="h-4 w-4 text-sage-500" />;
     } else if (/egg|eggs/i.test(lowerName)) {
       return <Egg className="h-4 w-4 text-sage-500" />;
@@ -91,7 +90,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
               </div>
               
               {preparation && (
-                <div className="text-xs text-gray-500 italic ml-5">{preparation}</div>
+                <div className="text-xs text-muted-foreground italic ml-5">{preparation}</div>
               )}
             </div>
           </div>

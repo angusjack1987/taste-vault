@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { Recipe } from './types.ts'
 import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts'
@@ -33,6 +32,9 @@ function cleanIngredient(ingredient: string): string {
     previousCleaned = cleaned;
     cleaned = cleaned.replace(/\([^)]*\)/g, '');
   }
+  
+  // Remove trailing brackets
+  cleaned = cleaned.replace(/\s*\)\s*$/, '');
   
   // Fix double commas and commas followed by spaces
   cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ');

@@ -26,8 +26,11 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   // Pattern for units that come after the amount (e.g., "Chicken Breast 500g")
   const reverseUnitsPattern = /^(.+?)\s+([\d\/\.\,\s]+\s*(?:g|kg|ml|l|oz|lb))$/i;
   
+  // Remove trailing brackets and extra spaces
+  const withoutTrailingBrackets = cleanedIngredient.replace(/\s*\)\s*$/, '').trim();
+  
   // Match for dual weight format like "300g/10oz green beans"
-  const dualWeightMatch = cleanedIngredient.match(dualWeightPattern);
+  const dualWeightMatch = withoutTrailingBrackets.match(dualWeightPattern);
   if (dualWeightMatch) {
     return {
       name: dualWeightMatch[2].trim(),
@@ -36,7 +39,7 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   }
   
   // Match for units like "500g Chicken Breast"
-  const unitsMatch = cleanedIngredient.match(unitsPattern);
+  const unitsMatch = withoutTrailingBrackets.match(unitsPattern);
   if (unitsMatch) {
     return {
       name: unitsMatch[2].trim(),
@@ -45,7 +48,7 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   }
   
   // Match for units that come after the ingredient like "Chicken Breast 500g"
-  const reverseMatch = cleanedIngredient.match(reverseUnitsPattern);
+  const reverseMatch = withoutTrailingBrackets.match(reverseUnitsPattern);
   if (reverseMatch) {
     return {
       name: reverseMatch[1].trim(),
@@ -54,7 +57,7 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   }
   
   // Match for simple numbers like "2 eggs"
-  const numberMatch = cleanedIngredient.match(numberPattern);
+  const numberMatch = withoutTrailingBrackets.match(numberPattern);
   if (numberMatch) {
     return {
       name: numberMatch[2].trim(),
@@ -64,7 +67,7 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   
   // No amount found
   return {
-    name: cleanedIngredient,
+    name: withoutTrailingBrackets,
     amount: null
   };
 }
@@ -88,6 +91,9 @@ export function cleanIngredientString(ingredient: string): string {
     previousCleaned = cleaned;
     cleaned = cleaned.replace(/\([^)]*\)/g, '');
   }
+  
+  // Remove trailing brackets
+  cleaned = cleaned.replace(/\s*\)\s*$/, '');
   
   // Fix double commas and commas followed by spaces
   cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ');
@@ -138,60 +144,31 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     };
   }
   
-  // Check for multi-word preparation phrases like "cut up", "cut into pieces", etc.
-  for (const phrase of prepWords) {
-    if (phrase.includes(' ')) {
-      // For phrases with spaces like "cut up"
-      const phrasePattern = new RegExp(`^(.+?)\\s+(${phrase})$`, 'i');
-      const phraseMatch = ingredient.match(phrasePattern);
-      
-      if (phraseMatch) {
-        return {
-          mainText: phraseMatch[1].trim(),
-          preparation: phrase
-        };
-      }
-      
-      // Also check for phrase at beginning
-      const startPhrasePattern = new RegExp(`^(${phrase})\\s+(.+)$`, 'i');
-      const startPhraseMatch = ingredient.match(startPhrasePattern);
-      
-      if (startPhraseMatch) {
-        return {
-          mainText: startPhraseMatch[2].trim(),
-          preparation: phrase
-        };
-      }
-    }
-  }
+  // Check for multi-word preparation phrases like "cut up", "finely chopped", etc.
+  // Sort prepWords by length in descending order to match longest phrases first
+  const sortedPrepWords = [...prepWords].sort((a, b) => b.length - a.length);
   
-  // Check for "preparation ingredient" format (e.g., "diced chicken")
-  for (const word of prepWords) {
-    if (!word.includes(' ')) {  // Skip multi-word phrases as they're handled above
-      const wordPattern = new RegExp(`^${word}\\s+(.+)$`, 'i');
-      const wordMatch = ingredient.match(wordPattern);
-      
-      if (wordMatch) {
-        return {
-          mainText: wordMatch[1].trim(),
-          preparation: word
-        };
-      }
+  for (const phrase of sortedPrepWords) {
+    // For phrases at end of ingredient (e.g., "onion finely chopped")
+    const phrasePattern = new RegExp(`^(.+?)\\s+(${phrase})$`, 'i');
+    const phraseMatch = ingredient.match(phrasePattern);
+    
+    if (phraseMatch) {
+      return {
+        mainText: phraseMatch[1].trim(),
+        preparation: phrase
+      };
     }
-  }
-  
-  // Check for "ingredient preparation" format (e.g., "chicken diced")
-  for (const word of prepWords) {
-    if (!word.includes(' ')) {  // Skip multi-word phrases as they're handled above
-      const wordPattern = new RegExp(`^(.+?)\\s+${word}$`, 'i');
-      const wordMatch = ingredient.match(wordPattern);
-      
-      if (wordMatch) {
-        return {
-          mainText: wordMatch[1].trim(),
-          preparation: word
-        };
-      }
+    
+    // Also check for phrase at beginning (e.g., "finely chopped onion")
+    const startPhrasePattern = new RegExp(`^(${phrase})\\s+(.+)$`, 'i');
+    const startPhraseMatch = ingredient.match(startPhrasePattern);
+    
+    if (startPhraseMatch) {
+      return {
+        mainText: startPhraseMatch[2].trim(),
+        preparation: phrase
+      };
     }
   }
   
