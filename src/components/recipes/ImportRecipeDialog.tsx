@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { X, Loader2, Link, Check, Save, Edit, Sparkles } from "lucide-react";
+import { X, Loader2, Link, Check, Save, Edit, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +30,8 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
   const [scrapedRecipe, setScrapedRecipe] = useState<Partial<RecipeFormData> | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editedRecipe, setEditedRecipe] = useState<Partial<RecipeFormData> | null>(null);
+  const [images, setImages] = useState<string[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   
   const { useScrapeRecipeMutation } = useScrapedRecipes();
   const { mutate: scrapeRecipe, isPending, isError, error } = useScrapeRecipeMutation();
@@ -41,7 +44,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
       url,
       {
         onSuccess: (data) => {
-          console.log("Raw scraped ingredients:", data.ingredients);
+          console.log("Raw scraped data:", data);
           
           // Enhanced cleaning of ingredients with better preservation of prep instructions
           const cleanedIngredients = data.ingredients?.map(ingredient => {
@@ -50,9 +53,18 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
             return cleaned;
           }) || [];
           
+          // Handle multiple images
+          const imagesList = Array.isArray(data.images) ? data.images : 
+                            (data.image ? [data.image] : []);
+          
+          setImages(imagesList);
+          setSelectedImageIndex(imagesList.length > 0 ? 0 : -1);
+          
           const cleanedData = {
             ...data,
-            ingredients: cleanedIngredients
+            ingredients: cleanedIngredients,
+            // Set the first image as the default if available
+            image: imagesList.length > 0 ? imagesList[0] : null
           };
           
           setScrapedRecipe(cleanedData);
@@ -107,6 +119,11 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
   
   const handleSaveRecipe = () => {
     if (editedRecipe) {
+      // Ensure the selected image is saved with the recipe
+      if (images.length > 0 && selectedImageIndex >= 0 && selectedImageIndex < images.length) {
+        editedRecipe.image = images[selectedImageIndex];
+      }
+      
       onImport(editedRecipe);
       resetDialog();
     }
@@ -117,7 +134,35 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     setEditedRecipe(null);
     setEditMode(false);
     setUrl("");
+    setImages([]);
+    setSelectedImageIndex(0);
     onClose();
+  };
+  
+  const selectNextImage = () => {
+    if (images.length > 1) {
+      const nextIndex = (selectedImageIndex + 1) % images.length;
+      setSelectedImageIndex(nextIndex);
+      if (editedRecipe) {
+        setEditedRecipe({
+          ...editedRecipe,
+          image: images[nextIndex]
+        });
+      }
+    }
+  };
+  
+  const selectPrevImage = () => {
+    if (images.length > 1) {
+      const prevIndex = (selectedImageIndex - 1 + images.length) % images.length;
+      setSelectedImageIndex(prevIndex);
+      if (editedRecipe) {
+        setEditedRecipe({
+          ...editedRecipe,
+          image: images[prevIndex]
+        });
+      }
+    }
   };
   
   const renderUrlInputStep = () => (
@@ -177,6 +222,73 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     </form>
   );
   
+  const renderImageCarousel = () => {
+    if (!images.length) return null;
+    
+    return (
+      <div className="space-y-2">
+        <Label>Recipe Image {images.length > 1 ? `(${selectedImageIndex + 1}/${images.length})` : ''}</Label>
+        <div className="relative">
+          <div className="w-full h-48 overflow-hidden rounded-md relative">
+            <img 
+              src={images[selectedImageIndex]} 
+              alt="Recipe" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Handle image loading error
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder.svg'; // Fall back to placeholder
+                target.onerror = null; // Prevent infinite error loop
+              }}
+            />
+          </div>
+          
+          {images.length > 1 && (
+            <>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full bg-background/80 border-none hover:bg-background"
+                onClick={selectPrevImage}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-background/80 border-none hover:bg-background"
+                onClick={selectNextImage}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+        {images.length > 1 && (
+          <div className="flex justify-center mt-2 space-x-1">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full ${
+                  index === selectedImageIndex ? 'bg-primary' : 'bg-gray-300'
+                }`}
+                onClick={() => {
+                  setSelectedImageIndex(index);
+                  if (editedRecipe) {
+                    setEditedRecipe({
+                      ...editedRecipe,
+                      image: images[index]
+                    });
+                  }
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+  
   const renderRecipePreview = () => {
     if (!scrapedRecipe || !editedRecipe) return null;
     
@@ -194,16 +306,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
               />
             </div>
             
-            {editedRecipe.image && (
-              <div className="space-y-2">
-                <Label>Image</Label>
-                <img 
-                  src={editedRecipe.image} 
-                  alt={editedRecipe.title || "Recipe"} 
-                  className="w-full h-48 object-cover rounded-md"
-                />
-              </div>
-            )}
+            {renderImageCarousel()}
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -294,13 +397,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
               {editedRecipe.description && <p className="text-muted-foreground mt-1">{editedRecipe.description}</p>}
             </div>
             
-            {editedRecipe.image && (
-              <img 
-                src={editedRecipe.image} 
-                alt={editedRecipe.title || "Recipe"} 
-                className="w-full h-48 object-cover rounded-md"
-              />
-            )}
+            {renderImageCarousel()}
             
             <div className="flex gap-4 text-sm">
               {editedRecipe.time && <div>Time: {editedRecipe.time} mins</div>}
