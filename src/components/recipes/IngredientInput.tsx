@@ -3,7 +3,7 @@ import React from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { parseIngredientAmount, parsePreparation } from "@/lib/ingredient-parser";
+import { parseIngredientAmount, parsePreparation, cleanIngredientString } from "@/lib/ingredient-parser";
 
 interface IngredientInputProps {
   ingredients: string[];
@@ -41,8 +41,10 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
   };
 
   const renderIngredientItem = (ingredient: string, index: number, isInput: boolean) => {
+    const cleanedIngredient = cleanIngredientString(ingredient);
+    
     // First parse the preparation instructions
-    const { mainText, preparation } = parsePreparation(ingredient);
+    const { mainText, preparation } = parsePreparation(cleanedIngredient);
     
     // Then parse the amount from the remaining text
     const { name, amount } = parseIngredientAmount(mainText);
@@ -111,8 +113,10 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
   const renderLivePreview = (ingredient: string) => {
     if (!ingredient) return null;
     
+    const cleanedIngredient = cleanIngredientString(ingredient);
+    
     // First parse the preparation instructions
-    const { mainText, preparation } = parsePreparation(ingredient);
+    const { mainText, preparation } = parsePreparation(cleanedIngredient);
     
     // Then parse the amount from the remaining text
     const { name, amount } = parseIngredientAmount(mainText);

@@ -15,6 +15,7 @@ import {
 import useScrapedRecipes from "@/hooks/useScrapedRecipes";
 import { Label } from "@/components/ui/label";
 import { RecipeFormData } from "@/hooks/useRecipes";
+import { cleanIngredientString } from "@/lib/ingredient-parser";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -37,8 +38,18 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     
     scrapeRecipe(url, {
       onSuccess: (data) => {
-        setScrapedRecipe(data);
-        setEditedRecipe(data);
+        // Clean the ingredients when importing
+        const cleanedIngredients = data.ingredients?.map(ingredient => 
+          cleanIngredientString(ingredient)
+        ) || [];
+        
+        const cleanedData = {
+          ...data,
+          ingredients: cleanedIngredients
+        };
+        
+        setScrapedRecipe(cleanedData);
+        setEditedRecipe(cleanedData);
       }
     });
   };

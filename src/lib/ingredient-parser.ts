@@ -4,12 +4,19 @@
  * Example: "500g Chicken Breast" -> { name: "Chicken Breast", amount: "500g" }
  * Example: "2 cups flour" -> { name: "flour", amount: "2 cups" }
  * Example: "1/2 teaspoon salt" -> { name: "salt", amount: "1/2 teaspoon" }
+ * Example: "300g/10oz green beans" -> { name: "green beans", amount: "300g/10oz" }
  */
 export function parseIngredientAmount(ingredient: string): { name: string; amount: string | null } {
   if (!ingredient || typeof ingredient !== 'string') {
     return { name: ingredient || '', amount: null };
   }
 
+  // Clean up the ingredient string by removing notes in parentheses
+  const cleanedIngredient = ingredient.replace(/\([^)]*\)/g, '').trim();
+  
+  // Dual weight format pattern (e.g., "300g/10oz green beans")
+  const dualWeightPattern = /^([\d\/\.\,\s]+(?:g|kg|ml|l|oz|lb)\/[\d\/\.\,\s]+(?:g|kg|ml|l|oz|lb))\s+(.+)$/i;
+  
   // Common units pattern to match
   const unitsPattern = /^([\d\/\.\,\s]+\s*(?:g|kg|ml|l|oz|lb|pound|pounds|cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|bunch|bunches|clove|cloves|pinch|pinches|handful|handfuls))\s+(.+)$/i;
   
@@ -19,8 +26,17 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   // Pattern for units that come after the amount (e.g., "Chicken Breast 500g")
   const reverseUnitsPattern = /^(.+?)\s+([\d\/\.\,\s]+\s*(?:g|kg|ml|l|oz|lb))$/i;
   
+  // Match for dual weight format like "300g/10oz green beans"
+  const dualWeightMatch = cleanedIngredient.match(dualWeightPattern);
+  if (dualWeightMatch) {
+    return {
+      name: dualWeightMatch[2].trim(),
+      amount: dualWeightMatch[1].trim()
+    };
+  }
+  
   // Match for units like "500g Chicken Breast"
-  const unitsMatch = ingredient.match(unitsPattern);
+  const unitsMatch = cleanedIngredient.match(unitsPattern);
   if (unitsMatch) {
     return {
       name: unitsMatch[2].trim(),
@@ -29,7 +45,7 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   }
   
   // Match for units that come after the ingredient like "Chicken Breast 500g"
-  const reverseMatch = ingredient.match(reverseUnitsPattern);
+  const reverseMatch = cleanedIngredient.match(reverseUnitsPattern);
   if (reverseMatch) {
     return {
       name: reverseMatch[1].trim(),
@@ -38,7 +54,7 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   }
   
   // Match for simple numbers like "2 eggs"
-  const numberMatch = ingredient.match(numberPattern);
+  const numberMatch = cleanedIngredient.match(numberPattern);
   if (numberMatch) {
     return {
       name: numberMatch[2].trim(),
@@ -48,9 +64,41 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   
   // No amount found
   return {
-    name: ingredient,
+    name: cleanedIngredient,
     amount: null
   };
+}
+
+/**
+ * Cleans up an ingredient string by removing notes in parentheses and extra commas
+ * Example: "300g / 10oz green beans ((Note 1))" -> "300g / 10oz green beans"
+ * Example: "1/2 small onion (, finely chopped (about 1/2 cup))" -> "1/2 small onion, finely chopped"
+ */
+export function cleanIngredientString(ingredient: string): string {
+  if (!ingredient || typeof ingredient !== 'string') {
+    return ingredient || '';
+  }
+  
+  // Remove all text in parentheses (including nested parentheses)
+  let cleaned = ingredient;
+  let previousCleaned = '';
+  
+  // Handle potentially nested parentheses by running the replacement multiple times
+  while (previousCleaned !== cleaned) {
+    previousCleaned = cleaned;
+    cleaned = cleaned.replace(/\([^)]*\)/g, '');
+  }
+  
+  // Fix double commas and commas followed by spaces
+  cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ');
+  
+  // Remove any trailing commas
+  cleaned = cleaned.replace(/,\s*$/, '');
+  
+  // Normalize spaces
+  cleaned = cleaned.trim();
+  
+  return cleaned;
 }
 
 /**
@@ -75,7 +123,8 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     'melted', 'softened', 'room temperature', 'chilled', 'cooked',
     'boiled', 'fried', 'baked', 'roasted', 'grilled', 'steamed',
     'mashed', 'pureed', 'blended', 'whisked', 'thinly sliced',
-    'roughly chopped', 'finely diced', 'coarsely ground'
+    'roughly chopped', 'finely chopped', 'finely diced', 'coarsely ground',
+    'finely minced', 'finely grated'
   ];
   
   // Check for "ingredient, preparation" format (e.g., "chicken, diced")

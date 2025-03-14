@@ -17,6 +17,38 @@ function handleCors(req: Request): Response | null {
   return null
 }
 
+/**
+ * Cleans up an ingredient string by removing notes in parentheses and extra commas
+ * Example: "300g / 10oz green beans ((Note 1))" -> "300g/10oz green beans"
+ */
+function cleanIngredient(ingredient: string): string {
+  if (!ingredient) return '';
+  
+  // Remove parentheses and their contents (including nested parentheses)
+  let cleaned = ingredient;
+  let previousCleaned = '';
+  
+  // Handle potentially nested parentheses by running the replacement multiple times
+  while (previousCleaned !== cleaned) {
+    previousCleaned = cleaned;
+    cleaned = cleaned.replace(/\([^)]*\)/g, '');
+  }
+  
+  // Fix double commas and commas followed by spaces
+  cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ');
+  
+  // Remove any trailing commas
+  cleaned = cleaned.replace(/,\s*$/, '');
+  
+  // Format dual measurement format to be consistent (e.g., "300g / 10oz" -> "300g/10oz")
+  cleaned = cleaned.replace(/(\d+\s*(?:g|kg|ml|l|oz|lb))\s*\/\s*(\d+\s*(?:g|kg|ml|l|oz|lb))/gi, '$1/$2');
+  
+  // Normalize spaces
+  cleaned = cleaned.trim();
+  
+  return cleaned;
+}
+
 // Extract recipe data from HTML content
 async function extractRecipeData(html: string, url: string): Promise<Partial<Recipe>> {
   const doc = new DOMParser().parseFromString(html, 'text/html')
@@ -54,9 +86,11 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
         // Extract title
         recipe.title = recipeData.name || recipe.title
         
-        // Extract ingredients
+        // Extract ingredients and clean them
         if (recipeData.recipeIngredient && Array.isArray(recipeData.recipeIngredient)) {
-          recipe.ingredients = recipeData.recipeIngredient.map(i => String(i).trim())
+          recipe.ingredients = recipeData.recipeIngredient
+            .map((i: string) => cleanIngredient(String(i).trim()))
+            .filter(Boolean)
         }
         
         // Extract instructions
@@ -106,7 +140,7 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
         
         if (recipeData.keywords) {
           const keywords = typeof recipeData.keywords === 'string'
-            ? recipeData.keywords.split(',').map(k => k.trim())
+            ? recipeData.keywords.split(',').map((k: string) => k.trim())
             : Array.isArray(recipeData.keywords) ? recipeData.keywords : []
           recipe.tags = [...recipe.tags, ...keywords]
         }
@@ -152,7 +186,9 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
     for (let i = 0; i < ingredientLists.length; i++) {
       const listItems = ingredientLists[i].querySelectorAll('li')
       if (listItems.length > 3) {  // Assume a list with at least 3 items could be ingredients
-        recipe.ingredients = Array.from(listItems).map(item => item.textContent?.trim() || '')
+        recipe.ingredients = Array.from(listItems)
+          .map(item => cleanIngredient(item.textContent?.trim() || ''))
+          .filter(Boolean)
         break
       }
     }
