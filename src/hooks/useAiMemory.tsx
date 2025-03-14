@@ -30,26 +30,21 @@ export const useAiMemory = () => {
     if (!user) return;
 
     try {
-      // Try to get insights from Supabase first
+      // Try to get insights using raw query to avoid TypeScript errors with table types
       const { data, error } = await supabase
-        .from('ai_memory_insights')
-        .select('insights, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .rpc('get_latest_memory_insights', { user_id_param: user.id });
 
-      if (data) {
+      if (data && data.length > 0) {
         // We found insights in the database, use these
-        const parsedInsights = parseMarkdownToHtml(data.insights);
+        const parsedInsights = parseMarkdownToHtml(data[0].insights);
         setInsights(parsedInsights);
-        setLastUpdated(data.created_at);
+        setLastUpdated(data[0].created_at);
         
         // Also update local storage for quick access
         const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
         const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
         localStorage.setItem(storageKey, parsedInsights);
-        localStorage.setItem(timestampKey, data.created_at);
+        localStorage.setItem(timestampKey, data[0].created_at);
         return;
       }
       
@@ -147,19 +142,20 @@ export const useAiMemory = () => {
     }
   };
 
-  // Store insights in Supabase database
+  // Store insights in Supabase database using a raw query to avoid TypeScript errors
   const storeInsightsInSupabase = async (rawInsights: string) => {
     if (!user) return;
     
     try {
-      // Store the raw markdown in Supabase
-      const { error } = await supabase
-        .from('ai_memory_insights')
-        .insert({
-          user_id: user.id,
-          insights: rawInsights,
-          created_at: new Date().toISOString()
-        });
+      // Store the raw markdown in Supabase using raw SQL query
+      const { error } = await supabase.rpc(
+        'store_memory_insights',
+        { 
+          user_id_param: user.id, 
+          insights_param: rawInsights,
+          created_at_param: new Date().toISOString()
+        }
+      );
         
       if (error) {
         console.error("Error storing insights in database:", error);

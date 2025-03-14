@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import useAuth from '@/hooks/useAuth';
@@ -38,7 +37,6 @@ const IndexPage = () => {
   const popularRecipes = [...recipes].sort(() => 0.5 - Math.random()).slice(0, 4); // Random for demo
   
   useEffect(() => {
-    // Force log to debug
     console.log("Memory enabled:", isMemoryEnabled);
     console.log("Memory loading:", memoryLoading);
     console.log("Memory insights:", insights);
@@ -64,7 +62,6 @@ const IndexPage = () => {
     }
   }, [user, insights, memoryLoading, getMemoryInsights, isMemoryEnabled]);
 
-  // Helper function to extract the first paragraph from HTML
   const extractFirstParagraph = (html: string): string => {
     // Simple extraction - get content up to first paragraph break
     // This is a basic implementation that assumes the first chunk of HTML is a paragraph
@@ -133,7 +130,7 @@ const IndexPage = () => {
         {/* Memory Insights Section - Always visible */}
         <MemoryInsightsSection 
           memoryLoading={memoryLoading}
-          memoryPreview={memoryPreview}
+          memoryPreview={memoryPreview || ""}
           isMemoryEnabled={isMemoryEnabled}
           onOpenMemoryDialog={() => setMemoryDialogOpen(true)}
           onGenerateInsights={getMemoryInsights}
