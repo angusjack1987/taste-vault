@@ -10,6 +10,12 @@ import { marked } from "marked";
 const MEMORY_INSIGHTS_KEY = "flavor-librarian-memory-insights";
 const MEMORY_TIMESTAMP_KEY = "flavor-librarian-memory-timestamp";
 
+// Define types for our RPC functions' responses
+interface MemoryInsight {
+  insights: string;
+  created_at: string;
+}
+
 export const useAiMemory = () => {
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<string | null>(null);
@@ -30,9 +36,17 @@ export const useAiMemory = () => {
     if (!user) return;
 
     try {
-      // Try to get insights using raw query to avoid TypeScript errors with table types
+      // Try to get insights using RPC to avoid TypeScript errors with table types
       const { data, error } = await supabase
-        .rpc('get_latest_memory_insights', { user_id_param: user.id });
+        .rpc('get_latest_memory_insights', { user_id_param: user.id }) as { 
+          data: MemoryInsight[] | null; 
+          error: any 
+        };
+
+      if (error) {
+        console.error("Error fetching from RPC:", error);
+        throw error;
+      }
 
       if (data && data.length > 0) {
         // We found insights in the database, use these
@@ -147,7 +161,7 @@ export const useAiMemory = () => {
     if (!user) return;
     
     try {
-      // Store the raw markdown in Supabase using raw SQL query
+      // Store the raw markdown in Supabase using RPC
       const { error } = await supabase.rpc(
         'store_memory_insights',
         { 
@@ -155,7 +169,7 @@ export const useAiMemory = () => {
           insights_param: rawInsights,
           created_at_param: new Date().toISOString()
         }
-      );
+      ) as { data: null; error: any };
         
       if (error) {
         console.error("Error storing insights in database:", error);
