@@ -101,38 +101,12 @@ const WeekDayCard = ({
     }
     
     return (
-      <div className="border rounded-md p-2 bg-card min-h-[60px] relative hover:shadow-sm transition-shadow group">
-        <div className="text-xs font-medium flex items-center">
-          {getMealIcon(mealType)}
-          <span className="capitalize text-muted-foreground">{mealType}</span>
-        </div>
-        <div className="pr-7 text-xs font-medium line-clamp-2 mt-1">
-          {meal.recipe ? (
-            <Link to={`/recipes/${meal.recipe.id}`} className="hover:underline">
-              {meal.recipe.title}
-            </Link>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <StickyNote className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>{meal.note || 'No details added'}</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="absolute top-1 right-1 flex">
-          {meal.recipe && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-primary hover:bg-primary/10"
-              title="View recipe"
-              asChild
-            >
-              <Link to={`/recipes/${meal.recipe.id}`}>
-                <Eye className="h-3 w-3" />
-              </Link>
-            </Button>
-          )}
+      <div className="border rounded-md p-2 bg-card min-h-[80px] relative hover:shadow-sm transition-shadow group">
+        <div className="flex justify-between items-center">
+          <div className="text-xs font-medium flex items-center">
+            {getMealIcon(mealType)}
+            <span className="capitalize text-muted-foreground">{mealType}</span>
+          </div>
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -163,6 +137,35 @@ const WeekDayCard = ({
             </AlertDialogContent>
           </AlertDialog>
         </div>
+        
+        <div className="text-xs font-medium line-clamp-2 mt-1 mb-4">
+          {meal.recipe ? (
+            <Link to={`/recipes/${meal.recipe.id}`} className="hover:underline">
+              {meal.recipe.title}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <StickyNote className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>{meal.note || 'No details added'}</span>
+            </div>
+          )}
+        </div>
+        
+        {meal.recipe && (
+          <div className="absolute bottom-2 right-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-primary hover:bg-primary/10"
+              title="View recipe"
+              asChild
+            >
+              <Link to={`/recipes/${meal.recipe.id}`}>
+                <Eye className="h-3 w-3" />
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     );
   };

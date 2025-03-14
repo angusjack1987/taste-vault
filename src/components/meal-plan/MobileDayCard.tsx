@@ -81,55 +81,39 @@ const MobileDayCard = ({
     }
     
     return (
-      <div className="flex-1 border rounded-md p-2 bg-card relative">
+      <div className="flex-1 border rounded-md p-2 bg-card relative min-h-[80px]">
         <div className="flex justify-between items-center">
           <div className="text-sm capitalize text-muted-foreground">{mealType}</div>
-          <div className="flex">
-            {meal.recipe && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-primary"
-                title="View recipe"
-                asChild
+                className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
               >
-                <Link to={`/recipes/${meal.recipe.id}`}>
-                  <Eye className="h-4 w-4" />
-                </Link>
+                <X className="h-4 w-4" />
               </Button>
-            )}
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove Meal</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to remove this meal from your plan?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => onRemoveMeal(meal.id)}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Remove Meal</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to remove this meal from your plan?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => onRemoveMeal(meal.id)}
-                  >
-                    Remove
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-        <div className="font-medium mt-1">
+        <div className="font-medium mt-1 mb-4">
           {meal.recipe ? (
             <Link to={`/recipes/${meal.recipe.id}`} className="hover:underline">
               {meal.recipe.title}
@@ -141,6 +125,22 @@ const MobileDayCard = ({
             </div>
           )}
         </div>
+        
+        {meal.recipe && (
+          <div className="absolute bottom-2 right-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-primary"
+              title="View recipe"
+              asChild
+            >
+              <Link to={`/recipes/${meal.recipe.id}`}>
+                <Eye className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
