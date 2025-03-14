@@ -10,7 +10,7 @@ import useAiRecipes from '@/hooks/useAiRecipes';
 import useAiMemory from '@/hooks/useAiMemory';
 import AiMemoryDialog from '@/components/meal-plan/dialogs/AiMemoryDialog';
 
-// Import the new component files
+// Import the component files
 import HeroSection from '@/components/home/HeroSection';
 import MemoryInsightsSection from '@/components/home/MemoryInsightsSection';
 import TodaysMealsSection from '@/components/home/TodaysMealsSection';
@@ -38,15 +38,27 @@ const IndexPage = () => {
   const popularRecipes = [...recipes].sort(() => 0.5 - Math.random()).slice(0, 4); // Random for demo
   
   useEffect(() => {
-    if (user && isMemoryEnabled && !insights && !memoryLoading) {
+    // Force log to debug
+    console.log("Memory enabled:", isMemoryEnabled);
+    console.log("Memory loading:", memoryLoading);
+    console.log("Memory insights:", insights);
+    
+    if (user && isMemoryEnabled) {
       console.log("Fetching memory insights");
-      getMemoryInsights().then(insights => {
-        if (insights) {
-          const firstParagraph = insights.split('\n\n')[0];
-          setMemoryPreview(firstParagraph);
-          console.log("Memory preview set:", firstParagraph);
-        }
-      });
+      // Get insights immediately when page loads if we have a user and memory is enabled
+      if (!insights && !memoryLoading) {
+        getMemoryInsights().then(insights => {
+          if (insights) {
+            const firstParagraph = insights.split('\n\n')[0];
+            setMemoryPreview(firstParagraph);
+            console.log("Memory preview set:", firstParagraph);
+          }
+        });
+      } else if (insights) {
+        // If we already have insights, set the preview
+        const firstParagraph = insights.split('\n\n')[0];
+        setMemoryPreview(firstParagraph);
+      }
     }
   }, [user, isMemoryEnabled, insights, memoryLoading, getMemoryInsights]);
 
@@ -105,11 +117,11 @@ const IndexPage = () => {
           onOpenSuggestDialog={handleOpenSuggestDialog}
         />
         
-        {/* Memory Insights Section */}
+        {/* Memory Insights Section - Add forced visible flag for debugging */}
         <MemoryInsightsSection 
           memoryLoading={memoryLoading}
           memoryPreview={memoryPreview}
-          isMemoryEnabled={isMemoryEnabled}
+          isMemoryEnabled={true} // Force to true for debugging
           onOpenMemoryDialog={() => setMemoryDialogOpen(true)}
           onGenerateInsights={getMemoryInsights}
         />

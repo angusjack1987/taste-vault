@@ -19,8 +19,9 @@ const MemoryInsightsSection = ({
   onOpenMemoryDialog,
   onGenerateInsights
 }: MemoryInsightsSectionProps) => {
-  if (!isMemoryEnabled) return null;
-
+  // Removing the conditional return since we want to ensure this component is always rendered
+  // for debugging purposes, and we'll handle the memory disabled state inside the component
+  
   return (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3">
@@ -40,7 +41,20 @@ const MemoryInsightsSection = ({
       
       <div className="playful-card bg-primary/10 border-primary/20 relative overflow-hidden">
         <div className="relative z-10">
-          {memoryLoading ? (
+          {!isMemoryEnabled ? (
+            <div className="py-3">
+              <p>AI Memory is currently disabled in your settings.</p>
+              <Link to="/settings/ai-settings">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="mt-4"
+                >
+                  Enable AI Memory
+                </Button>
+              </Link>
+            </div>
+          ) : memoryLoading ? (
             <div className="flex items-center gap-2 py-3">
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
               <p>Loading your cooking insights...</p>
