@@ -225,7 +225,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
   };
 
   return (
-    <ol className="space-y-4">
+    <ol className="space-y-4 text-xs sm:text-sm">
       {instructions.map((step, index) => {
         const matches = findIngredientMatches(step);
         return (

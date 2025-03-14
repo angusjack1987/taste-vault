@@ -370,7 +370,7 @@ const RecipeDetail = () => {
               <TabsTrigger value="instructions">Instructions</TabsTrigger>
             </TabsList>
             <TabsContent value="ingredients" className="mt-4">
-              <ScrollArea className="max-h-[400px]">
+              <ScrollArea maxHeight="350px">
                 <ul className="space-y-3">
                   {recipe.ingredients.map((ingredient, index) => {
                     const cleanedIngredient = cleanIngredientString(ingredient);
@@ -410,7 +410,7 @@ const RecipeDetail = () => {
               </ScrollArea>
             </TabsContent>
             <TabsContent value="instructions" className="mt-4">
-              <ScrollArea className="max-h-[400px]">
+              <ScrollArea maxHeight="350px">
                 <InstructionsWithTooltips
                   instructions={recipe.instructions}
                   ingredients={recipe.ingredients}

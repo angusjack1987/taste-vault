@@ -16,10 +16,7 @@ const ScrollArea = React.forwardRef<
     {...props}
   >
     <ScrollAreaPrimitive.Viewport 
-      className={cn(
-        "h-full w-full rounded-[inherit]", 
-        maxHeight && `max-h-[${maxHeight}]`
-      )}
+      className={cn("h-full w-full rounded-[inherit]")}
       style={maxHeight ? { maxHeight } : undefined}
     >
       {children}
