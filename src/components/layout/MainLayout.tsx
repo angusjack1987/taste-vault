@@ -48,13 +48,13 @@ const MainLayout = ({
         action={action}
       />
       
-      <main className="flex-1 pb-24 relative overflow-x-hidden overflow-y-auto">
+      <main className="flex-1 pb-24 px-4 md:px-6 relative overflow-x-hidden overflow-y-auto">
         {/* Subtle background elements */}
         <div className="absolute top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl -z-10"></div>
         <div className="absolute bottom-40 -left-20 w-40 h-40 bg-secondary/5 rounded-full blur-3xl -z-10"></div>
         
         <div 
-          className={`max-w-4xl mx-auto w-full relative main-content transition-all duration-300 ease-in-out ${
+          className={`max-w-6xl mx-auto w-full relative main-content transition-all duration-300 ease-in-out ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
         >

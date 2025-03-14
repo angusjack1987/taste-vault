@@ -47,13 +47,13 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
   const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
     if (!meal) {
       return (
-        <div className="border border-dashed border-border rounded p-2 flex justify-center items-center gap-1.5 min-h-[60px] bg-background/50 hover:bg-background transition-colors">
+        <div className="border border-dashed border-border rounded-md p-2 flex justify-center items-center gap-1.5 min-h-[70px] bg-background/50 hover:bg-background transition-colors">
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs group" onClick={() => onAddMeal(date, mealType)}>
             <Plus className="h-3.5 w-3.5 mr-1 group-hover:animate-spin-slow" />
             {getMealIcon(mealType)}
-            Add
+            <span className="hidden sm:inline">{mealType}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" onClick={() => onSuggestMeal(date, mealType)}>
+          <Button variant="ghost" size="sm" className="h-7 w-7 px-0 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" onClick={() => onSuggestMeal(date, mealType)}>
             <Lightbulb className="h-3.5 w-3.5 group-hover:animate-pulse-slow" />
           </Button>
         </div>
@@ -61,14 +61,16 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
     }
     
     return (
-      <div className="border rounded p-2 bg-card min-h-[60px] relative hover:shadow-sm transition-shadow group">
-        <div className="text-xs font-medium line-clamp-2 pr-6 flex items-center">
-          {getMealIcon(mealType)}
-          {meal.recipe?.title || (
-            <span className="flex items-center text-muted-foreground">
-              <Utensils className="h-3 w-3 mr-1 group-hover:animate-pulse-slow" /> No recipe selected
-            </span>
-          )}
+      <div className="border rounded-md p-2 bg-card min-h-[70px] relative hover:shadow-sm transition-shadow group">
+        <div className="text-xs font-medium line-clamp-2 pr-6 flex items-start">
+          <span className="mt-0.5">{getMealIcon(mealType)}</span>
+          <span className="flex-1">
+            {meal.recipe?.title || (
+              <span className="flex items-center text-muted-foreground">
+                <Utensils className="h-3 w-3 mr-1 group-hover:animate-pulse-slow" /> No recipe selected
+              </span>
+            )}
+          </span>
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -104,14 +106,15 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
   
   return (
     <div className={cn(
-      "border rounded p-2 space-y-1 transition-all",
+      "border rounded-lg p-2 space-y-2 transition-all",
       isToday ? "border-primary bg-primary/5 shadow-sm" : "hover:border-muted-foreground/30"
     )}>
       <div className={cn(
-        "text-center mb-2 font-medium text-sm",
+        "text-center mb-2 font-medium flex flex-col",
         isToday && "text-primary"
       )}>
-        {format(date, 'd')}
+        <span className="text-sm">{format(date, 'EEE')}</span>
+        <span className="text-lg">{format(date, 'd')}</span>
       </div>
       
       {renderMealSlot('breakfast', meals.breakfast)}
