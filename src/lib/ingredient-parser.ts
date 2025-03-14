@@ -52,3 +52,26 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
     amount: null
   };
 }
+
+/**
+ * Parses an ingredient string to extract preparation instructions
+ * Example: "Chicken Breast, diced" -> { mainText: "Chicken Breast", preparation: "diced" }
+ */
+export function parsePreparation(ingredient: string): { mainText: string; preparation: string | null } {
+  const separators = [', ', '; ', ' - ', ' for '];
+  let mainText = ingredient;
+  let preparation = null;
+  
+  for (const separator of separators) {
+    if (ingredient.includes(separator)) {
+      const parts = ingredient.split(new RegExp(`(${separator})`));
+      if (parts.length >= 3) {
+        mainText = parts[0];
+        preparation = parts.slice(2).join('');
+        break;
+      }
+    }
+  }
+  
+  return { mainText, preparation };
+}

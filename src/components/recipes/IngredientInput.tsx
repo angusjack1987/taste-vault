@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { parseIngredientAmount } from "@/lib/ingredient-parser";
+import { parseIngredientAmount, parsePreparation } from "@/lib/ingredient-parser";
 
 interface IngredientInputProps {
   ingredients: string[];
@@ -20,25 +20,6 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
   onRemove,
   onKeyDown
 }) => {
-  const parsePreparation = (ingredient: string): { mainText: string; preparation: string | null } => {
-    const separators = [', ', '; ', ' - ', ' for '];
-    let mainText = ingredient;
-    let preparation = null;
-    
-    for (const separator of separators) {
-      if (ingredient.includes(separator)) {
-        const parts = ingredient.split(new RegExp(`(${separator})`));
-        if (parts.length >= 3) {
-          mainText = parts[0];
-          preparation = parts.slice(2).join('');
-          break;
-        }
-      }
-    }
-    
-    return { mainText, preparation };
-  };
-
   const getIngredientIcon = (ingredientName: string) => {
     const lowerName = ingredientName.toLowerCase();
     
@@ -59,97 +40,117 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     }
   };
 
+  const renderIngredientItem = (ingredient: string, index: number, isInput: boolean) => {
+    const { mainText, preparation } = parsePreparation(ingredient);
+    const { name, amount } = parseIngredientAmount(mainText);
+
+    if (isInput) {
+      return (
+        <div className="flex gap-2">
+          <Input
+            placeholder={`Ingredient ${index + 1} (e.g., 500g Chicken Breast, diced)`}
+            value={ingredient}
+            onChange={(e) => {
+              const newIngredients = [...ingredients];
+              newIngredients[index] = e.target.value;
+              onChange(newIngredients);
+            }}
+            onKeyDown={(e) => onKeyDown(e, index)}
+            className="flex-grow"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => onRemove(index)}
+            disabled={ingredients.length <= 1}
+          >
+            <Scissors className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-start gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            {amount && (
+              <span className="font-mono text-sm">{amount}</span>
+            )}
+            
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1">
+                {getIngredientIcon(name)}
+                <span className="text-sm">{name}</span>
+              </div>
+              
+              {preparation && (
+                <span className="text-xs text-gray-500 italic ml-5 mt-0.5">{preparation}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove(index)}
+          className="h-6 w-6 text-muted-foreground mt-1"
+        >
+          <Scissors className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  };
+
+  const renderLivePreview = (ingredient: string) => {
+    if (!ingredient) return null;
+    
+    const { mainText, preparation } = parsePreparation(ingredient);
+    const { name, amount } = parseIngredientAmount(mainText);
+
+    return (
+      <div className="grid grid-cols-3 gap-2 px-2 mt-1">
+        {amount && (
+          <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center border border-sage-200">
+            <span className="font-mono">{amount}</span>
+          </div>
+        )}
+        
+        <div className="bg-sage-50 rounded-md p-2 flex flex-col border border-sage-200">
+          <div className="flex items-center gap-2">
+            {getIngredientIcon(name)}
+            <span className="text-sm">{name}</span>
+          </div>
+          {preparation && (
+            <span className="text-xs text-gray-500 italic mt-0.5">{preparation}</span>
+          )}
+        </div>
+        
+        {preparation && !amount && (
+          <div className="bg-sage-50 rounded-md p-2 text-xs flex items-center border border-sage-200">
+            <span className="italic text-gray-500">{preparation}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3">
       {ingredients.map((ingredient, index) => {
-        const { mainText, preparation } = parsePreparation(ingredient);
-        const { name, amount } = parseIngredientAmount(mainText);
-        
         const isLastItem = index === ingredients.length - 1;
         
         return (
           <div key={index} className="space-y-1">
-            {isLastItem ? (
-              <div className="flex gap-2">
-                <Input
-                  placeholder={`Ingredient ${index + 1} (e.g., 500g Chicken Breast, diced)`}
-                  value={ingredient}
-                  onChange={(e) => {
-                    const newIngredients = [...ingredients];
-                    newIngredients[index] = e.target.value;
-                    onChange(newIngredients);
-                  }}
-                  onKeyDown={(e) => onKeyDown(e, index)}
-                  className="flex-grow"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onRemove(index)}
-                  disabled={ingredients.length <= 1}
-                >
-                  <Scissors className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-start gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    {amount && (
-                      <span className="font-mono text-sm">{amount}</span>
-                    )}
-                    
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-1">
-                        {getIngredientIcon(name)}
-                        <span className="text-sm">{name}</span>
-                      </div>
-                      
-                      {preparation && (
-                        <span className="text-xs text-gray-500 italic ml-5 mt-1">{preparation}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onRemove(index)}
-                  className="h-6 w-6 text-muted-foreground mt-1"
-                >
-                  <Scissors className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
+            {isLastItem ? 
+              renderIngredientItem(ingredient, index, true) : 
+              renderIngredientItem(ingredient, index, false)
+            }
             
-            {isLastItem && ingredient && (
-              <div className="grid grid-cols-3 gap-2 px-2 mt-1">
-                {amount && (
-                  <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center border border-sage-200">
-                    <span className="font-mono">{amount}</span>
-                  </div>
-                )}
-                
-                <div className="bg-sage-50 rounded-md p-2 flex flex-col border border-sage-200">
-                  <div className="flex items-center gap-2">
-                    {getIngredientIcon(name)}
-                    <span className="text-sm">{name}</span>
-                  </div>
-                  {preparation && (
-                    <span className="text-xs text-gray-500 mt-1 italic ml-5">{preparation}</span>
-                  )}
-                </div>
-                
-                {preparation && !amount && (
-                  <div className="bg-sage-50 rounded-md p-2 text-xs flex items-center border border-sage-200">
-                    <span className="italic text-gray-500">{preparation}</span>
-                  </div>
-                )}
-              </div>
-            )}
+            {isLastItem && ingredient && renderLivePreview(ingredient)}
           </div>
         );
       })}
