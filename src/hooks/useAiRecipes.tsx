@@ -168,6 +168,29 @@ export const useAiRecipes = () => {
     }
   };
 
+  // Add the new enhanceRecipeInstructions function
+  const enhanceRecipeInstructions = async (data: {
+    recipeTitle: string;
+    instructions: string[];
+    ingredients: string[];
+  }) => {
+    try {
+      return await makeEdgeFunctionRequest(
+        "enhance-recipe-instructions",
+        "enhance-recipe-instructions",
+        data
+      );
+    } catch (error) {
+      console.error("Failed to enhance recipe instructions:", error);
+      toast.error("Failed to enhance recipe instructions. Please try again later.");
+      // Return empty enhanced instructions to avoid breaking the UI
+      return data.instructions.map(step => ({
+        step,
+        tooltips: []
+      }));
+    }
+  };
+
   // Helper to determine current season
   const getCurrentSeason = () => {
     const month = new Date().getMonth();
@@ -183,6 +206,7 @@ export const useAiRecipes = () => {
     analyzeMealPlan,
     suggestMealForPlan,
     generateRecipe,
+    enhanceRecipeInstructions,
     generateBabyFood
   };
 };

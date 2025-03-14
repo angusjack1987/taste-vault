@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -48,6 +47,15 @@ import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
 import InstructionsWithTooltips from "@/components/recipes/InstructionsWithTooltips";
 
+interface EnhancedInstruction {
+  step: string;
+  tooltips: Array<{
+    text: string;
+    ingredient: string;
+    explanation?: string;
+  }>;
+}
+
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -60,14 +68,23 @@ const RecipeDetail = () => {
   const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
   const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
   const [additionalPreferences, setAdditionalPreferences] = useState("");
+  const [enhancedInstructions, setEnhancedInstructions] = useState<EnhancedInstruction[]>([]);
+  const [isEnhancingInstructions, setIsEnhancingInstructions] = useState(false);
+  const [isInstructionsEnhanced, setIsInstructionsEnhanced] = useState(false);
   
   const { useRecipe, useDeleteRecipe } = useRecipes();
   const { useAddManyShoppingListItems } = useShoppingList();
-  const { suggestMealForPlan, loading: aiLoading } = useAiRecipes();
+  const { suggestMealForPlan, enhanceRecipeInstructions, loading: aiLoading } = useAiRecipes();
   
   const { data: recipe, isLoading, error } = useRecipe(id);
   const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
   const { mutateAsync: deleteRecipe } = useDeleteRecipe();
+  
+  useEffect(() => {
+    if (recipe && !isInstructionsEnhanced && !isEnhancingInstructions) {
+      handleEnhanceInstructions();
+    }
+  }, [recipe]);
 
   const getIngredientIcon = (ingredientName: string) => {
     const lowerName = ingredientName.toLowerCase();
@@ -130,6 +147,10 @@ const RecipeDetail = () => {
     }
   };
 
+  const handleOpenSuggestDialog = () => {
+    setSuggestDialogOpen(true);
+  };
+  
   const handleOpenVariationsDialog = () => {
     setVariationsDialogOpen(true);
   };
@@ -215,6 +236,33 @@ const RecipeDetail = () => {
 
   const handleResetSuggestedMeal = () => {
     setSuggestedMeal(null);
+  };
+
+  const handleEnhanceInstructions = async () => {
+    if (!recipe) return;
+    
+    setIsEnhancingInstructions(true);
+    
+    try {
+      const result = await enhanceRecipeInstructions({
+        recipeTitle: recipe.title,
+        instructions: recipe.instructions,
+        ingredients: recipe.ingredients
+      });
+      
+      if (result && Array.isArray(result)) {
+        setEnhancedInstructions(result);
+        setIsInstructionsEnhanced(true);
+        toast.success("Instructions enhanced with detailed tooltips");
+      } else {
+        throw new Error("Couldn't enhance instructions");
+      }
+    } catch (error) {
+      console.error("Error enhancing instructions:", error);
+      toast.error("Failed to enhance instructions");
+    } finally {
+      setIsEnhancingInstructions(false);
+    }
   };
 
   if (isLoading) {
@@ -353,12 +401,32 @@ const RecipeDetail = () => {
             <p className="text-muted-foreground mb-6">{recipe.description}</p>
           )}
 
-          <div className="mb-6">
+          <div className="mb-6 flex flex-col sm:flex-row gap-3">
             <AiSuggestionButton 
               onClick={handleOpenVariationsDialog} 
               label="Get AI Recipe Variations"
               className="w-full md:w-auto"
             />
+            
+            <AiSuggestionButton 
+              onClick={handleEnhanceInstructions} 
+              label={isInstructionsEnhanced ? "Instructions Enhanced" : "Enhance Instructions"}
+              variant="mint"
+              isLoading={isEnhancingInstructions}
+              className="w-full md:w-auto"
+            >
+              {isInstructionsEnhanced ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Instructions Enhanced
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+                  Enhance Instructions
+                </>
+              )}
+            </AiSuggestionButton>
           </div>
           
           <Tabs defaultValue="ingredients" className="mb-8">
@@ -399,16 +467,19 @@ const RecipeDetail = () => {
             </TabsContent>
             <TabsContent value="instructions" className="mt-4">
               <ScrollArea maxHeight="350px">
-                <ol className="space-y-4">
-                  {recipe.instructions.map((step, index) => (
-                    <li key={index} className="flex gap-3 mb-4">
-                      <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
-                        {index + 1}
-                      </span>
-                      <span className="text-xs sm:text-sm">{step}</span>
-                    </li>
-                  ))}
-                </ol>
+                {isEnhancingInstructions ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                    <span>Enhancing instructions...</span>
+                  </div>
+                ) : (
+                  <InstructionsWithTooltips
+                    instructions={recipe.instructions}
+                    ingredients={recipe.ingredients}
+                    enhancedInstructions={enhancedInstructions}
+                    isEnhanced={isInstructionsEnhanced}
+                  />
+                )}
               </ScrollArea>
             </TabsContent>
           </Tabs>
