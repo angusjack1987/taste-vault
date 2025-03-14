@@ -4,12 +4,12 @@ import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 
 function DefaultDemo() {
   const tabs = [
-    { title: "Dashboard", icon: Home, path: "/", type: undefined as const },
-    { title: "Notifications", icon: Bell, path: "/notifications", type: undefined as const },
+    { title: "Dashboard", icon: Home, path: "/" },
+    { title: "Notifications", icon: Bell, path: "/notifications" },
     { type: "separator" as const },
-    { title: "Settings", icon: Settings, path: "/settings", type: undefined as const },
-    { title: "Support", icon: HelpCircle, path: "/support", type: undefined as const },
-    { title: "Security", icon: Shield, path: "/security", type: undefined as const },
+    { title: "Settings", icon: Settings, path: "/settings" },
+    { title: "Support", icon: HelpCircle, path: "/support" },
+    { title: "Security", icon: Shield, path: "/security" },
   ];
 
   return (
@@ -21,11 +21,11 @@ function DefaultDemo() {
 
 function CustomColorDemo() {
   const tabs = [
-    { title: "Profile", icon: User, path: "/profile", type: undefined as const },
-    { title: "Messages", icon: Mail, path: "/messages", type: undefined as const },
+    { title: "Profile", icon: User, path: "/profile" },
+    { title: "Messages", icon: Mail, path: "/messages" },
     { type: "separator" as const },
-    { title: "Documents", icon: FileText, path: "/documents", type: undefined as const },
-    { title: "Privacy", icon: Lock, path: "/privacy", type: undefined as const },
+    { title: "Documents", icon: FileText, path: "/documents" },
+    { title: "Privacy", icon: Lock, path: "/privacy" },
   ];
 
   return (

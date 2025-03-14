@@ -33,41 +33,15 @@ const BottomNav = () => {
   const pathname = location.pathname;
   
   // Convert navItems to the format expected by ExpandableTabs
-  const tabs = [
-    // First two navigation items
-    ...navItems.slice(0, 2).map(item => ({ 
-      title: item.title, 
-      icon: item.icon, 
-      path: item.to,
-      type: undefined as const
-    })),
-    // Separator before center action button
-    { type: "separator" as const },
-    // Last two navigation items
-    ...navItems.slice(2, 4).map(item => ({ 
-      title: item.title, 
-      icon: item.icon, 
-      path: item.to,
-      type: undefined as const
-    })),
+  const leftTabs = [
+    { title: navItems[0].title, icon: navItems[0].icon, path: navItems[0].to },
+    { title: navItems[1].title, icon: navItems[1].icon, path: navItems[1].to },
   ];
-
-  // Find the currently active tab index based on pathname
-  const getActiveTabIndex = () => {
-    const index = tabs.findIndex(tab => 
-      tab.type !== "separator" && 
-      (pathname === tab.path || 
-       (tab.path !== "/" && pathname.startsWith(tab.path)))
-    );
-    return index !== -1 ? index : null;
-  };
-
-  // Handle tab selection
-  const handleTabChange = (index: number | null) => {
-    if (index !== null && tabs[index].type !== "separator") {
-      // We don't navigate here - we let the button click handle that
-    }
-  };
+  
+  const rightTabs = [
+    { title: navItems[2].title, icon: navItems[2].icon, path: navItems[2].to },
+    { title: navItems[3].title, icon: navItems[3].icon, path: navItems[3].to },
+  ];
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
@@ -76,14 +50,9 @@ const BottomNav = () => {
           {/* First two nav items */}
           <div className="col-span-2">
             <ExpandableTabs 
-              tabs={tabs.slice(0, 2)}
+              tabs={leftTabs}
               activeColor="text-secondary"
               className="border-none bg-transparent shadow-none"
-              onChange={(index) => {
-                if (index !== null) {
-                  // We'll handle navigation in the component, not here
-                }
-              }}
             />
           </div>
 
@@ -121,14 +90,9 @@ const BottomNav = () => {
           {/* Last two nav items */}
           <div className="col-span-2">
             <ExpandableTabs 
-              tabs={tabs.slice(3)} // Skip the separator
+              tabs={rightTabs}
               activeColor="text-secondary"
               className="border-none bg-transparent shadow-none"
-              onChange={(index) => {
-                if (index !== null) {
-                  // We'll handle navigation in the component, not here
-                }
-              }}
             />
           </div>
         </div>

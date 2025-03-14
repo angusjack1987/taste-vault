@@ -118,14 +118,14 @@ export function ExpandableTabs({
           return <Separator key={`separator-${index}`} />;
         }
 
-        // TypeScript now knows this is a Tab, not a Separator
-        const Icon = (tab as Tab).icon;
+        // Now TypeScript knows this is a Tab
+        const Icon = tab.icon;
         const isSelected = selected === index;
         
         // Determine if this tab should be considered active based on the URL path
-        const isActive = (tab as Tab).path && 
-          ((tab as Tab).path === pathname || 
-           ((tab as Tab).path !== "/" && pathname.startsWith((tab as Tab).path || "")));
+        const isActive = tab.path && 
+          (tab.path === pathname || 
+           (tab.path !== "/" && pathname.startsWith(tab.path)));
         
         // Select UI classNames based on whether tab is active
         const tabClassName = cn(
@@ -161,17 +161,17 @@ export function ExpandableTabs({
                   transition={transition}
                   className="overflow-hidden text-[10px] font-medium"
                 >
-                  {(tab as Tab).title}
+                  {tab.title}
                 </motion.span>
               )}
             </AnimatePresence>
           </motion.div>
         );
 
-        return (tab as Tab).path ? (
+        return tab.path ? (
           <Link 
-            key={(tab as Tab).title}
-            to={(tab as Tab).path || "#"} 
+            key={tab.title}
+            to={tab.path} 
             className="flex justify-center"
             onClick={() => handleSelect(index)}
           >
@@ -179,7 +179,7 @@ export function ExpandableTabs({
           </Link>
         ) : (
           <button
-            key={(tab as Tab).title}
+            key={tab.title}
             onClick={() => handleSelect(index)}
             className="flex justify-center"
           >
