@@ -8,7 +8,7 @@ import useRecipes from "@/hooks/useRecipes";
 import useMealPlans, { MealType } from "@/hooks/useMealPlans";
 import useAiRecipes from "@/hooks/useAiRecipes";
 import { toast } from "sonner";
-import useMobile from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import our components
 import WeekView from "@/components/meal-plan/WeekView";
@@ -111,6 +111,7 @@ const MealPlan = () => {
       await createMealPlan({
         date: currentDay,
         meal_type: currentMealType,
+        recipe_id: null,
         note: note
       });
       

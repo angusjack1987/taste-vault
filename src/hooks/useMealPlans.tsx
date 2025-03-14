@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ export type MealPlan = {
   date: string;
   meal_type: MealType;
   recipe_id: string | null;
+  note?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -107,7 +109,8 @@ export const useMealPlans = () => {
   const createMealPlan = async (mealPlan: {
     date: Date;
     meal_type: MealType;
-    recipe_id: string | null;
+    recipe_id?: string | null;
+    note?: string | null;
   }): Promise<MealPlan> => {
     if (!user) throw new Error("User not authenticated");
 
@@ -117,7 +120,8 @@ export const useMealPlans = () => {
       user_id: user.id,
       date: formattedDate,
       meal_type: mealPlan.meal_type,
-      recipe_id: mealPlan.recipe_id,
+      recipe_id: mealPlan.recipe_id || null,
+      note: mealPlan.note || null,
     };
 
     // First try to find an existing meal plan for this day and meal type
@@ -133,9 +137,14 @@ export const useMealPlans = () => {
 
     if (existingMeal) {
       // Update the existing meal plan
+      const updateData = {
+        recipe_id: mealPlan.recipe_id || null,
+        note: mealPlan.note || null
+      };
+      
       const { data, error } = await supabase
         .from("meal_plans")
-        .update({ recipe_id: mealPlan.recipe_id })
+        .update(updateData)
         .eq("id", existingMeal.id)
         .select()
         .single();

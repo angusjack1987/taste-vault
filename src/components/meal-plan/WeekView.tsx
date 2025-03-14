@@ -23,9 +23,10 @@ interface WeekViewProps {
   onAddMeal: (date: Date, mealType: MealType) => void;
   onRemoveMeal: (mealPlanId: string) => void;
   onSuggestMeal: (date: Date, mealType: MealType) => void;
+  onQuickAddMeal: (date: Date, mealType: MealType) => void;
 }
 
-const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekViewProps) => {
+const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal, onQuickAddMeal }: WeekViewProps) => {
   const isMobile = useIsMobile();
   const weekStart = weekDays.length > 0 ? weekDays[0].date : new Date();
   const weekEnd = weekDays.length > 0 ? weekDays[weekDays.length - 1].date : new Date();
@@ -90,6 +91,7 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
                 onAddMeal={onAddMeal}
                 onRemoveMeal={onRemoveMeal}
                 onSuggestMeal={onSuggestMeal}
+                onQuickAddMeal={onQuickAddMeal}
                 showDateHeader={true}
               />
             </div>
@@ -113,6 +115,7 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
                 onAddMeal={onAddMeal}
                 onRemoveMeal={onRemoveMeal}
                 onSuggestMeal={onSuggestMeal}
+                onQuickAddMeal={onQuickAddMeal}
               />
             </div>
           );
