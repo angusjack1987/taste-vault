@@ -1,10 +1,5 @@
+
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 
 interface InstructionsWithTooltipsProps {
@@ -27,7 +22,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
   enhancedInstructions,
   isEnhanced = false,
 }) => {
-  // Function to find ingredients in instruction text with improved algorithm
+  // Improved function to find ingredients in instruction text
   const findIngredientMatches = (text: string) => {
     // Create a map to store matches
     const matches: Array<{
@@ -41,7 +36,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       (a, b) => b.length - a.length
     );
 
-    // Process ingredients to create a more comprehensive matching system
+    // Better ingredient processing for more comprehensive matching
     const ingredientKeywords = sortedIngredients.map((ingredient) => {
       // Extract the main ingredient name without quantity and preparation
       const mainName = ingredient
@@ -84,17 +79,58 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       
       if (mainName.length < 3) return; // Skip very short ingredients
       
-      // Check for the main ingredient name
-      const mainRegex = new RegExp(`\\b${mainName}\\b`, "gi");
-      let match;
+      // Match the main ingredient name
+      const mainNameWords = mainName.toLowerCase().split(/\s+/);
       
-      // Find all matches of the main ingredient name
-      while ((match = mainRegex.exec(text)) !== null) {
-        matches.push({
-          ingredient: fullIngredient,
-          index: match.index,
-          length: match[0].length,
+      // If the main name has multiple words, check for each word and also the full phrase
+      if (mainNameWords.length > 1) {
+        // Check for the full phrase
+        const fullNameRegex = new RegExp(`\\b${mainName.replace(/\s+/g, '\\s+')}\\b`, "gi");
+        let fullMatch;
+        
+        while ((fullMatch = fullNameRegex.exec(text)) !== null) {
+          matches.push({
+            ingredient: fullIngredient,
+            index: fullMatch.index,
+            length: fullMatch[0].length,
+          });
+        }
+        
+        // Also check for key words in the ingredient name
+        mainNameWords.forEach(word => {
+          if (word.length < 3) return; // Skip very short words
+          
+          const wordRegex = new RegExp(`\\b${word}\\b`, "gi");
+          let wordMatch;
+          
+          while ((wordMatch = wordRegex.exec(text)) !== null) {
+            // Only add if we don't already have a match at this position
+            const alreadyMatched = matches.some(m => 
+              (wordMatch.index >= m.index && wordMatch.index < m.index + m.length) ||
+              (wordMatch.index + word.length > m.index && wordMatch.index < m.index)
+            );
+            
+            if (!alreadyMatched) {
+              matches.push({
+                ingredient: fullIngredient,
+                index: wordMatch.index,
+                length: wordMatch[0].length,
+              });
+            }
+          }
         });
+      } else {
+        // For single word ingredients
+        const mainRegex = new RegExp(`\\b${mainName}\\b`, "gi");
+        let match;
+        
+        while ((match = mainRegex.exec(text)) !== null) {
+          matches.push({
+            ingredient: fullIngredient,
+            index: match.index,
+            length: match[0].length,
+          });
+        }
       }
       
       // Check for forms (sauce, dressing, etc.)
@@ -122,7 +158,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         }
       });
 
-      // Check for preparations in context
+      // Check for preparations that might indicate the ingredient
       preparations.forEach(prep => {
         if (!prep || prep.length < 4) return;
         
@@ -136,11 +172,19 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
           const context = text.substring(contextStart, contextEnd).toLowerCase();
           
           if (context.includes(mainName.toLowerCase())) {
-            matches.push({
-              ingredient: fullIngredient,
-              index: matchPrep.index,
-              length: matchPrep[0].length,
-            });
+            // Don't add prep words as separate matches if they're close to the main ingredient
+            const alreadyMatched = matches.some(m => 
+              Math.abs(matchPrep.index - m.index) < 15 && 
+              context.indexOf(mainName.toLowerCase()) < 15
+            );
+            
+            if (!alreadyMatched) {
+              matches.push({
+                ingredient: fullIngredient,
+                index: matchPrep.index,
+                length: matchPrep[0].length,
+              });
+            }
           }
         }
       });
@@ -308,7 +352,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         renderEnhancedInstructions()
       ) : (
         instructions.map((step, index) => {
-          // Get all matches per instruction (no longer limited to one)
+          // Find all ingredient matches in this instruction
           const matches = findIngredientMatches(step);
           return (
             <li key={index} className="flex gap-3 mb-4">

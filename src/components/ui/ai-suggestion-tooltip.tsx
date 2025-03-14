@@ -16,7 +16,7 @@ const AiSuggestionTooltip = ({ children, content }: AiSuggestionTooltipProps) =>
   return (
     <TooltipProvider>
       <Tooltip delayDuration={100}>
-        <TooltipTrigger className="cursor-pointer inline-flex" asChild>
+        <TooltipTrigger className="cursor-pointer inline-flex touch-manipulation" asChild>
           {children}
         </TooltipTrigger>
         <TooltipContent 
