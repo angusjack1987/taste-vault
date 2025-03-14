@@ -4,12 +4,12 @@ import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 
 function DefaultDemo() {
   const tabs = [
-    { title: "Dashboard", icon: Home },
-    { title: "Notifications", icon: Bell },
-    { type: "separator" },
-    { title: "Settings", icon: Settings },
-    { title: "Support", icon: HelpCircle },
-    { title: "Security", icon: Shield },
+    { title: "Dashboard", icon: Home, type: undefined },
+    { title: "Notifications", icon: Bell, type: undefined },
+    { type: "separator" as const },
+    { title: "Settings", icon: Settings, type: undefined },
+    { title: "Support", icon: HelpCircle, type: undefined },
+    { title: "Security", icon: Shield, type: undefined },
   ];
 
   return (
@@ -21,11 +21,11 @@ function DefaultDemo() {
 
 function CustomColorDemo() {
   const tabs = [
-    { title: "Profile", icon: User },
-    { title: "Messages", icon: Mail },
-    { type: "separator" },
-    { title: "Documents", icon: FileText },
-    { title: "Privacy", icon: Lock },
+    { title: "Profile", icon: User, type: undefined },
+    { title: "Messages", icon: Mail, type: undefined },
+    { type: "separator" as const },
+    { title: "Documents", icon: FileText, type: undefined },
+    { title: "Privacy", icon: Lock, type: undefined },
   ];
 
   return (
