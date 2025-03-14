@@ -26,6 +26,7 @@ interface WeekDayCardProps {
   onAddMeal: (date: Date, mealType: MealType) => void;
   onRemoveMeal: (mealPlanId: string) => void;
   onSuggestMeal: (date: Date, mealType: MealType) => void;
+  showDateHeader?: boolean;
 }
 
 const getMealIcon = (mealType: MealType) => {
@@ -41,7 +42,14 @@ const getMealIcon = (mealType: MealType) => {
   }
 };
 
-const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekDayCardProps) => {
+const WeekDayCard = ({ 
+  date, 
+  meals, 
+  onAddMeal, 
+  onRemoveMeal, 
+  onSuggestMeal,
+  showDateHeader = true 
+}: WeekDayCardProps) => {
   const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
   
   const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
@@ -64,6 +72,7 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
             className="h-7 w-7 px-0 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" 
             onClick={() => onSuggestMeal(date, mealType)}
             title="Get AI suggestion"
+            type="button"
           >
             <Lightbulb className="h-3.5 w-3.5 group-hover:animate-pulse-slow" />
           </Button>
@@ -116,23 +125,25 @@ const WeekDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: We
   };
   
   return (
-    <div className={cn(
-      "border rounded-lg p-3 space-y-2 transition-all h-full flex flex-col",
-      isToday ? "border-primary bg-primary/5 shadow-sm" : "hover:border-muted-foreground/30"
-    )}>
-      <div className={cn(
-        "text-center mb-1 font-medium",
-        isToday && "text-primary"
-      )}>
-        <span className="text-lg">{format(date, 'd')}</span>
-      </div>
+    <>
+      {showDateHeader && (
+        <div className={cn(
+          "text-center mb-1 font-medium",
+          isToday && "text-primary"
+        )}>
+          <span className="text-lg">{format(date, 'd')}</span>
+        </div>
+      )}
       
-      <div className="space-y-2 flex-1 flex flex-col justify-between">
-        {renderMealSlot('breakfast', meals.breakfast)}
-        {renderMealSlot('lunch', meals.lunch)}
-        {renderMealSlot('dinner', meals.dinner)}
+      <div className={cn(
+        "grid grid-cols-3 gap-3 flex-1",
+        showDateHeader && "space-y-2 flex flex-col"
+      )}>
+        <div>{renderMealSlot('breakfast', meals.breakfast)}</div>
+        <div>{renderMealSlot('lunch', meals.lunch)}</div>
+        <div>{renderMealSlot('dinner', meals.dinner)}</div>
       </div>
-    </div>
+    </>
   );
 };
 

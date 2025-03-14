@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import WeekDayCard from './WeekDayCard';
 import MobileDayCard from './MobileDayCard';
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, subDays, addWeeks, subWeeks } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
@@ -34,7 +34,7 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
   return (
     <div className="space-y-4">
       {/* Week navigation header */}
-      <div className="flex items-center justify-between md:justify-center mb-2">
+      <div className="flex items-center justify-between md:justify-center mb-4">
         <div className="flex items-center gap-3 md:gap-6">
           <Button variant="outline" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full">
             <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
@@ -48,35 +48,40 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
         </div>
       </div>
       
-      {/* Desktop view */}
-      <div className="hidden md:block">
-        <div className="grid grid-cols-7 gap-3 text-center text-sm mb-2">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="font-medium text-muted-foreground">
-              {day}
+      {/* Desktop view - stacked days */}
+      <div className="hidden md:block space-y-3">
+        {weekDays.map((day) => (
+          <div key={day.date.toString()} className="flex items-stretch">
+            {/* Day label for desktop view */}
+            <div className="w-32 mr-4 flex flex-col justify-center">
+              <p className="font-medium">{format(day.date, 'EEEE')}</p>
+              <p className="text-sm text-muted-foreground">{format(day.date, 'MMM d')}</p>
+              {format(new Date(), 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd') && (
+                <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full mt-1 inline-block w-fit">Today</span>
+              )}
             </div>
-          ))}
-        </div>
-        
-        <div className="grid grid-cols-7 gap-3">
-          {weekDays.map((day) => (
-            <WeekDayCard
-              key={day.date.toString()}
-              date={day.date}
-              meals={day.meals}
-              onAddMeal={onAddMeal}
-              onRemoveMeal={onRemoveMeal}
-              onSuggestMeal={onSuggestMeal}
-            />
-          ))}
-        </div>
+            
+            {/* Meals container */}
+            <div className="flex-1 grid grid-cols-3 gap-3">
+              <WeekDayCard
+                key={`${day.date.toString()}-desktop`}
+                date={day.date}
+                meals={day.meals}
+                onAddMeal={onAddMeal}
+                onRemoveMeal={onRemoveMeal}
+                onSuggestMeal={onSuggestMeal}
+                showDateHeader={false}
+              />
+            </div>
+          </div>
+        ))}
       </div>
       
       {/* Mobile view */}
       <div className="md:hidden space-y-4">
         {weekDays.map((day) => (
           <MobileDayCard
-            key={day.date.toString()}
+            key={`${day.date.toString()}-mobile`}
             date={day.date}
             meals={day.meals}
             onAddMeal={onAddMeal}
