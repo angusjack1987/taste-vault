@@ -6,32 +6,28 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-bold transition-all duration-200 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:-translate-y-[2px] active:translate-y-0 group hover:shadow-md",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow hover:shadow-vibrant [&_svg]:group-hover:animate-spin-slow",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow hover:shadow-md [&_svg]:group-hover:animate-shake",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
         outline:
-          "border-2 border-input bg-background hover:bg-accent/20 hover:text-accent-foreground shadow-sm hover:border-accent [&_svg]:group-hover:animate-pulse-slow",
+          "border border-input bg-background hover:bg-accent/10 hover:text-accent-foreground shadow-sm",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow hover:shadow-vibrant [&_svg]:group-hover:animate-pulse-slow",
-        ghost: "hover:bg-accent/10 hover:text-accent-foreground [&_svg]:group-hover:animate-spin-slow",
-        link: "text-primary underline-offset-4 hover:underline [&_svg]:group-hover:animate-pulse-slow",
-        fun: "bg-gradient-to-r from-sunshine-400 via-sunshine-500 to-sunshine-600 text-charcoal-800 shadow-sm hover:shadow-vibrant hover:opacity-90 [&_svg]:group-hover:animate-bounce",
-        mint: "bg-seafoam-500 text-white hover:bg-seafoam-400 shadow-sm hover:shadow-vibrant [&_svg]:group-hover:animate-pulse-slow",
-        ocean: "bg-ocean-500 text-white hover:bg-ocean-400 shadow-sm hover:shadow-vibrant [&_svg]:group-hover:animate-pulse-slow",
-        berry: "bg-berry-500 text-white hover:bg-berry-400 shadow-sm hover:shadow-vibrant [&_svg]:group-hover:animate-pulse-slow",
-        sunshine: "bg-sunshine-500 text-charcoal-800 hover:bg-sunshine-400 shadow-sm hover:shadow-vibrant [&_svg]:group-hover:animate-bounce",
-        cta: "bg-gradient-to-r from-secondary via-secondary/90 to-secondary text-white rounded-full px-6 py-3 font-bold shadow-md hover:shadow-vibrant hover:opacity-90 [&_svg]:group-hover:animate-pulse-slow transform transition-all duration-300",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-sm",
+        ghost: "hover:bg-accent/10 hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+        clean: "bg-background border border-border shadow-sm hover:bg-accent/5 text-foreground",
+        menu: "bg-transparent hover:bg-accent/10 w-full justify-start text-left font-normal",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
-        xl: "h-12 rounded-md px-10 text-base",
+        xs: "h-8 rounded-md px-2.5 text-xs",
       },
     },
     defaultVariants: {

@@ -1,5 +1,4 @@
 
-
 #root {
   margin: 0 auto;
   text-align: center;
@@ -25,6 +24,14 @@ body {
 .card-hover:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Button animation */
+.btn-hover {
+  transition: all 0.2s ease;
+}
+.btn-hover:hover {
+  transform: translateY(-2px);
 }
 
 /* Fancy button animation */
@@ -108,6 +115,30 @@ body {
   box-shadow: 8px 8px 0 0 #000;
 }
 
+/* Clean card style */
+.clean-card {
+  border-radius: 16px;
+  border: 1px solid #eaeaea;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+.clean-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Professional card style */
+.pro-card {
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+.pro-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
 /* Audio visualization animations */
 @keyframes sound-wave {
   0% {
@@ -154,4 +185,20 @@ body {
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px dashed rgba(0,0,0,0.1);
+}
+
+/* Professional section styling */
+.section-pro {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Subtle dividers */
+.divider-subtle {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.1), transparent);
+  margin: 1.5rem 0;
 }
