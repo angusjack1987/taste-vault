@@ -45,6 +45,7 @@ import useAiRecipes from "@/hooks/useAiRecipes";
 import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
+import InstructionsWithTooltips from "@/components/recipes/InstructionsWithTooltips";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -410,16 +411,10 @@ const RecipeDetail = () => {
             </TabsContent>
             <TabsContent value="instructions" className="mt-4">
               <ScrollArea className="max-h-[400px]">
-                <ol className="space-y-4">
-                  {recipe.instructions.map((step, index) => (
-                    <li key={index} className="flex gap-3">
-                      <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
-                        {index + 1}
-                      </span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
+                <InstructionsWithTooltips
+                  instructions={recipe.instructions}
+                  ingredients={recipe.ingredients}
+                />
               </ScrollArea>
             </TabsContent>
           </Tabs>
