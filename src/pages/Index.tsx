@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -35,13 +34,11 @@ const IndexPage = () => {
   const recentRecipes = recipes.slice(0, 4);
   const popularRecipes = [...recipes].sort(() => 0.5 - Math.random()).slice(0, 4); // Random for demo
   
-  // Fetch memory insights on page load if enabled
   useEffect(() => {
     if (user && isMemoryEnabled && !insights && !memoryLoading) {
       console.log("Fetching memory insights");
       getMemoryInsights().then(insights => {
         if (insights) {
-          // Create a short preview of the insights
           const firstParagraph = insights.split('\n\n')[0];
           setMemoryPreview(firstParagraph);
           console.log("Memory preview set:", firstParagraph);
@@ -64,11 +61,9 @@ const IndexPage = () => {
       });
       
       try {
-        // Try to parse the JSON from the AI response
         const parsedResult = JSON.parse(result);
         setSuggestedMeal(parsedResult);
       } catch (e) {
-        // If parsing fails, use the raw response
         setSuggestedMeal({ rawResponse: result });
       }
     } catch (error) {
@@ -80,7 +75,6 @@ const IndexPage = () => {
   };
 
   const handleSaveSuggestedRecipe = async (optionIndex: number) => {
-    // This would be implemented to save the selected recipe
     setSuggestDialogOpen(false);
     setSuggestedMeal(null);
   };
@@ -94,7 +88,6 @@ const IndexPage = () => {
   return (
     <MainLayout title="Flavor Librarian">
       <div className="space-y-8 px-4">
-        {/* Hero Section */}
         <section className="mt-6">
           <h1 className="text-2xl font-bold mb-1">Good day, {firstName}!</h1>
           <p className="text-3xl font-bold mb-6">What shall we cook today?</p>
@@ -140,58 +133,6 @@ const IndexPage = () => {
           </div>
         </section>
         
-        {/* Today's Meals */}
-        {todaysMeals.length > 0 && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xl font-bold">Today's Meals</h2>
-              <Link to="/meal-plan" className="text-sm font-medium flex items-center">
-                View all <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </div>
-            
-            <div className="playful-card">
-              {todaysMeals.map((meal) => (
-                <div key={meal.id} className="mb-3 last:mb-0">
-                  <h3 className="font-medium text-sm text-muted-foreground capitalize mb-1">
-                    {meal.meal_type}
-                  </h3>
-                  {meal.recipe ? (
-                    <Link to={`/recipes/${meal.recipe.id}`} className="block">
-                      <div className="flex items-center gap-3">
-                        {meal.recipe.image ? (
-                          <img 
-                            src={meal.recipe.image} 
-                            alt={meal.recipe.title}
-                            className="w-12 h-12 rounded-lg object-cover" 
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                            <ChefHat className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-bold">{meal.recipe.title}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  ) : (
-                    <Link to="/meal-plan" className="block">
-                      <div className="rounded-lg p-3 border border-dashed border-border flex items-center justify-center">
-                        <Button variant="ghost" size="sm" className="rounded-full">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add {meal.meal_type}
-                        </Button>
-                      </div>
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        
-        {/* AI Memory Insights Section */}
         {isMemoryEnabled && (
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -251,7 +192,56 @@ const IndexPage = () => {
           </section>
         )}
         
-        {/* Recipe Sections */}
+        {todaysMeals.length > 0 && (
+          <section className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xl font-bold">Today's Meals</h2>
+              <Link to="/meal-plan" className="text-sm font-medium flex items-center">
+                View all <ArrowRight className="h-4 w-4 ml-1" />
+              </Link>
+            </div>
+            
+            <div className="playful-card">
+              {todaysMeals.map((meal) => (
+                <div key={meal.id} className="mb-3 last:mb-0">
+                  <h3 className="font-medium text-sm text-muted-foreground capitalize mb-1">
+                    {meal.meal_type}
+                  </h3>
+                  {meal.recipe ? (
+                    <Link to={`/recipes/${meal.recipe.id}`} className="block">
+                      <div className="flex items-center gap-3">
+                        {meal.recipe.image ? (
+                          <img 
+                            src={meal.recipe.image} 
+                            alt={meal.recipe.title}
+                            className="w-12 h-12 rounded-lg object-cover" 
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                            <ChefHat className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold">{meal.recipe.title}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <Link to="/meal-plan" className="block">
+                      <div className="rounded-lg p-3 border border-dashed border-border flex items-center justify-center">
+                        <Button variant="ghost" size="sm" className="rounded-full">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add {meal.meal_type}
+                        </Button>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        
         <CategorySection 
           title="Recent Recipes" 
           recipes={recentRecipes}
@@ -266,7 +256,6 @@ const IndexPage = () => {
           emptyMessage="Explore more recipes to see popular ones!"
         />
         
-        {/* AI Chef Section */}
         <section className="mb-10">
           <div className="playful-card bg-secondary/10 border-secondary/30">
             <div className="flex flex-col items-center text-center">
@@ -311,7 +300,6 @@ const IndexPage = () => {
   );
 };
 
-// Missing import fixed
 const Plus = ({ className }: { className?: string }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
