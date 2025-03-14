@@ -27,7 +27,7 @@ const AiSuggestionButton = ({
     <Button
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden font-black uppercase",
+        "relative overflow-hidden font-black uppercase border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all active:translate-x-0 active:translate-y-0 active:shadow-none rounded-none",
         className
       )}
       size={size}
@@ -42,7 +42,7 @@ const AiSuggestionButton = ({
       ) : (
         children || (
           <>
-            <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+            <Sparkles className="h-4 w-4 mr-2 animate-pulse" strokeWidth={2.5} />
             {label}
           </>
         )
