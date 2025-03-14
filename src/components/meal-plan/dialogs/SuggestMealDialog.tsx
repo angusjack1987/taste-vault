@@ -257,8 +257,8 @@ const SuggestMealDialog = ({
               >
                 <ArrowRight className="mr-2 h-4 w-4" />
                 {currentDay && currentMealType 
-                  ? "Add to Meal Plan" 
-                  : "Save Recipe"}
+                  ? "Save to Recipe Library & Meal Plan" 
+                  : "Save to Recipe Library"}
               </Button>
             )}
           </DialogFooter>

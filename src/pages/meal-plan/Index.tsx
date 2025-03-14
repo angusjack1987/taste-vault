@@ -183,6 +183,7 @@ const MealPlan = () => {
     try {
       const selectedOption = suggestedMeal.options[optionIndex];
       
+      // Create the recipe in the recipe library
       const newRecipe = await createRecipe({
         title: selectedOption.title,
         description: selectedOption.description,
@@ -195,6 +196,7 @@ const MealPlan = () => {
         tags: []
       });
       
+      // Now add it to the meal plan if a day and meal type were selected
       if (currentDay && currentMealType) {
         await createMealPlan({
           date: currentDay,
