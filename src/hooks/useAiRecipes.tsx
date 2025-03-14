@@ -47,7 +47,7 @@ export const useAiRecipes = () => {
               userId: user.id,
             },
             aiSettings: {
-              model: aiSettings?.model || "gpt-3.5-turbo",
+              model: aiSettings?.model || "gpt-4o-mini",
               temperature: aiSettings?.temperature || 0.7,
               promptHistoryEnabled: aiSettings?.promptHistoryEnabled !== false,
               useMemory: aiSettings?.useMemory ?? true,
@@ -68,6 +68,7 @@ export const useAiRecipes = () => {
       return response.result;
     } catch (error) {
       console.error(`Unexpected error in ${endpoint}:`, error);
+      toast.error(`AI request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     } finally {
       setLoading(false);
@@ -128,11 +129,21 @@ export const useAiRecipes = () => {
     instructions: string[];
     ingredients: string[];
   }) => {
-    return makeEdgeFunctionRequest(
-      "enhance-recipe-instructions",
-      "enhance-recipe-instructions",
-      data
-    );
+    try {
+      return await makeEdgeFunctionRequest(
+        "enhance-recipe-instructions",
+        "enhance-recipe-instructions",
+        data
+      );
+    } catch (error) {
+      console.error("Failed to enhance recipe instructions:", error);
+      toast.error("Failed to enhance recipe instructions. Please try again later.");
+      // Return empty enhanced instructions to avoid breaking the UI
+      return data.instructions.map(step => ({
+        step,
+        tooltips: []
+      }));
+    }
   };
 
   // Helper to determine current season

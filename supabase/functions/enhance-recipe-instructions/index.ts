@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { type, data } = await req.json();
+    const { type, data, aiSettings } = await req.json();
     
     if (type !== 'enhance-recipe-instructions') {
       throw new Error(`Unsupported request type: ${type}`);
@@ -36,6 +36,10 @@ serve(async (req) => {
     console.log("Instructions count:", instructions.length);
     console.log("Ingredients count:", ingredients.length);
 
+    // Use the AI settings from the request if available, otherwise use defaults
+    const model = aiSettings?.model || 'gpt-4o-mini';
+    const temperature = aiSettings?.temperature || 0.7;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -43,7 +47,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [
           { 
             role: 'system', 
@@ -77,7 +81,7 @@ serve(async (req) => {
             `
           }
         ],
-        temperature: 0.7,
+        temperature: temperature,
         max_tokens: 2000,
       }),
     });
@@ -90,6 +94,8 @@ serve(async (req) => {
 
     const data_response = await response.json();
     const enhancedInstructions = data_response.choices[0].message.content;
+    
+    console.log("Raw response from OpenAI:", enhancedInstructions.substring(0, 200) + "...");
     
     // Parse the response and validate it
     let parsedInstructions;
@@ -122,10 +128,18 @@ serve(async (req) => {
         parsedInstructions = correctedInstructions;
       }
       
+      console.log("Successfully parsed response with", parsedInstructions.length, "instructions");
     } catch (error) {
       console.error('Error parsing AI response:', error);
       console.error('Raw response:', enhancedInstructions);
-      throw new Error(`Failed to parse AI response: ${error.message}`);
+      
+      // Fallback: create a simple version if parsing fails
+      parsedInstructions = instructions.map(step => ({
+        step: step,
+        tooltips: [],
+      }));
+      
+      console.log("Using fallback parsed instructions");
     }
 
     return new Response(
