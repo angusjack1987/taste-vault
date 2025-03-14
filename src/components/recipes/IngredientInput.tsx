@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
       return <Beef className="h-4 w-4 text-sage-500" />;
     } else if (/fish|salmon|tuna|cod|tilapia|shrimp|prawn|seafood/i.test(lowerName)) {
       return <Fish className="h-4 w-4 text-sage-500" />;
-    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|strawberry|blueberry|raspberry/i.test(lowerName)) {
+    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|cherries|strawberry|blueberry|raspberry/i.test(lowerName)) {
       return <Apple className="h-4 w-4 text-sage-500" />;
     } else if (/egg|eggs/i.test(lowerName)) {
       return <Egg className="h-4 w-4 text-sage-500" />;
@@ -41,7 +41,10 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
   };
 
   const renderIngredientItem = (ingredient: string, index: number, isInput: boolean) => {
+    // First parse the preparation instructions
     const { mainText, preparation } = parsePreparation(ingredient);
+    
+    // Then parse the amount from the remaining text
     const { name, amount } = parseIngredientAmount(mainText);
 
     if (isInput) {
@@ -86,7 +89,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
               </div>
               
               {preparation && (
-                <span className="text-xs text-gray-500 italic ml-5 mt-0.5">{preparation}</span>
+                <div className="text-xs text-gray-500 italic ml-5">{preparation}</div>
               )}
             </div>
           </div>
@@ -108,7 +111,10 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
   const renderLivePreview = (ingredient: string) => {
     if (!ingredient) return null;
     
+    // First parse the preparation instructions
     const { mainText, preparation } = parsePreparation(ingredient);
+    
+    // Then parse the amount from the remaining text
     const { name, amount } = parseIngredientAmount(mainText);
 
     return (
@@ -125,7 +131,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
             <span className="text-sm">{name}</span>
           </div>
           {preparation && (
-            <span className="text-xs text-gray-500 italic mt-0.5">{preparation}</span>
+            <div className="text-xs text-gray-500 italic">{preparation}</div>
           )}
         </div>
         

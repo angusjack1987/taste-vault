@@ -56,22 +56,62 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
 /**
  * Parses an ingredient string to extract preparation instructions
  * Example: "Chicken Breast, diced" -> { mainText: "Chicken Breast", preparation: "diced" }
+ * Example: "diced chicken" -> { mainText: "chicken", preparation: "diced" }
  */
 export function parsePreparation(ingredient: string): { mainText: string; preparation: string | null } {
-  const separators = [', ', '; ', ' - ', ' for '];
-  let mainText = ingredient;
-  let preparation = null;
+  // Check for empty input
+  if (!ingredient || typeof ingredient !== 'string') {
+    return { mainText: ingredient || '', preparation: null };
+  }
   
-  for (const separator of separators) {
-    if (ingredient.includes(separator)) {
-      const parts = ingredient.split(new RegExp(`(${separator})`));
-      if (parts.length >= 3) {
-        mainText = parts[0];
-        preparation = parts.slice(2).join('');
-        break;
-      }
+  // Common preparation words that might appear at the beginning
+  const prepWords = [
+    'diced', 'chopped', 'minced', 'sliced', 'grated', 'crushed',
+    'peeled', 'julienned', 'cubed', 'shredded', 'torn', 'crumbled',
+    'pitted', 'halved', 'quartered', 'whole', 'ground', 'powdered',
+    'fresh', 'frozen', 'canned', 'dried'
+  ];
+  
+  // Check for "ingredient, preparation" format (e.g., "chicken, diced")
+  const commaPattern = /^(.+?),\s*(.+)$/;
+  const commaMatch = ingredient.match(commaPattern);
+  
+  if (commaMatch) {
+    return {
+      mainText: commaMatch[1].trim(),
+      preparation: commaMatch[2].trim()
+    };
+  }
+  
+  // Check for "preparation ingredient" format (e.g., "diced chicken")
+  for (const word of prepWords) {
+    const wordPattern = new RegExp(`^${word}\\s+(.+)$`, 'i');
+    const wordMatch = ingredient.match(wordPattern);
+    
+    if (wordMatch) {
+      return {
+        mainText: wordMatch[1].trim(),
+        preparation: word
+      };
     }
   }
   
-  return { mainText, preparation };
+  // Check for "ingredient preparation" format (e.g., "chicken diced")
+  for (const word of prepWords) {
+    const wordPattern = new RegExp(`^(.+?)\\s+${word}$`, 'i');
+    const wordMatch = ingredient.match(wordPattern);
+    
+    if (wordMatch) {
+      return {
+        mainText: wordMatch[1].trim(),
+        preparation: word
+      };
+    }
+  }
+  
+  // No preparation found
+  return {
+    mainText: ingredient,
+    preparation: null
+  };
 }
