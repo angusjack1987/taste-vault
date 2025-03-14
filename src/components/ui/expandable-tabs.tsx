@@ -6,11 +6,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useOnClickOutside } from "usehooks-ts";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 // Define the Tab interface
 interface Tab {
   title: string;
   icon: LucideIcon;
+  path?: string; // Add path for navigation
   type?: undefined;
 }
 
@@ -19,6 +21,7 @@ interface Separator {
   type: "separator";
   title?: undefined;
   icon?: undefined;
+  path?: undefined;
 }
 
 // Union type for tabs array items
@@ -58,12 +61,39 @@ export function ExpandableTabs({
   activeColor = "text-primary",
   onChange,
 }: ExpandableTabsProps) {
-  const [selected, setSelected] = React.useState<number | null>(null);
+  const location = useLocation();
+  const pathname = location.pathname;
+  
+  // Find the selected tab index based on the current path
+  const findSelectedTabIndex = () => {
+    return tabs.findIndex(
+      (tab) => 
+        tab.type !== "separator" && 
+        tab.path && 
+        (pathname === tab.path || 
+         (tab.path !== "/" && pathname.startsWith(tab.path)))
+    );
+  };
+  
+  const [selected, setSelected] = React.useState<number | null>(() => {
+    const index = findSelectedTabIndex();
+    return index !== -1 ? index : null;
+  });
+  
   const outsideClickRef = React.useRef(null);
 
+  // Update selected tab when the pathname changes
+  React.useEffect(() => {
+    const index = findSelectedTabIndex();
+    setSelected(index !== -1 ? index : null);
+  }, [pathname]);
+
   useOnClickOutside(outsideClickRef, () => {
-    setSelected(null);
-    onChange?.(null);
+    // Don't clear selection on outside click for navigation tabs
+    if (!tabs.some(tab => tab.type !== "separator" && tab.path)) {
+      setSelected(null);
+      onChange?.(null);
+    }
   });
 
   const handleSelect = (index: number) => {
@@ -90,38 +120,71 @@ export function ExpandableTabs({
 
         // TypeScript now knows this is a Tab, not a Separator
         const Icon = (tab as Tab).icon;
-        return (
-          <motion.button
-            key={(tab as Tab).title}
+        const isSelected = selected === index;
+        
+        // Determine if this tab should be considered active based on the URL path
+        const isActive = (tab as Tab).path && 
+          ((tab as Tab).path === pathname || 
+           ((tab as Tab).path !== "/" && pathname.startsWith((tab as Tab).path || "")));
+        
+        // Select UI classNames based on whether tab is active
+        const tabClassName = cn(
+          "relative flex items-center rounded-xl px-2 py-1 text-sm font-medium transition-colors duration-300 hover:scale-110",
+          isSelected || isActive
+            ? cn("bg-transparent", activeColor, "animate-pulse-slow")
+            : "text-primary-foreground hover:text-secondary"
+        );
+
+        // If tab has a path, wrap with Link
+        const TabContent = (
+          <motion.div
             variants={buttonVariants}
             initial={false}
             animate="animate"
-            custom={selected === index}
-            onClick={() => handleSelect(index)}
+            custom={isSelected || isActive}
             transition={transition}
-            className={cn(
-              "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300",
-              selected === index
-                ? cn("bg-muted", activeColor)
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
+            className={tabClassName}
           >
-            <Icon size={20} />
+            <div className="flex justify-center w-full">
+              <Icon className={cn(
+                "w-4 h-4 mb-0.5 transition-all",
+                isSelected || isActive ? activeColor : "text-primary-foreground"
+              )} />
+            </div>
             <AnimatePresence initial={false}>
-              {selected === index && (
+              {(isSelected || isActive) && (
                 <motion.span
                   variants={spanVariants}
                   initial="initial"
                   animate="animate"
                   exit="exit"
                   transition={transition}
-                  className="overflow-hidden"
+                  className="overflow-hidden text-[10px] font-medium"
                 >
                   {(tab as Tab).title}
                 </motion.span>
               )}
             </AnimatePresence>
-          </motion.button>
+          </motion.div>
+        );
+
+        return (tab as Tab).path ? (
+          <Link 
+            key={(tab as Tab).title}
+            to={(tab as Tab).path || "#"} 
+            className="flex justify-center"
+            onClick={() => handleSelect(index)}
+          >
+            {TabContent}
+          </Link>
+        ) : (
+          <button
+            key={(tab as Tab).title}
+            onClick={() => handleSelect(index)}
+            className="flex justify-center"
+          >
+            {TabContent}
+          </button>
         );
       })}
     </div>
