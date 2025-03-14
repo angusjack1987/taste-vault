@@ -100,11 +100,14 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                       <span className="font-mono text-sm">{amount}</span>
                     )}
                     
-                    <div className="flex items-center gap-1">
-                      {getIngredientIcon(name)}
-                      <span className="text-sm">{name}</span>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1">
+                        {getIngredientIcon(name)}
+                        <span className="text-sm">{name}</span>
+                      </div>
+                      
                       {preparation && (
-                        <span className="text-xs text-gray-500 italic ml-1">{preparation}</span>
+                        <span className="text-xs text-gray-500 italic ml-5 mt-1">{preparation}</span>
                       )}
                     </div>
                   </div>
@@ -130,14 +133,14 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                   </div>
                 )}
                 
-                <div className="bg-sage-50 rounded-md p-2 flex items-center border border-sage-200">
+                <div className="bg-sage-50 rounded-md p-2 flex flex-col border border-sage-200">
                   <div className="flex items-center gap-2">
                     {getIngredientIcon(name)}
                     <span className="text-sm">{name}</span>
-                    {preparation && (
-                      <span className="text-xs text-gray-500 italic ml-1">{preparation}</span>
-                    )}
                   </div>
+                  {preparation && (
+                    <span className="text-xs text-gray-500 mt-1 italic ml-5">{preparation}</span>
+                  )}
                 </div>
                 
                 {preparation && !amount && (
