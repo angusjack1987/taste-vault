@@ -16,6 +16,14 @@ interface MemoryInsight {
   created_at: string;
 }
 
+// Define types for RPC function parameters and responses
+type GetLatestMemoryInsightsFn = (params: { user_id_param: string }) => Promise<{ data: MemoryInsight[] | null; error: any }>;
+type StoreMemoryInsightsFn = (params: { 
+  user_id_param: string; 
+  insights_param: string; 
+  created_at_param: string
+}) => Promise<{ data: null; error: any }>;
+
 export const useAiMemory = () => {
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<string | null>(null);
@@ -36,12 +44,10 @@ export const useAiMemory = () => {
     if (!user) return;
 
     try {
-      // Try to get insights using RPC to avoid TypeScript errors with table types
-      const { data, error } = await supabase
-        .rpc('get_latest_memory_insights', { user_id_param: user.id }) as { 
-          data: MemoryInsight[] | null; 
-          error: any 
-        };
+      // Explicitly type the RPC function call
+      const { data, error } = await (supabase.rpc as any)('get_latest_memory_insights', { 
+        user_id_param: user.id 
+      }) as ReturnType<GetLatestMemoryInsightsFn>;
 
       if (error) {
         console.error("Error fetching from RPC:", error);
@@ -161,15 +167,15 @@ export const useAiMemory = () => {
     if (!user) return;
     
     try {
-      // Store the raw markdown in Supabase using RPC
-      const { error } = await supabase.rpc(
+      // Store the raw markdown in Supabase using RPC with explicit typing
+      const { error } = await (supabase.rpc as any)(
         'store_memory_insights',
         { 
           user_id_param: user.id, 
           insights_param: rawInsights,
           created_at_param: new Date().toISOString()
         }
-      ) as { data: null; error: any };
+      ) as ReturnType<StoreMemoryInsightsFn>;
         
       if (error) {
         console.error("Error storing insights in database:", error);
