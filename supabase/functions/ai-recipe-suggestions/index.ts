@@ -1,198 +1,367 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.29.0";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
+// CORS headers
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-serve(async (req) => {
+// OpenAI API configuration
+const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+
+interface RequestData {
+  type: "suggest-recipes" | "analyze-meal-plan" | "suggest-meal-for-plan";
+  data: any;
+  aiSettings?: AISettings;
+}
+
+interface AISettings {
+  model?: string;
+  temperature?: number;
+  promptHistoryEnabled?: boolean;
+  userPreferences?: {
+    responseStyle?: "concise" | "balanced" | "detailed";
+  };
+}
+
+serve(async (req: Request) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
   }
 
   try {
-    const { type, data, aiSettings } = await req.json();
-    
-    let prompt = '';
-    let systemPrompt = 'You are an AI assistant specialized in recipe suggestions and meal planning. Be concise and provide practical advice.';
-    
-    // Adjust system prompt based on user's response style preference
-    if (aiSettings?.userPreferences?.responseStyle) {
-      const styleMap = {
-        concise: 'Be extremely concise and to the point in your responses.',
-        balanced: 'Provide moderately detailed responses with a balance of information.',
-        detailed: 'Provide comprehensive and detailed information in your responses.'
-      };
-      systemPrompt += ' ' + styleMap[aiSettings.userPreferences.responseStyle];
-    }
-    
-    // Process the user's food preferences if available
-    const formatUserPreferences = (userFoodPreferences: any) => {
-      if (!userFoodPreferences) return '';
-      
-      // Ensure userFoodPreferences is an object
-      if (typeof userFoodPreferences !== 'object' || Array.isArray(userFoodPreferences)) return '';
-      
-      let prefString = 'Based on these user preferences:';
-      
-      if (userFoodPreferences.favoriteCuisines) {
-        prefString += ` Favorite cuisines: ${userFoodPreferences.favoriteCuisines}.`;
-      }
-      
-      if (userFoodPreferences.favoriteChefs) {
-        prefString += ` Favorite chefs/cooks: ${userFoodPreferences.favoriteChefs}.`;
-      }
-      
-      if (userFoodPreferences.ingredientsToAvoid) {
-        prefString += ` Ingredients to avoid: ${userFoodPreferences.ingredientsToAvoid}.`;
-      }
-      
-      if (userFoodPreferences.dietaryNotes) {
-        prefString += ` Additional notes: ${userFoodPreferences.dietaryNotes}.`;
-      }
-      
-      return prefString;
-    };
-    
-    if (type === 'suggest-recipes') {
-      const { preferences, dietaryRestrictions, userFoodPreferences } = data;
-      
-      // Include user's stored food preferences in the prompt
-      const userPrefsString = formatUserPreferences(userFoodPreferences);
-      
-      prompt = `Suggest 3 recipe ideas ${preferences ? `based on these preferences: ${preferences}` : ''} ${dietaryRestrictions ? `with these dietary restrictions: ${dietaryRestrictions}` : ''}. ${userPrefsString} For each recipe, provide the title, a brief description, and a list of main ingredients.`;
-      
-      console.log("Recipe suggestion prompt:", prompt);
-    } else if (type === 'analyze-meal-plan') {
-      const { mealPlan } = data;
-      prompt = `Analyze this weekly meal plan and provide feedback on nutritional balance and suggest improvements: ${JSON.stringify(mealPlan)}`;
-    } else if (type === 'generate-recipe') {
-      const { title, ingredients, userFoodPreferences } = data;
-      
-      // Include user's stored food preferences in the prompt
-      const userPrefsString = formatUserPreferences(userFoodPreferences);
-      
-      prompt = `Create a complete recipe for "${title}" using these main ingredients: ${ingredients}. ${userPrefsString} Include detailed instructions, cooking time, and serving size.`;
-      
-      console.log("Recipe generation prompt:", prompt);
-    } else if (type === 'suggest-meal-for-plan') {
-      const { mealType, season, additionalPreferences, userFoodPreferences } = data;
-      
-      // Include user's stored food preferences in the prompt
-      const userPrefsString = formatUserPreferences(userFoodPreferences);
-      
-      const seasonalConsideration = season 
-        ? `Consider that it's currently ${season} season, but don't put too much emphasis on it.` 
-        : '';
-      
-      prompt = `Suggest TWO different recipe options for ${mealType}. ${seasonalConsideration} ${additionalPreferences ? `Additional preferences: ${additionalPreferences}.` : ''} ${userPrefsString}
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") || "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+    );
 
-For EACH recipe, return in this JSON format:
+    // Parse request body
+    const requestData: RequestData = await req.json();
+    const { type, data, aiSettings } = requestData;
+
+    console.log("Request type:", type);
+    console.log("AI Settings:", aiSettings);
+
+    // Process request based on type
+    let result;
+    let prompt;
+
+    switch (type) {
+      case "suggest-recipes":
+        prompt = generateRecipeSuggestionsPrompt(data, aiSettings);
+        result = await getOpenAiCompletion(prompt, aiSettings);
+        break;
+      case "analyze-meal-plan":
+        prompt = generateMealPlanAnalysisPrompt(data, aiSettings);
+        result = await getOpenAiCompletion(prompt, aiSettings);
+        break;
+      case "suggest-meal-for-plan":
+        prompt = generateMealSuggestionPrompt(data, aiSettings);
+        result = await getOpenAiCompletion(prompt, aiSettings);
+        
+        // Try to parse the AI response to extract structured meal suggestions
+        try {
+          const parsedResult = await parseMealSuggestion(result, aiSettings);
+          result = parsedResult;
+        } catch (error) {
+          console.error("Error parsing meal suggestion:", error);
+          // Fall back to the raw response if parsing fails
+        }
+        break;
+      default:
+        throw new Error(`Unknown request type: ${type}`);
+    }
+
+    // Log the prompt to history if enabled
+    if (aiSettings?.promptHistoryEnabled !== false && data.userId) {
+      try {
+        // Store a truncated version of the response for history
+        const responsePreview = typeof result === 'string' 
+          ? result.substring(0, 150) + (result.length > 150 ? '...' : '')
+          : JSON.stringify(result).substring(0, 150) + '...';
+          
+        await supabaseClient.from('ai_prompt_history').insert({
+          user_id: data.userId,
+          endpoint: type,
+          prompt: prompt,
+          response_preview: responsePreview,
+          model: aiSettings?.model,
+          temperature: aiSettings?.temperature
+        });
+        
+        console.log("Prompt history logged");
+      } catch (error) {
+        console.error("Error logging prompt history:", error);
+      }
+    }
+
+    // Return result
+    return new Response(JSON.stringify({ result }), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
+  }
+});
+
+// Function to generate recipe suggestions prompt
+function generateRecipeSuggestionsPrompt(data: any, aiSettings?: AISettings): string {
+  const {
+    preferences = "",
+    dietaryRestrictions = "",
+    userFoodPreferences = null,
+  } = data;
+
+  let promptStyle = "Please suggest 5 recipes";
+  
+  if (aiSettings?.userPreferences?.responseStyle === "concise") {
+    promptStyle = "Please briefly suggest 3 recipes";
+  } else if (aiSettings?.userPreferences?.responseStyle === "detailed") {
+    promptStyle = "Please suggest 5 detailed recipes with full instructions";
+  }
+
+  let prompt = `${promptStyle} based on the following criteria:\n\n`;
+
+  if (preferences) {
+    prompt += `User preferences: ${preferences}\n`;
+  }
+
+  if (dietaryRestrictions) {
+    prompt += `Dietary restrictions: ${dietaryRestrictions}\n`;
+  }
+
+  // Add user's stored food preferences if available
+  if (userFoodPreferences) {
+    if (userFoodPreferences.favoriteCuisines) {
+      prompt += `Favorite cuisines: ${userFoodPreferences.favoriteCuisines}\n`;
+    }
+    if (userFoodPreferences.favoriteChefs) {
+      prompt += `Favorite chefs or cooking styles: ${userFoodPreferences.favoriteChefs}\n`;
+    }
+    if (userFoodPreferences.ingredientsToAvoid) {
+      prompt += `Ingredients to avoid: ${userFoodPreferences.ingredientsToAvoid}\n`;
+    }
+    if (userFoodPreferences.dietaryNotes) {
+      prompt += `Additional dietary notes: ${userFoodPreferences.dietaryNotes}\n`;
+    }
+  }
+
+  prompt += "\nFor each recipe, include the name and a brief description.";
+
+  return prompt;
+}
+
+// Function to generate meal plan analysis prompt
+function generateMealPlanAnalysisPrompt(data: any, aiSettings?: AISettings): string {
+  const { mealPlan } = data;
+
+  let detailLevel = "balanced";
+  if (aiSettings?.userPreferences?.responseStyle) {
+    detailLevel = aiSettings.userPreferences.responseStyle;
+  }
+
+  const meals = mealPlan.map((meal: any) => {
+    const date = new Date(meal.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    return `${date} - ${meal.meal_type}: ${meal.recipe ? meal.recipe.title : 'No meal planned'}`;
+  }).join("\n");
+
+  let prompt = `Analyze the following meal plan and provide insights. ${
+    detailLevel === "concise" 
+      ? "Keep your analysis brief and to the point." 
+      : detailLevel === "detailed"
+      ? "Provide detailed analysis with specific recommendations for improvement."
+      : "Provide a balanced analysis with some recommendations."
+  }\n\n`;
+  
+  prompt += `Meal Plan:\n${meals}\n\n`;
+  
+  prompt += "Please analyze for:\n";
+  prompt += "1. Nutritional balance\n";
+  prompt += "2. Variety of cuisines and ingredients\n";
+  prompt += "3. Suggestions for improvements or additions\n";
+  
+  if (detailLevel === "detailed") {
+    prompt += "4. Potential nutrient deficiencies\n";
+    prompt += "5. Ideas for healthy snacks to complement the meals\n";
+  }
+
+  return prompt;
+}
+
+// Function to generate meal suggestion prompt
+function generateMealSuggestionPrompt(data: any, aiSettings?: AISettings): string {
+  const {
+    mealType,
+    season,
+    additionalPreferences = "",
+    userFoodPreferences = null,
+  } = data;
+
+  let detailLevel = "balanced";
+  if (aiSettings?.userPreferences?.responseStyle) {
+    detailLevel = aiSettings.userPreferences.responseStyle;
+  }
+
+  let prompt = `Suggest ${detailLevel === "concise" ? "1 recipe" : "2 different recipes"} for ${mealType} that would be appropriate for ${season} season.`;
+
+  if (additionalPreferences) {
+    prompt += ` Consider these preferences: ${additionalPreferences}.`;
+  }
+
+  // Add user's stored food preferences if available
+  if (userFoodPreferences) {
+    prompt += "\n\nPlease also consider the user's food profile:";
+    
+    if (userFoodPreferences.favoriteCuisines) {
+      prompt += `\nFavorite cuisines: ${userFoodPreferences.favoriteCuisines}`;
+    }
+    if (userFoodPreferences.favoriteChefs) {
+      prompt += `\nFavorite chefs or cooking styles: ${userFoodPreferences.favoriteChefs}`;
+    }
+    if (userFoodPreferences.ingredientsToAvoid) {
+      prompt += `\nIngredients to avoid: ${userFoodPreferences.ingredientsToAvoid}`;
+    }
+    if (userFoodPreferences.dietaryNotes) {
+      prompt += `\nAdditional dietary notes: ${userFoodPreferences.dietaryNotes}`;
+    }
+  }
+
+  prompt += `\n\nFor each recipe, provide:
+1. Title
+2. Brief description
+3. List of ingredients with quantities
+4. Step by step instructions
+5. Preparation time
+6. Number of servings
+7. Any special highlights (e.g. "high-protein", "quick", "vegetarian")
+
+Format your response in JSON with the following structure:
 {
   "options": [
     {
-      "title": "First Recipe Title",
+      "title": "Recipe Title",
       "description": "Brief description",
-      "highlights": ["highlight 1", "highlight 2", "highlight 3"],
-      "ingredients": ["ingredient 1", "ingredient 2", ...],
-      "instructions": ["step 1", "step 2", ...],
-      "time": estimated_minutes_to_prepare,
-      "servings": number_of_servings
-    },
-    {
-      "title": "Second Recipe Title",
-      "description": "Brief description",
-      "highlights": ["highlight 1", "highlight 2", "highlight 3"],
-      "ingredients": ["ingredient 1", "ingredient 2", ...],
-      "instructions": ["step 1", "step 2", ...],
-      "time": estimated_minutes_to_prepare,
-      "servings": number_of_servings
+      "highlights": ["highlight1", "highlight2"],
+      "ingredients": ["ingredient1", "ingredient2"],
+      "instructions": ["step1", "step2"],
+      "time": preparationTimeInMinutes,
+      "servings": numberOfServings
     }
   ]
 }`;
+
+  return prompt;
+}
+
+// Function to parse AI meal suggestion responses
+async function parseMealSuggestion(response: string, aiSettings?: AISettings): Promise<any> {
+  try {
+    // Look for JSON in the response
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+      const jsonString = jsonMatch[0];
+      const parsedResponse = JSON.parse(jsonString);
       
-      console.log("Meal suggestion prompt:", prompt);
-    } else {
-      return new Response(
-        JSON.stringify({ error: 'Invalid request type' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Validate expected structure
+      if (parsedResponse && parsedResponse.options && Array.isArray(parsedResponse.options)) {
+        return parsedResponse;
+      }
     }
+    
+    // If no valid JSON found or doesn't have expected structure,
+    // use OpenAI to parse the unstructured response
+    const parsePrompt = `Parse the following meal suggestion into a structured JSON format:
 
-    // Get the selected model and temperature from user settings, or use defaults
-    const model = aiSettings?.model || 'gpt-4o-mini';
-    const temperature = aiSettings?.temperature !== undefined ? aiSettings.temperature : 0.7;
+${response}
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+Please format as:
+{
+  "options": [
+    {
+      "title": "Recipe Title",
+      "description": "Brief description",
+      "highlights": ["highlight1", "highlight2"],
+      "ingredients": ["ingredient1", "ingredient2"],
+      "instructions": ["step1", "step2"],
+      "time": preparationTimeInMinutes,
+      "servings": numberOfServings
+    }
+  ]
+}
+
+Ensure all data is accurately extracted from the text.`;
+
+    const parsedResult = await getOpenAiCompletion(parsePrompt, aiSettings);
+    
+    // Extract JSON from the resulting text
+    const parsedJsonMatch = parsedResult.match(/\{[\s\S]*\}/);
+    if (parsedJsonMatch) {
+      return JSON.parse(parsedJsonMatch[0]);
+    }
+    
+    // If all parsing attempts fail, return the original response
+    return { rawResponse: response };
+    
+  } catch (error) {
+    console.error("Error parsing meal suggestion:", error);
+    return { rawResponse: response };
+  }
+}
+
+// Function to communicate with OpenAI API
+async function getOpenAiCompletion(prompt: string, aiSettings?: AISettings): Promise<string> {
+  if (!openaiApiKey) {
+    throw new Error("OpenAI API key is not configured");
+  }
+
+  const model = aiSettings?.model || "gpt-3.5-turbo";
+  const temperature = aiSettings?.temperature !== undefined ? aiSettings.temperature : 0.7;
+
+  console.log(`Using model: ${model}, temperature: ${temperature}`);
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
         model: model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
-        ],
+        messages: [{ role: "user", content: prompt }],
         temperature: temperature,
       }),
     });
 
-    const data_response = await response.json();
-    console.log("OpenAI response:", JSON.stringify(data_response));
-    
-    if (data_response.error) {
-      throw new Error(data_response.error.message || 'Error calling OpenAI API');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
     }
 
-    const aiResponse = data_response.choices[0].message.content;
-    
-    // If prompt history is enabled and user ID is provided, store the prompt
-    if (aiSettings?.promptHistoryEnabled && data.userId) {
-      try {
-        const { error } = await fetch(
-          `${req.url.split('/functions/')[0]}/rest/v1/ai_prompt_history`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': Deno.env.get('SUPABASE_API_KEY') || '',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_API_KEY') || ''}`,
-            },
-            body: JSON.stringify({
-              user_id: data.userId,
-              endpoint: type,
-              prompt: prompt,
-              response_preview: aiResponse.substring(0, 200) + (aiResponse.length > 200 ? '...' : ''),
-              timestamp: new Date().toISOString(),
-            }),
-          }
-        ).then(res => res.json());
-        
-        if (error) {
-          console.error("Error saving prompt history:", error);
-        }
-      } catch (historyError) {
-        console.error("Failed to save prompt history:", historyError);
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ result: aiResponse }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-    
+    const data = await response.json();
+    return data.choices[0].message.content;
   } catch (error) {
-    console.error('Error in AI recipe suggestions function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error("Error calling OpenAI API:", error);
+    throw new Error(`Failed to get AI completion: ${error.message}`);
   }
-});
+}

@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_prompt_history: {
+        Row: {
+          endpoint: string
+          id: string
+          model: string | null
+          prompt: string
+          response_preview: string | null
+          temperature: number | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          endpoint: string
+          id?: string
+          model?: string | null
+          prompt: string
+          response_preview?: string | null
+          temperature?: number | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          endpoint?: string
+          id?: string
+          model?: string | null
+          prompt?: string
+          response_preview?: string | null
+          temperature?: number | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fridge_items: {
         Row: {
           category: string | null

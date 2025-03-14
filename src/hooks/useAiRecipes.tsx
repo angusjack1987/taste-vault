@@ -36,7 +36,7 @@ interface RecipeOption {
   rawContent?: string;
 }
 
-interface UserFoodPreferences {
+export interface UserFoodPreferences {
   favoriteCuisines?: string;
   favoriteChefs?: string;
   ingredientsToAvoid?: string;
@@ -44,7 +44,7 @@ interface UserFoodPreferences {
 }
 
 // Define a type for AI settings
-interface AISettings {
+export interface AISettings {
   model?: string;
   temperature?: number;
   promptHistoryEnabled?: boolean;
@@ -54,7 +54,7 @@ interface AISettings {
 }
 
 // Define a type for the preferences object shape
-interface UserPreferences {
+export interface UserPreferences {
   food?: UserFoodPreferences;
   ai?: AISettings;
   [key: string]: any; // Allow other preference categories

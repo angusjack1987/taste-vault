@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -86,10 +87,26 @@ const App = () => (
               </AuthGuard>
             } />
             {/* Settings Routes */}
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/settings/food-preferences" element={<FoodPreferences />} />
-            <Route path="/ai-settings" element={<AISettings />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={
+              <AuthGuard>
+                <Settings />
+              </AuthGuard>
+            } />
+            <Route path="/settings/food-preferences" element={
+              <AuthGuard>
+                <FoodPreferences />
+              </AuthGuard>
+            } />
+            <Route path="/settings/ai-settings" element={
+              <AuthGuard>
+                <AISettings />
+              </AuthGuard>
+            } />
+            <Route path="/profile" element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

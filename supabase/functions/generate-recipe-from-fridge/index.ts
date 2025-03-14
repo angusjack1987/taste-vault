@@ -1,197 +1,280 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.29.0";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
+// CORS headers
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-serve(async (req) => {
+// OpenAI API configuration
+const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+
+interface UserFoodPreferences {
+  favoriteCuisines?: string;
+  favoriteChefs?: string;
+  ingredientsToAvoid?: string;
+  dietaryNotes?: string;
+}
+
+interface AISettings {
+  model?: string;
+  temperature?: number;
+  promptHistoryEnabled?: boolean;
+  userPreferences?: {
+    responseStyle?: "concise" | "balanced" | "detailed";
+  };
+}
+
+serve(async (req: Request) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
   }
 
   try {
-    const { ingredients, userFoodPreferences, aiSettings, userId } = await req.json();
-    
-    if (!ingredients || ingredients.length === 0) {
-      throw new Error('No ingredients provided');
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") || "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+    );
+
+    const {
+      ingredients,
+      userFoodPreferences,
+      aiSettings,
+      userId
+    } = await req.json();
+
+    console.log("Generating recipes from ingredients:", ingredients);
+    console.log("AI Settings:", aiSettings);
+
+    if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
+      throw new Error("No ingredients provided");
     }
 
-    console.log("Generating recipes with ingredients:", ingredients);
-    console.log("User preferences:", userFoodPreferences || "None provided");
-    
-    // Format user preferences if provided
-    const userPrefsString = formatUserPreferences(userFoodPreferences);
-    
-    // Add response style adjustment based on user settings
-    let styleGuidance = '';
-    if (aiSettings?.userPreferences?.responseStyle) {
-      const styleMap = {
-        concise: 'Be concise and focused in your recipe descriptions.',
-        balanced: 'Provide a moderate level of detail in your recipe instructions.',
-        detailed: 'Include comprehensive details and explanations in your recipes.'
-      };
-      styleGuidance = styleMap[aiSettings.userPreferences.responseStyle];
-    }
-    
-    // Prepare the prompt for generating multiple recipe options
-    const prompt = `Create TWO different recipe options using some or all of these ingredients: ${ingredients.join(', ')}. 
-${userPrefsString}
-${styleGuidance}
+    // Generate recipes from the ingredients
+    const prompt = generateRecipePrompt(ingredients, userFoodPreferences, aiSettings);
+    const recipes = await getRecipesFromAI(prompt, aiSettings);
 
-For EACH recipe, provide the following in JSON format:
-{
-  "title": "Recipe Title",
-  "description": "A brief appealing description of the dish",
-  "highlights": ["highlight1", "highlight2", "highlight3"],
-  "ingredients": ["ingredient with quantity 1", "ingredient with quantity 2", ...],
-  "instructions": ["step 1", "step 2", ...],
-  "time": estimated_minutes_to_prepare,
-  "servings": number_of_servings
-}
-
-Return your response as a JSON object with the following structure:
-{
-  "options": [
-    {first recipe object},
-    {second recipe object}
-  ]
-}
-
-Not all ingredients need to be used in each recipe, but use as many as possible to create delicious, cohesive dishes. Make the recipes distinct from each other - different cuisines or cooking methods.`;
-
-    console.log("Sending prompt to OpenAI API");
-
-    // Get the selected model and temperature from user settings, or use defaults
-    const model = aiSettings?.model || 'gpt-4o-mini';
-    const temperature = aiSettings?.temperature !== undefined ? aiSettings.temperature : 0.7;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a skilled chef that specializes in creating delicious recipes from available ingredients. You always return responses in the exact JSON format requested, with no additional text.'
-          },
-          { role: 'user', content: prompt }
-        ],
-        temperature: temperature,
-        response_format: { type: "json_object" }
-      }),
-    });
-
-    const data = await response.json();
-    
-    if (data.error) {
-      console.error("OpenAI API error:", data.error);
-      throw new Error(data.error.message || 'Error generating recipes');
-    }
-
-    const recipeContent = data.choices[0].message.content;
-    console.log("Raw recipe content:", recipeContent.substring(0, 200) + "...");
-    
-    // Parse the JSON response and ensure it's in the correct format
-    let recipeOptions = [];
-    try {
-      const parsedContent = JSON.parse(recipeContent);
-      
-      if (parsedContent.options && Array.isArray(parsedContent.options)) {
-        // If we got the expected format with options array
-        recipeOptions = parsedContent.options;
-        console.log(`Successfully parsed ${recipeOptions.length} recipe options`);
-      } else if (Array.isArray(parsedContent) && parsedContent.length > 0) {
-        // If we got a direct array (no options wrapper)
-        recipeOptions = parsedContent;
-        console.log(`Parsed ${recipeOptions.length} recipe options from direct array`);
-      } else {
-        // If we got an unexpected format
-        console.log("Unexpected response format, wrapping raw content");
-        recipeOptions = [{ title: "Recipe Suggestion", rawContent: recipeContent }];
-      }
-    } catch (e) {
-      console.error("Error parsing recipe JSON:", e);
-      // If parsing fails, return the raw text
-      recipeOptions = [{ title: "Recipe Suggestion", rawContent: recipeContent }];
-    }
-
-    // If prompt history is enabled and user ID is provided, store the prompt
-    if (aiSettings?.promptHistoryEnabled && userId) {
+    // Log the prompt to history if enabled
+    if (aiSettings?.promptHistoryEnabled !== false && userId) {
       try {
-        const { error } = await fetch(
-          `${req.url.split('/functions/')[0]}/rest/v1/ai_prompt_history`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': Deno.env.get('SUPABASE_API_KEY') || '',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_API_KEY') || ''}`,
-            },
-            body: JSON.stringify({
-              user_id: userId,
-              endpoint: 'generate-recipe-from-fridge',
-              prompt: prompt,
-              response_preview: JSON.stringify(recipeOptions).substring(0, 200) + '...',
-              timestamp: new Date().toISOString(),
-            }),
-          }
-        ).then(res => res.json());
+        // Store a truncated version of the response
+        const responsePreview = JSON.stringify(recipes).substring(0, 150) + '...';
+          
+        await supabaseClient.from('ai_prompt_history').insert({
+          user_id: userId,
+          endpoint: "generate-recipe-from-fridge",
+          prompt: prompt,
+          response_preview: responsePreview,
+          model: aiSettings?.model,
+          temperature: aiSettings?.temperature
+        });
         
-        if (error) {
-          console.error("Error saving prompt history:", error);
-        }
-      } catch (historyError) {
-        console.error("Failed to save prompt history:", historyError);
+        console.log("Prompt history logged");
+      } catch (error) {
+        console.error("Error logging prompt history:", error);
       }
     }
 
-    const result = { recipes: recipeOptions };
-    console.log(`Returning ${recipeOptions.length} recipe options`);
-    
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-    
+    return new Response(JSON.stringify({ recipes }), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
-    console.error('Error in generate-recipe-from-fridge function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error("Error generating recipes:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
   }
 });
 
-// Helper function to format user preferences
-function formatUserPreferences(userFoodPreferences: any): string {
-  if (!userFoodPreferences) return '';
+function generateRecipePrompt(
+  ingredients: string[],
+  userFoodPreferences: UserFoodPreferences | null,
+  aiSettings?: AISettings
+): string {
+  const detailLevel = aiSettings?.userPreferences?.responseStyle || "balanced";
   
-  // Ensure userFoodPreferences is an object
-  if (typeof userFoodPreferences !== 'object' || Array.isArray(userFoodPreferences)) return '';
-  
-  let prefString = 'Consider these user preferences:';
-  
-  if (userFoodPreferences.favoriteCuisines) {
-    prefString += ` Favorite cuisines: ${userFoodPreferences.favoriteCuisines}.`;
+  let prompt = `Create ${detailLevel === "concise" ? "1 recipe" : "2 recipes"} using some or all of these ingredients:\n`;
+  prompt += ingredients.join(", ");
+  prompt += "\n\n";
+
+  // Add user's food preferences if available
+  if (userFoodPreferences) {
+    prompt += "Please consider the following user preferences:\n";
+    
+    if (userFoodPreferences.favoriteCuisines) {
+      prompt += `- Favorite cuisines: ${userFoodPreferences.favoriteCuisines}\n`;
+    }
+    if (userFoodPreferences.favoriteChefs) {
+      prompt += `- Favorite chefs/styles: ${userFoodPreferences.favoriteChefs}\n`;
+    }
+    if (userFoodPreferences.ingredientsToAvoid) {
+      prompt += `- Ingredients to avoid: ${userFoodPreferences.ingredientsToAvoid}\n`;
+    }
+    if (userFoodPreferences.dietaryNotes) {
+      prompt += `- Dietary notes: ${userFoodPreferences.dietaryNotes}\n`;
+    }
   }
-  
-  if (userFoodPreferences.ingredientsToAvoid) {
-    prefString += ` Ingredients to avoid: ${userFoodPreferences.ingredientsToAvoid}.`;
+
+  prompt += `\nFor each recipe, provide:
+1. Title
+2. Brief description
+3. List of ingredients with quantities
+4. Step by step instructions
+5. Preparation time
+6. Number of servings
+7. Any special highlights (e.g. "high-protein", "quick", "vegetarian")
+
+Format your response in JSON with the following structure:
+{
+  "recipes": [
+    {
+      "title": "Recipe Title",
+      "description": "Brief description",
+      "highlights": ["highlight1", "highlight2"],
+      "ingredients": ["ingredient1", "ingredient2"],
+      "instructions": ["step1", "step2"],
+      "time": preparationTimeInMinutes,
+      "servings": numberOfServings
+    }
+  ]
+}`;
+
+  return prompt;
+}
+
+async function getRecipesFromAI(prompt: string, aiSettings?: AISettings): Promise<any[]> {
+  if (!openaiApiKey) {
+    throw new Error("OpenAI API key is not configured");
   }
-  
-  if (userFoodPreferences.dietaryNotes) {
-    prefString += ` Additional dietary notes: ${userFoodPreferences.dietaryNotes}.`;
+
+  const model = aiSettings?.model || "gpt-3.5-turbo";
+  const temperature = aiSettings?.temperature !== undefined ? aiSettings.temperature : 0.7;
+
+  console.log(`Using model: ${model}, temperature: ${temperature}`);
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: temperature,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    // Parse the JSON response
+    try {
+      // Extract JSON object from the content (in case of additional text)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsedData = JSON.parse(jsonMatch[0]);
+        return parsedData.recipes || [];
+      }
+      throw new Error("No valid JSON found in the response");
+    } catch (parseError) {
+      console.error("Error parsing AI response:", parseError);
+      
+      // Attempt to fix using another AI call
+      return parseRecipesWithAI(content, aiSettings);
+    }
+  } catch (error) {
+    console.error("Error generating recipes with OpenAI:", error);
+    throw new Error(`Failed to generate recipes: ${error.message}`);
   }
-  
-  return prefString;
+}
+
+async function parseRecipesWithAI(content: string, aiSettings?: AISettings): Promise<any[]> {
+  if (!openaiApiKey) {
+    throw new Error("OpenAI API key is not configured");
+  }
+
+  const fixPrompt = `Parse the following text into a proper JSON format with recipes:
+
+${content}
+
+The response should be in this exact format:
+{
+  "recipes": [
+    {
+      "title": "Recipe Title",
+      "description": "Brief description",
+      "highlights": ["highlight1", "highlight2"],
+      "ingredients": ["ingredient1", "ingredient2"],
+      "instructions": ["step1", "step2"],
+      "time": preparationTimeInMinutes,
+      "servings": numberOfServings
+    }
+  ]
+}
+
+Please ensure the result is valid JSON.`;
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${openaiApiKey}`,
+    },
+    body: JSON.stringify({
+      model: aiSettings?.model || "gpt-3.5-turbo",
+      messages: [{ role: "user", content: fixPrompt }],
+      temperature: 0.3, // Lower temperature for more deterministic parsing
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to parse recipes format");
+  }
+
+  const data = await response.json();
+  const parsedContent = data.choices[0].message.content;
+
+  try {
+    // Extract JSON object
+    const jsonMatch = parsedContent.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsedData = JSON.parse(jsonMatch[0]);
+      return parsedData.recipes || [];
+    }
+    throw new Error("Failed to parse recipes");
+  } catch (error) {
+    console.error("Error parsing fixed AI response:", error);
+    
+    // If all else fails, return a manually constructed minimal recipe
+    return [{
+      title: "Recipe from Ingredients",
+      description: "A recipe based on your ingredients",
+      ingredients: ["See original ingredients list"],
+      instructions: ["See AI generated instructions"],
+      rawContent: content
+    }];
+  }
 }
