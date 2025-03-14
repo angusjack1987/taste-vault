@@ -55,7 +55,7 @@ const transition = { delay: 0.1, type: "spring", bounce: 0, duration: 0.6 };
 export function ExpandableTabs({
   tabs,
   className,
-  activeColor = "text-secondary",
+  activeColor = "text-primary",
   onChange,
 }: ExpandableTabsProps) {
   const [selected, setSelected] = React.useState<number | null>(null);
@@ -72,14 +72,14 @@ export function ExpandableTabs({
   };
 
   const Separator = () => (
-    <div className="mx-1 h-[24px] w-[1.2px] bg-primary/30" aria-hidden="true" />
+    <div className="mx-1 h-[24px] w-[1.2px] bg-border" aria-hidden="true" />
   );
 
   return (
     <div
       ref={outsideClickRef}
       className={cn(
-        "flex flex-wrap items-center gap-2 rounded-full bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground p-1 shadow-vibrant",
+        "flex flex-wrap items-center gap-2 rounded-2xl border bg-background p-1 shadow-sm",
         className
       )}
     >
@@ -100,20 +100,13 @@ export function ExpandableTabs({
             onClick={() => handleSelect(index)}
             transition={transition}
             className={cn(
-              "relative flex items-center rounded-xl px-2 py-1 text-sm font-medium transition-all hover:scale-110",
+              "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300",
               selected === index
-                ? cn(activeColor, "animate-pulse-slow")
-                : "text-primary-foreground"
+                ? cn("bg-muted", activeColor)
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
-            <div className="flex justify-center w-full">
-              <Icon 
-                className={cn(
-                  "w-4 h-4 mb-0.5 transition-all",
-                  selected === index ? activeColor : "text-primary-foreground"
-                )} 
-              />
-            </div>
+            <Icon size={20} />
             <AnimatePresence initial={false}>
               {selected === index && (
                 <motion.span
@@ -122,7 +115,7 @@ export function ExpandableTabs({
                   animate="animate"
                   exit="exit"
                   transition={transition}
-                  className="overflow-hidden text-[10px] font-medium"
+                  className="overflow-hidden"
                 >
                   {(tab as Tab).title}
                 </motion.span>
