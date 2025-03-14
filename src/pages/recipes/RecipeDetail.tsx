@@ -502,11 +502,9 @@ const RecipeDetail = () => {
                 ) : (
                   <AiSuggestionButton
                     onClick={handleEnhanceInstructions}
-                    loading={isEnhancingInstructions}
-                    title="Enhance Instructions"
-                    tooltip="Add helpful tooltips to instructions"
+                    isLoading={isEnhancingInstructions}
+                    label="Enhance Instructions"
                     className="h-8 w-8"
-                    iconSize={16}
                   />
                 )}
               </div>
@@ -515,7 +513,10 @@ const RecipeDetail = () => {
             <ScrollArea className="max-h-[400px]">
               {isInstructionsEnhanced ? (
                 <InstructionsWithTooltips 
-                  instructions={enhancedInstructions} 
+                  instructions={recipe.instructions}
+                  ingredients={recipe.ingredients}
+                  enhancedInstructions={enhancedInstructions}
+                  isEnhanced={true}
                 />
               ) : (
                 <ol className="list-decimal list-inside space-y-3">
@@ -535,10 +536,17 @@ const RecipeDetail = () => {
         open={suggestDialogOpen}
         onOpenChange={setSuggestDialogOpen}
         suggestedMeal={suggestedMeal}
-        loading={parsingMealSuggestion}
+        aiLoading={aiLoading || parsingMealSuggestion}
         onReset={handleResetSuggestedMeal}
         onSave={handleSaveSuggestedRecipe}
         additionalPreferences={additionalPreferences}
+        currentDay={null}
+        currentMealType={null}
+        suggestMealType={suggestMealType}
+        setSuggestMealType={setSuggestMealType}
+        onSuggestMeal={handleSuggestMeal}
+        setAdditionalPreferences={setAdditionalPreferences}
+        parsingMealSuggestion={parsingMealSuggestion}
       />
       
       <RecipeVariationsDialog 
@@ -546,7 +554,7 @@ const RecipeDetail = () => {
         onOpenChange={setVariationsDialogOpen}
         onGenerateVariation={handleGenerateVariation}
         isLoading={parsingMealSuggestion}
-        recipeTitle={recipe.title}
+        recipeName={recipe.title}
       />
     </MainLayout>
   );
