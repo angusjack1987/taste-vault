@@ -15,6 +15,7 @@ export interface AISettings {
   model?: string;
   temperature?: number;
   promptHistoryEnabled?: boolean;
+  useMemory?: boolean;
   userPreferences?: UserPreferences;
 }
 
@@ -49,6 +50,7 @@ export const useAiRecipes = () => {
               model: aiSettings?.model || "gpt-3.5-turbo",
               temperature: aiSettings?.temperature || 0.7,
               promptHistoryEnabled: aiSettings?.promptHistoryEnabled !== false,
+              useMemory: aiSettings?.useMemory ?? true,
               userPreferences: {
                 responseStyle: aiSettings?.userPreferences?.responseStyle || "balanced",
               },

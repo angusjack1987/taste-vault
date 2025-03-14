@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ChevronDown, InfoIcon, Trash, History, Sparkles, Server, Brain } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -56,7 +55,6 @@ const AISettings = () => {
   
   const [aiMemoryOpen, setAiMemoryOpen] = useState(false);
   
-  // Local state for form values
   const [localSettings, setLocalSettings] = useState<AISettingsType>({
     model: aiSettings?.model || "gpt-3.5-turbo",
     temperature: aiSettings?.temperature || 0.7,
@@ -67,7 +65,6 @@ const AISettings = () => {
     }
   });
   
-  // Update local state when data is loaded
   React.useEffect(() => {
     if (aiSettings) {
       setLocalSettings({
