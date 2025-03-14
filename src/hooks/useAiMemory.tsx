@@ -35,13 +35,10 @@ export const useAiMemory = () => {
     if (!user) return;
 
     try {
-      // Use type assertion after awaiting the Promise
-      const { data, error } = await supabase.rpc('get_latest_memory_insights', { 
+      // Use a type assertion to bypass TypeScript's type checking for the RPC call
+      const { data, error } = await (supabase.rpc as any)('get_latest_memory_insights', { 
         user_id_param: user.id 
-      }) as unknown as { 
-        data: MemoryInsight[] | null; 
-        error: any 
-      };
+      });
 
       if (error) {
         console.error("Error fetching from RPC:", error);
@@ -161,15 +158,15 @@ export const useAiMemory = () => {
     if (!user) return;
     
     try {
-      // Use type assertion after awaiting the Promise
-      const { error } = await supabase.rpc(
+      // Use a type assertion to bypass TypeScript's type checking for the RPC call
+      const { error } = await (supabase.rpc as any)(
         'store_memory_insights',
         { 
           user_id_param: user.id, 
           insights_param: rawInsights,
           created_at_param: new Date().toISOString()
         }
-      ) as unknown as { data: null; error: any };
+      );
         
       if (error) {
         console.error("Error storing insights in database:", error);
