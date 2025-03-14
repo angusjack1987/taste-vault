@@ -43,24 +43,37 @@ const IndexPage = () => {
     console.log("Memory loading:", memoryLoading);
     console.log("Memory insights:", insights);
     
-    if (user && isMemoryEnabled) {
+    // Always try to get insights when component mounts
+    if (user) {
       console.log("Fetching memory insights");
-      // Get insights immediately when page loads if we have a user and memory is enabled
+      // If we don't have insights yet and aren't currently loading them
       if (!insights && !memoryLoading) {
         getMemoryInsights().then(insights => {
           if (insights) {
-            const firstParagraph = insights.split('\n\n')[0];
+            // Get the first paragraph for preview
+            const firstParagraph = extractFirstParagraph(insights);
             setMemoryPreview(firstParagraph);
             console.log("Memory preview set:", firstParagraph);
           }
         });
       } else if (insights) {
         // If we already have insights, set the preview
-        const firstParagraph = insights.split('\n\n')[0];
+        const firstParagraph = extractFirstParagraph(insights);
         setMemoryPreview(firstParagraph);
       }
     }
-  }, [user, isMemoryEnabled, insights, memoryLoading, getMemoryInsights]);
+  }, [user, insights, memoryLoading, getMemoryInsights, isMemoryEnabled]);
+
+  // Helper function to extract the first paragraph from HTML
+  const extractFirstParagraph = (html: string): string => {
+    // Simple extraction - get content up to first paragraph break
+    // This is a basic implementation that assumes the first chunk of HTML is a paragraph
+    const firstChunk = html.split('</p>')[0];
+    if (firstChunk) {
+      return firstChunk + '</p>';
+    }
+    return html;
+  };
 
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
@@ -117,11 +130,11 @@ const IndexPage = () => {
           onOpenSuggestDialog={handleOpenSuggestDialog}
         />
         
-        {/* Memory Insights Section - Add forced visible flag for debugging */}
+        {/* Memory Insights Section - Always visible */}
         <MemoryInsightsSection 
           memoryLoading={memoryLoading}
           memoryPreview={memoryPreview}
-          isMemoryEnabled={true} // Force to true for debugging
+          isMemoryEnabled={true} // Always show this section regardless of settings
           onOpenMemoryDialog={() => setMemoryDialogOpen(true)}
           onGenerateInsights={getMemoryInsights}
         />

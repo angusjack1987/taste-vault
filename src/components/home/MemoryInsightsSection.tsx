@@ -47,7 +47,8 @@ const MemoryInsightsSection = ({
             </div>
           ) : memoryPreview ? (
             <>
-              <p className="text-base">{memoryPreview}</p>
+              <div className="text-base prose prose-sm max-w-none" 
+                   dangerouslySetInnerHTML={{ __html: memoryPreview }} />
               <Button 
                 variant="secondary" 
                 size="sm" 

@@ -52,11 +52,11 @@ const AiMemoryDialog = ({ open, onOpenChange }: AiMemoryDialogProps) => {
               <p className="text-muted-foreground">Analyzing your cooking journey...</p>
             </div>
           ) : insights ? (
-            <div className="mt-2 space-y-4 whitespace-pre-line">
+            <div className="mt-2 space-y-4 prose prose-sm max-w-none">
               {insights.split('\n\n').map((paragraph, idx) => (
-                <p key={idx} className="text-base">
-                  {paragraph}
-                </p>
+                <div key={idx} 
+                     className="text-base"
+                     dangerouslySetInnerHTML={{ __html: paragraph.replace(/\n/g, '<br />') }} />
               ))}
             </div>
           ) : (
