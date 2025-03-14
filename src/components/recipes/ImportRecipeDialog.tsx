@@ -17,7 +17,7 @@ import { RecipeFormData } from "@/hooks/useRecipes";
 import { cleanIngredientString, parsePreparation, parseIngredientAmount, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import IngredientInput from "./IngredientInput";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -45,7 +45,6 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
         onSuccess: (data) => {
           console.log("Raw scraped ingredients:", data.ingredients);
           
-          // Enhanced cleaning of ingredients with better preservation of prep instructions
           const cleanedIngredients = data.ingredients?.map(ingredient => {
             const cleaned = cleanIngredientString(ingredient);
             console.log(`Cleaned ingredient: "${ingredient}" -> "${cleaned}"`);
@@ -352,10 +351,8 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
                 {(editedRecipe.ingredients || []).map((ingredient, index) => {
                   console.log(`Processing ingredient for display: "${ingredient}"`);
                   
-                  // First try to extract direct preparation instructions
                   const preparationInstructions = extractPreparationInstructions(ingredient);
                   
-                  // If that doesn't work, fall back to the standard parsing approach
                   const { mainText, preparation } = parsePreparation(ingredient);
                   const { name, amount } = parseIngredientAmount(mainText);
                   
