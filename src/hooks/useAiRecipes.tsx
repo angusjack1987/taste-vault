@@ -122,6 +122,19 @@ export const useAiRecipes = () => {
     );
   };
 
+  // Add the new enhanceRecipeInstructions function
+  const enhanceRecipeInstructions = async (data: {
+    recipeTitle: string;
+    instructions: string[];
+    ingredients: string[];
+  }) => {
+    return makeEdgeFunctionRequest(
+      "enhance-recipe-instructions",
+      "enhance-recipe-instructions",
+      data
+    );
+  };
+
   // Helper to determine current season
   const getCurrentSeason = () => {
     const month = new Date().getMonth();
@@ -137,6 +150,7 @@ export const useAiRecipes = () => {
     analyzeMealPlan,
     suggestMealForPlan,
     generateRecipe,
+    enhanceRecipeInstructions,
   };
 };
 

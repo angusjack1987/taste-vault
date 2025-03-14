@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Info } from "lucide-react";
+import { Info, Sparkles } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -11,11 +11,22 @@ import {
 interface InstructionsWithTooltipsProps {
   instructions: string[];
   ingredients: string[];
+  enhancedInstructions?: {
+    step: string;
+    tooltips: Array<{
+      text: string;
+      ingredient: string;
+      explanation?: string;
+    }>;
+  }[];
+  isEnhanced?: boolean;
 }
 
 const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
   instructions,
   ingredients,
+  enhancedInstructions,
+  isEnhanced = false,
 }) => {
   // Function to find ingredients in instruction text with improved algorithm
   const findIngredientMatches = (text: string) => {
@@ -93,20 +104,20 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         
         // Custom logic for specific forms that might represent the ingredient
         const formRegex = new RegExp(`\\b${form}\\b`, "gi");
-        let matchItem; // Changed from 'match' to 'matchItem'
+        let matchItem;
         
-        while ((matchItem = formRegex.exec(text)) !== null) { // Changed from 'match' to 'matchItem'
+        while ((matchItem = formRegex.exec(text)) !== null) {
           // Only add if this section of text likely refers to the ingredient
           // by checking nearby words
-          const contextStart = Math.max(0, matchItem.index - 30); // Changed from 'match.index' to 'matchItem.index'
-          const contextEnd = Math.min(text.length, matchItem.index + form.length + 30); // Changed from 'match.index' to 'matchItem.index'
+          const contextStart = Math.max(0, matchItem.index - 30);
+          const contextEnd = Math.min(text.length, matchItem.index + form.length + 30);
           const context = text.substring(contextStart, contextEnd).toLowerCase();
           
           if (context.includes(mainName.toLowerCase())) {
             matches.push({
               ingredient: fullIngredient,
-              index: matchItem.index, // Changed from 'match.index' to 'matchItem.index'
-              length: matchItem[0].length, // Changed from 'match[0].length' to 'matchItem[0].length'
+              index: matchItem.index,
+              length: matchItem[0].length,
             });
           }
         }
@@ -117,19 +128,19 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         if (!prep || prep.length < 4) return;
         
         const prepRegex = new RegExp(`\\b${prep}\\b`, "gi");
-        let matchPrep; // Changed from 'match' to 'matchPrep'
+        let matchPrep;
         
-        while ((matchPrep = prepRegex.exec(text)) !== null) { // Changed from 'match' to 'matchPrep'
+        while ((matchPrep = prepRegex.exec(text)) !== null) {
           // Check if the ingredient name is mentioned nearby
-          const contextStart = Math.max(0, matchPrep.index - 20); // Changed from 'match.index' to 'matchPrep.index'
-          const contextEnd = Math.min(text.length, matchPrep.index + prep.length + 20); // Changed from 'match.index' to 'matchPrep.index'
+          const contextStart = Math.max(0, matchPrep.index - 20);
+          const contextEnd = Math.min(text.length, matchPrep.index + prep.length + 20);
           const context = text.substring(contextStart, contextEnd).toLowerCase();
           
           if (context.includes(mainName.toLowerCase())) {
             matches.push({
               ingredient: fullIngredient,
-              index: matchPrep.index, // Changed from 'match.index' to 'matchPrep.index'
-              length: matchPrep[0].length, // Changed from 'match[0].length' to 'matchPrep[0].length'
+              index: matchPrep.index,
+              length: matchPrep[0].length,
             });
           }
         }
@@ -144,12 +155,12 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
     
     techniquesToMatch.forEach(technique => {
       const techniqueRegex = new RegExp(`\\b${technique}\\b`, "gi");
-      let matchTech; // Changed from 'match' to 'matchTech'
+      let matchTech;
       
-      while ((matchTech = techniqueRegex.exec(text)) !== null) { // Changed from 'match' to 'matchTech'
+      while ((matchTech = techniqueRegex.exec(text)) !== null) {
         // Find which ingredients this technique might apply to
-        const contextEnd = Math.min(text.length, matchTech.index + technique.length + 40); // Changed from 'match.index' to 'matchTech.index'
-        const forwardContext = text.substring(matchTech.index, contextEnd).toLowerCase(); // Changed from 'match.index' to 'matchTech.index'
+        const contextEnd = Math.min(text.length, matchTech.index + technique.length + 40);
+        const forwardContext = text.substring(matchTech.index, contextEnd).toLowerCase();
         
         ingredientKeywords.forEach(({ fullIngredient, mainName }) => {
           if (mainName.length < 3) return;
@@ -157,7 +168,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
           if (forwardContext.includes(mainName.toLowerCase())) {
             matches.push({
               ingredient: fullIngredient,
-              index: matchTech.index, // Changed from 'match.index' to 'matchTech.index'
+              index: matchTech.index,
               length: technique.length,
             });
           }
@@ -224,19 +235,89 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
     return <>{result}</>;
   };
 
+  // Render enhanced instructions if available
+  const renderEnhancedInstructions = () => {
+    return enhancedInstructions?.map((step, index) => {
+      const result: React.ReactNode[] = [];
+      let currentText = step.step;
+      let lastIndex = 0;
+
+      // Sort tooltips by their position in the text
+      const sortedTooltips = [...step.tooltips].sort((a, b) => 
+        currentText.toLowerCase().indexOf(a.text.toLowerCase()) - 
+        currentText.toLowerCase().indexOf(b.text.toLowerCase())
+      );
+
+      sortedTooltips.forEach((tooltip, i) => {
+        const tooltipStart = currentText.toLowerCase().indexOf(tooltip.text.toLowerCase());
+        if (tooltipStart === -1) return;
+
+        // Add text before the tooltip
+        if (tooltipStart > lastIndex) {
+          result.push(currentText.substring(lastIndex, tooltipStart));
+        }
+
+        // Add the tooltip
+        const tooltipText = currentText.substr(tooltipStart, tooltip.text.length);
+        result.push(
+          <TooltipProvider key={`enhanced-tooltip-${index}-${i}`}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help border-dotted border-b border-primary text-primary">
+                  {tooltipText}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 mt-0.5 text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold mb-1">{tooltip.ingredient}</p>
+                    {tooltip.explanation && (
+                      <p className="text-xs text-muted-foreground">{tooltip.explanation}</p>
+                    )}
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+
+        lastIndex = tooltipStart + tooltip.text.length;
+      });
+
+      // Add text after the last tooltip
+      if (lastIndex < currentText.length) {
+        result.push(currentText.substring(lastIndex));
+      }
+
+      return (
+        <li key={index} className="flex gap-3">
+          <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
+            {index + 1}
+          </span>
+          <span>{result.length > 0 ? result : currentText}</span>
+        </li>
+      );
+    });
+  };
+
   return (
     <ol className="space-y-4 text-xs sm:text-sm">
-      {instructions.map((step, index) => {
-        const matches = findIngredientMatches(step);
-        return (
-          <li key={index} className="flex gap-3">
-            <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
-              {index + 1}
-            </span>
-            <span>{renderTextWithTooltips(step, matches)}</span>
-          </li>
-        );
-      })}
+      {isEnhanced && enhancedInstructions ? (
+        renderEnhancedInstructions()
+      ) : (
+        instructions.map((step, index) => {
+          const matches = findIngredientMatches(step);
+          return (
+            <li key={index} className="flex gap-3">
+              <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
+                {index + 1}
+              </span>
+              <span>{renderTextWithTooltips(step, matches)}</span>
+            </li>
+          );
+        })
+      )}
     </ol>
   );
 };
