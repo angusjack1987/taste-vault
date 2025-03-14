@@ -31,8 +31,8 @@ const RecipeCard = ({
               className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full bg-muted/20 flex items-center justify-center">
-              <Utensils className="h-12 w-12 text-muted-foreground opacity-30" />
+            <div className="w-full h-full bg-sage-50 flex items-center justify-center">
+              <Utensils className="h-12 w-12 text-sage-300" />
             </div>
           )}
           {rating && (
@@ -47,7 +47,7 @@ const RecipeCard = ({
           <h3 className="font-heading font-bold text-sm line-clamp-1 transition-all group-hover:text-primary">{title}</h3>
           
           {time && (
-            <div className="mt-1 flex items-center text-secondary text-xs font-medium">
+            <div className="mt-1 flex items-center text-muted-foreground text-xs font-medium">
               <Clock className="w-3 h-3 mr-1" />
               <span>{time} min</span>
             </div>

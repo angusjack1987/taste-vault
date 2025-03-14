@@ -80,26 +80,26 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     }
 
     return (
-      <div className="flex items-start gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
-        <div className="flex-1">
-          <div className="flex items-start gap-2">
-            {amount && (
-              <span className="font-mono text-sm">{amount}</span>
-            )}
-            
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                {getIngredientIcon(name)}
-                <span className="text-sm">{name}</span>
-              </div>
-              
-              {(prepInstructions || preparation) && (
-                <div className="text-xs text-muted-foreground italic ml-5">
-                  {prepInstructions || preparation}
-                </div>
-              )}
+      <div className="flex items-center p-2 bg-sage-50 rounded-md border border-sage-200 hover:bg-sage-100 transition-colors">
+        <div className="flex-shrink-0 mr-3">
+          {getIngredientIcon(name)}
+        </div>
+        
+        <div className="flex-1 grid grid-cols-12 gap-2 items-center">
+          {amount ? (
+            <>
+              <span className="font-mono text-sm col-span-3 text-sage-700">{amount}</span>
+              <span className="text-sm font-medium col-span-9">{name}</span>
+            </>
+          ) : (
+            <span className="text-sm font-medium col-span-12">{name}</span>
+          )}
+          
+          {(prepInstructions || preparation) && (
+            <div className="text-xs text-muted-foreground italic col-span-12 mt-1 ml-0">
+              {prepInstructions || preparation}
             </div>
-          </div>
+          )}
         </div>
         
         <Button
@@ -107,7 +107,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
           variant="ghost"
           size="icon"
           onClick={() => onRemove(index)}
-          className="h-6 w-6 text-muted-foreground mt-1"
+          className="flex-shrink-0 h-6 w-6 text-muted-foreground ml-2"
         >
           <Scissors className="h-3 w-3" />
         </Button>
@@ -133,28 +133,29 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     console.log(`Parsed preview: name="${name}", amount="${amount}", prep="${prepInstructions || preparation}"`);
 
     return (
-      <div className="grid grid-cols-3 gap-2 px-2 mt-1">
-        {amount && (
-          <div className="bg-sage-50 rounded-md p-2 text-sm flex items-center border border-sage-200">
-            <span className="font-mono">{amount}</span>
-          </div>
-        )}
-        
-        <div className="bg-sage-50 rounded-md p-2 flex flex-col border border-sage-200">
-          <div className="flex items-center gap-2">
+      <div className="p-2 mt-1 border border-sage-200 rounded-md bg-sage-50">
+        <div className="flex items-center">
+          <div className="flex-shrink-0 mr-3">
             {getIngredientIcon(name)}
-            <span className="text-sm">{name}</span>
           </div>
-          {(prepInstructions || preparation) && (
-            <div className="text-xs text-gray-500 italic">{prepInstructions || preparation}</div>
-          )}
+          
+          <div className="flex-1 grid grid-cols-12 gap-2 items-center">
+            {amount ? (
+              <>
+                <span className="font-mono text-sm col-span-3 text-sage-700">{amount}</span>
+                <span className="text-sm font-medium col-span-9">{name}</span>
+              </>
+            ) : (
+              <span className="text-sm font-medium col-span-12">{name}</span>
+            )}
+            
+            {(prepInstructions || preparation) && (
+              <div className="text-xs text-muted-foreground italic col-span-12 mt-1">
+                {prepInstructions || preparation}
+              </div>
+            )}
+          </div>
         </div>
-        
-        {(prepInstructions || preparation) && !amount && (
-          <div className="bg-sage-50 rounded-md p-2 text-xs flex items-center border border-sage-200">
-            <span className="italic text-gray-500">{prepInstructions || preparation}</span>
-          </div>
-        )}
       </div>
     );
   };

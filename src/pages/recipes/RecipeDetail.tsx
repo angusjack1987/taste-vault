@@ -433,34 +433,31 @@ const RecipeDetail = () => {
                 <ul className="space-y-3">
                   {recipe.ingredients.map((ingredient, index) => {
                     const cleanedIngredient = cleanIngredientString(ingredient);
-                    
                     const prepInstructions = extractPreparationInstructions(cleanedIngredient);
-                    
                     const { mainText, preparation } = parsePreparation(cleanedIngredient);
-                    
                     const { name, amount } = parseIngredientAmount(mainText);
                     
                     return (
-                      <li key={index} className="flex items-start gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
-                        <div className="flex-1">
-                          <div className="flex items-start gap-2">
-                            {amount && (
-                              <span className="font-mono text-sm">{amount}</span>
-                            )}
-                            
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1">
-                                {getIngredientIcon(name)}
-                                <span className="text-sm">{name}</span>
-                              </div>
-                              
-                              {(prepInstructions || preparation) && (
-                                <div className="text-xs text-muted-foreground italic ml-5">
-                                  {prepInstructions || preparation}
-                                </div>
-                              )}
+                      <li key={index} className="flex items-center p-2 bg-sage-50 rounded-md border border-sage-200 hover:bg-sage-100 transition-colors">
+                        <div className="flex-shrink-0 mr-3">
+                          {getIngredientIcon(name)}
+                        </div>
+                        
+                        <div className="flex-1 grid grid-cols-12 gap-2 items-center">
+                          {amount ? (
+                            <>
+                              <span className="font-mono text-sm col-span-3 text-sage-700">{amount}</span>
+                              <span className="text-sm font-medium col-span-9">{name}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-medium col-span-12">{name}</span>
+                          )}
+                          
+                          {(prepInstructions || preparation) && (
+                            <div className="text-xs text-muted-foreground italic col-span-12 mt-1 ml-0">
+                              {prepInstructions || preparation}
                             </div>
-                          </div>
+                          )}
                         </div>
                       </li>
                     );
