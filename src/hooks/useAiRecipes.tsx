@@ -86,6 +86,51 @@ export const useAiRecipes = () => {
     );
   };
 
+  // Add the missing suggestRecipe function for the baby food page
+  const suggestRecipe = async (data: {
+    ingredients: string;
+    recipeName?: string;
+    additionalPreferences?: string;
+  }) => {
+    try {
+      const { data: response, error } = await supabase.functions.invoke(
+        "ai-recipe-suggestions",
+        {
+          body: {
+            type: "suggest-recipes",
+            data: {
+              preferences: `Baby food recipe using: ${data.ingredients}${data.recipeName ? `. Recipe name: ${data.recipeName}` : ''}${data.additionalPreferences ? `. Additional preferences: ${data.additionalPreferences}` : ''}`,
+              dietaryRestrictions: "Safe for babies",
+              userId: user?.id,
+            },
+            aiSettings: {
+              model: aiSettings?.model || "gpt-4o-mini",
+              temperature: aiSettings?.temperature || 0.7,
+              promptHistoryEnabled: aiSettings?.promptHistoryEnabled !== false,
+              userPreferences: {
+                responseStyle: aiSettings?.userPreferences?.responseStyle || "balanced",
+              },
+            },
+          },
+        }
+      );
+
+      if (error) {
+        console.error("Error calling baby food recipe suggestion:", error);
+        toast.error(`Recipe suggestion failed: ${error.message}`);
+        throw error;
+      }
+
+      return response.result;
+    } catch (error) {
+      console.error("Unexpected error in baby food recipe suggestion:", error);
+      toast.error(`Recipe suggestion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const analyzeMealPlan = async (data: {
     mealPlan: any[];
   }) => {
@@ -203,6 +248,7 @@ export const useAiRecipes = () => {
   return {
     loading,
     suggestRecipes,
+    suggestRecipe,
     analyzeMealPlan,
     suggestMealForPlan,
     generateRecipe,
