@@ -67,6 +67,10 @@ const MealPlan = () => {
     }
   }, [isMobile, mealPlansLoading]);
   
+  const handleChangeWeek = (newStartDate: Date) => {
+    setSelectedDate(newStartDate);
+  };
+  
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
     
@@ -300,6 +304,7 @@ const MealPlan = () => {
           onRemoveMeal={handleRemoveMeal}
           onSuggestMeal={openSuggestMealDialog}
           onQuickAddMeal={handleQuickAddMeal}
+          onChangeWeek={handleChangeWeek}
         />
         
         <ShoppingList />

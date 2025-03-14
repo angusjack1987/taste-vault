@@ -24,9 +24,17 @@ interface WeekViewProps {
   onRemoveMeal: (mealPlanId: string) => void;
   onSuggestMeal: (date: Date, mealType: MealType) => void;
   onQuickAddMeal: (date: Date, mealType: MealType) => void;
+  onChangeWeek?: (newStartDate: Date) => void;
 }
 
-const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal, onQuickAddMeal }: WeekViewProps) => {
+const WeekView = ({ 
+  weekDays, 
+  onAddMeal, 
+  onRemoveMeal, 
+  onSuggestMeal, 
+  onQuickAddMeal,
+  onChangeWeek 
+}: WeekViewProps) => {
   const isMobile = useIsMobile();
   const weekStart = weekDays.length > 0 ? weekDays[0].date : new Date();
   const weekEnd = weekDays.length > 0 ? weekDays[weekDays.length - 1].date : new Date();
@@ -40,6 +48,21 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal, onQuickAdd
   const todayIndex = weekDays.findIndex(day => 
     format(new Date(), 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd')
   );
+  
+  // Navigation handlers
+  const handlePreviousWeek = () => {
+    if (onChangeWeek) {
+      const previousWeekStart = subWeeks(weekStart, 1);
+      onChangeWeek(previousWeekStart);
+    }
+  };
+  
+  const handleNextWeek = () => {
+    if (onChangeWeek) {
+      const nextWeekStart = addWeeks(weekStart, 1);
+      onChangeWeek(nextWeekStart);
+    }
+  };
   
   // Scroll to today's card on initial render for mobile view
   useEffect(() => {
@@ -59,13 +82,23 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal, onQuickAdd
       {/* Week navigation header */}
       <div className="flex items-center justify-between md:justify-center mb-4">
         <div className="flex items-center gap-3 md:gap-6">
-          <Button variant="outline" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-8 w-8 md:h-9 md:w-9 rounded-full"
+            onClick={handlePreviousWeek}
+          >
             <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
           
           <h2 className="text-sm md:text-base font-medium">{weekLabel}</h2>
           
-          <Button variant="outline" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-8 w-8 md:h-9 md:w-9 rounded-full"
+            onClick={handleNextWeek}
+          >
             <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
         </div>
