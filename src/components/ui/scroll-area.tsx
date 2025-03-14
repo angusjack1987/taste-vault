@@ -20,6 +20,7 @@ const ScrollArea = React.forwardRef<
         "h-full w-full rounded-[inherit]", 
         maxHeight && `max-h-[${maxHeight}]`
       )}
+      style={maxHeight ? { maxHeight } : undefined}
     >
       {children}
     </ScrollAreaPrimitive.Viewport>
