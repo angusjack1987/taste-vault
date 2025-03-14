@@ -39,6 +39,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     scrapeRecipe(url, {
       onSuccess: (data) => {
         // Clean the ingredients when importing, ensuring trailing brackets and parentheses are removed
+        // and preserving preparation instructions
         const cleanedIngredients = data.ingredients?.map(ingredient => 
           cleanIngredientString(ingredient)
         ) || [];
@@ -307,9 +308,18 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
             <div>
               <h4 className="font-medium mb-2">Ingredients</h4>
               <ul className="list-disc pl-5 space-y-1">
-                {(editedRecipe.ingredients || []).map((ingredient, index) => (
-                  <li key={index}>{ingredient}</li>
-                ))}
+                {(editedRecipe.ingredients || []).map((ingredient, index) => {
+                  // Parse the ingredient to show preparation instructions nicely
+                  const { mainText, preparation } = parsePreparation(ingredient);
+                  const { name, amount } = parseIngredientAmount(mainText);
+                  
+                  return (
+                    <li key={index} className="text-sm">
+                      <span className="font-medium">{amount ? `${amount} ` : ''}{name}</span>
+                      {preparation && <span className="text-muted-foreground italic ml-1">({preparation})</span>}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
             

@@ -14,8 +14,8 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   // Clean up the ingredient string by removing notes in parentheses
   const cleanedIngredient = ingredient.replace(/\([^)]*\)/g, '').trim();
   
-  // Dual weight format pattern (e.g., "300g/10oz green beans")
-  const dualWeightPattern = /^([\d\/\.\,\s]+(?:g|kg|ml|l|oz|lb)\/[\d\/\.\,\s]+(?:g|kg|ml|l|oz|lb))\s+(.+)$/i;
+  // Dual weight format pattern (e.g., "300g/10oz green beans", "300g / 10oz green beans")
+  const dualWeightPattern = /^([\d\/\.\,\s]+(?:g|kg|ml|l|oz|lb)[\s\/]*[\d\/\.\,\s]+(?:g|kg|ml|l|oz|lb))\s+(.+)$/i;
   
   // Common units pattern to match
   const unitsPattern = /^([\d\/\.\,\s]+\s*(?:g|kg|ml|l|oz|lb|pound|pounds|cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|bunch|bunches|clove|cloves|pinch|pinches|handful|handfuls))\s+(.+)$/i;
@@ -29,12 +29,12 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
   // Remove trailing brackets and extra spaces
   const withoutTrailingBrackets = cleanedIngredient.replace(/\s*\)\s*$/, '').trim();
   
-  // Match for dual weight format like "300g/10oz green beans"
+  // Match for dual weight format like "300g/10oz green beans" or "300g / 10oz green beans"
   const dualWeightMatch = withoutTrailingBrackets.match(dualWeightPattern);
   if (dualWeightMatch) {
     return {
       name: dualWeightMatch[2].trim(),
-      amount: dualWeightMatch[1].trim()
+      amount: dualWeightMatch[1].trim().replace(/\s+\/\s+/g, '/') // Normalize spaces around slash
     };
   }
   
@@ -101,6 +101,9 @@ export function cleanIngredientString(ingredient: string): string {
   // Remove any trailing commas
   cleaned = cleaned.replace(/,\s*$/, '');
   
+  // Normalize spaces around slashes in measurements (e.g., "300g / 10oz" -> "300g/10oz")
+  cleaned = cleaned.replace(/(\d+\s*(?:g|kg|ml|l|oz|lb))\s*\/\s*(\d+\s*(?:g|kg|ml|l|oz|lb))/gi, '$1/$2');
+  
   // Normalize spaces
   cleaned = cleaned.trim();
   
@@ -112,6 +115,7 @@ export function cleanIngredientString(ingredient: string): string {
  * Example: "Chicken Breast, diced" -> { mainText: "Chicken Breast", preparation: "diced" }
  * Example: "diced chicken" -> { mainText: "chicken", preparation: "diced" }
  * Example: "blackberries cut up" -> { mainText: "blackberries", preparation: "cut up" }
+ * Example: "garlic cloves, finely chopped" -> { mainText: "garlic cloves", preparation: "finely chopped" }
  */
 export function parsePreparation(ingredient: string): { mainText: string; preparation: string | null } {
   // Check for empty input
@@ -129,8 +133,9 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     'melted', 'softened', 'room temperature', 'chilled', 'cooked',
     'boiled', 'fried', 'baked', 'roasted', 'grilled', 'steamed',
     'mashed', 'pureed', 'blended', 'whisked', 'thinly sliced',
-    'roughly chopped', 'finely chopped', 'finely diced', 'coarsely ground',
-    'finely minced', 'finely grated'
+    'roughly chopped', 'roughly diced', 'finely diced', 'finely chopped', 
+    'finely sliced', 'coarsely chopped', 'thinly sliced', 'coarsely ground',
+    'finely minced', 'finely grated', 'lightly beaten', 'well beaten'
   ];
   
   // Check for "ingredient, preparation" format (e.g., "chicken, diced")
@@ -138,10 +143,28 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
   const commaMatch = ingredient.match(commaPattern);
   
   if (commaMatch) {
-    return {
-      mainText: commaMatch[1].trim(),
-      preparation: commaMatch[2].trim()
-    };
+    const potentialPrep = commaMatch[2].trim();
+    
+    // Check if what follows the comma is actually a preparation instruction
+    // by looking for common preparation words at the beginning
+    for (const prep of prepWords) {
+      if (potentialPrep.toLowerCase().startsWith(prep.toLowerCase())) {
+        return {
+          mainText: commaMatch[1].trim(),
+          preparation: potentialPrep
+        };
+      }
+    }
+    
+    // If no preparation word is found, check if any prep word appears in the text
+    for (const prep of prepWords) {
+      if (potentialPrep.toLowerCase().includes(prep.toLowerCase())) {
+        return {
+          mainText: commaMatch[1].trim(),
+          preparation: potentialPrep
+        };
+      }
+    }
   }
   
   // Check for multi-word preparation phrases like "cut up", "finely chopped", etc.
@@ -149,9 +172,9 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
   const sortedPrepWords = [...prepWords].sort((a, b) => b.length - a.length);
   
   for (const phrase of sortedPrepWords) {
-    // For phrases at end of ingredient (e.g., "onion finely chopped")
-    const phrasePattern = new RegExp(`^(.+?)\\s+(${phrase})$`, 'i');
-    const phraseMatch = ingredient.match(phrasePattern);
+    // For phrases at the end of ingredient (e.g., "onion finely chopped")
+    const phraseRegex = new RegExp(`^(.+?)\\s+(${phrase})$`, 'i');
+    const phraseMatch = ingredient.match(phraseRegex);
     
     if (phraseMatch) {
       return {
@@ -161,8 +184,8 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     }
     
     // Also check for phrase at beginning (e.g., "finely chopped onion")
-    const startPhrasePattern = new RegExp(`^(${phrase})\\s+(.+)$`, 'i');
-    const startPhraseMatch = ingredient.match(startPhrasePattern);
+    const startPhraseRegex = new RegExp(`^(${phrase})\\s+(.+)$`, 'i');
+    const startPhraseMatch = ingredient.match(startPhraseRegex);
     
     if (startPhraseMatch) {
       return {

@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { Recipe } from './types.ts'
 import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts'
@@ -49,6 +50,41 @@ function cleanIngredient(ingredient: string): string {
   cleaned = cleaned.trim();
   
   return cleaned;
+}
+
+/**
+ * Parse time string to minutes
+ * Examples: "PT15M", "PT1H30M", "15 mins", "1 hour 30 minutes"
+ */
+function parseTimeToMinutes(timeStr: string): number | null {
+  if (!timeStr) return null;
+  
+  // Handle ISO 8601 duration format (e.g., PT15M, PT1H30M)
+  const isoDurationMatch = timeStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?/i);
+  if (isoDurationMatch) {
+    const hours = parseInt(isoDurationMatch[1] || '0', 10);
+    const minutes = parseInt(isoDurationMatch[2] || '0', 10);
+    return (hours * 60) + minutes;
+  }
+  
+  // Handle human-readable format (e.g., "15 mins", "1 hour 30 minutes")
+  const hourMatch = timeStr.match(/(\d+)\s*(?:hour|hr|h)/i);
+  const minuteMatch = timeStr.match(/(\d+)\s*(?:minute|min|m)/i);
+  
+  let totalMinutes = 0;
+  if (hourMatch) {
+    totalMinutes += parseInt(hourMatch[1], 10) * 60;
+  }
+  if (minuteMatch) {
+    totalMinutes += parseInt(minuteMatch[1], 10);
+  }
+  
+  // If we just have a number, assume it's minutes
+  if (!hourMatch && !minuteMatch && /^\d+$/.test(timeStr.trim())) {
+    totalMinutes = parseInt(timeStr.trim(), 10);
+  }
+  
+  return totalMinutes > 0 ? totalMinutes : null;
 }
 
 // Extract recipe data from HTML content
@@ -107,16 +143,32 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
           }
         }
         
-        // Extract cooking time
-        if (recipeData.cookTime) {
-          const cookTimeMatch = recipeData.cookTime.match(/PT(\d+)M/)
-          if (cookTimeMatch && cookTimeMatch[1]) {
-            recipe.time = parseInt(cookTimeMatch[1], 10)
+        // Extract cooking times
+        let totalMinutes = 0;
+        
+        // Total time (preferred if available)
+        if (recipeData.totalTime) {
+          const totalTime = parseTimeToMinutes(recipeData.totalTime);
+          if (totalTime) {
+            recipe.time = totalTime;
+            totalMinutes = totalTime;
           }
-        } else if (recipeData.totalTime) {
-          const totalTimeMatch = recipeData.totalTime.match(/PT(\d+)M/)
-          if (totalTimeMatch && totalTimeMatch[1]) {
-            recipe.time = parseInt(totalTimeMatch[1], 10)
+        }
+        
+        // If total time wasn't found or is zero, try cook time + prep time
+        if (!totalMinutes) {
+          if (recipeData.cookTime) {
+            const cookTime = parseTimeToMinutes(recipeData.cookTime);
+            if (cookTime) totalMinutes += cookTime;
+          }
+          
+          if (recipeData.prepTime) {
+            const prepTime = parseTimeToMinutes(recipeData.prepTime);
+            if (prepTime) totalMinutes += prepTime;
+          }
+          
+          if (totalMinutes > 0) {
+            recipe.time = totalMinutes;
           }
         }
         
@@ -161,6 +213,25 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
     const titleElement = doc.querySelector('h1')
     if (titleElement) {
       recipe.title = titleElement.textContent?.trim() || ''
+    }
+  }
+  
+  // Time fallback - look for common time patterns in the page
+  if (!recipe.time) {
+    // Common time patterns like "15 minutes", "Total: 25 mins", "Cook time: 30 min"
+    const timeRegex = /(?:total|cook(?:ing)?|prep(?:aration)?|time)[\s\:]*(\d+)[\s]*(min|minute|m|hour|hr|h)/i;
+    const bodyText = doc.body.textContent || '';
+    const timeMatch = bodyText.match(timeRegex);
+    
+    if (timeMatch) {
+      const value = parseInt(timeMatch[1], 10);
+      const unit = timeMatch[2].toLowerCase();
+      
+      if (unit.startsWith('h')) {
+        recipe.time = value * 60; // Convert hours to minutes
+      } else {
+        recipe.time = value;
+      }
     }
   }
   
