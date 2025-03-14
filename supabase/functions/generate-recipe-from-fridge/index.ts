@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { ingredients, userFoodPreferences } = await req.json();
+    const { ingredients, userFoodPreferences, aiSettings, userId } = await req.json();
     
     if (!ingredients || ingredients.length === 0) {
       throw new Error('No ingredients provided');
@@ -28,9 +28,21 @@ serve(async (req) => {
     // Format user preferences if provided
     const userPrefsString = formatUserPreferences(userFoodPreferences);
     
+    // Add response style adjustment based on user settings
+    let styleGuidance = '';
+    if (aiSettings?.userPreferences?.responseStyle) {
+      const styleMap = {
+        concise: 'Be concise and focused in your recipe descriptions.',
+        balanced: 'Provide a moderate level of detail in your recipe instructions.',
+        detailed: 'Include comprehensive details and explanations in your recipes.'
+      };
+      styleGuidance = styleMap[aiSettings.userPreferences.responseStyle];
+    }
+    
     // Prepare the prompt for generating multiple recipe options
     const prompt = `Create TWO different recipe options using some or all of these ingredients: ${ingredients.join(', ')}. 
 ${userPrefsString}
+${styleGuidance}
 
 For EACH recipe, provide the following in JSON format:
 {
@@ -55,6 +67,10 @@ Not all ingredients need to be used in each recipe, but use as many as possible 
 
     console.log("Sending prompt to OpenAI API");
 
+    // Get the selected model and temperature from user settings, or use defaults
+    const model = aiSettings?.model || 'gpt-4o-mini';
+    const temperature = aiSettings?.temperature !== undefined ? aiSettings.temperature : 0.7;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -62,7 +78,7 @@ Not all ingredients need to be used in each recipe, but use as many as possible 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [
           { 
             role: 'system', 
@@ -70,7 +86,7 @@ Not all ingredients need to be used in each recipe, but use as many as possible 
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: temperature,
         response_format: { type: "json_object" }
       }),
     });
@@ -107,6 +123,36 @@ Not all ingredients need to be used in each recipe, but use as many as possible 
       console.error("Error parsing recipe JSON:", e);
       // If parsing fails, return the raw text
       recipeOptions = [{ title: "Recipe Suggestion", rawContent: recipeContent }];
+    }
+
+    // If prompt history is enabled and user ID is provided, store the prompt
+    if (aiSettings?.promptHistoryEnabled && userId) {
+      try {
+        const { error } = await fetch(
+          `${req.url.split('/functions/')[0]}/rest/v1/ai_prompt_history`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': Deno.env.get('SUPABASE_API_KEY') || '',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_API_KEY') || ''}`,
+            },
+            body: JSON.stringify({
+              user_id: userId,
+              endpoint: 'generate-recipe-from-fridge',
+              prompt: prompt,
+              response_preview: JSON.stringify(recipeOptions).substring(0, 200) + '...',
+              timestamp: new Date().toISOString(),
+            }),
+          }
+        ).then(res => res.json());
+        
+        if (error) {
+          console.error("Error saving prompt history:", error);
+        }
+      } catch (historyError) {
+        console.error("Failed to save prompt history:", historyError);
+      }
     }
 
     const result = { recipes: recipeOptions };

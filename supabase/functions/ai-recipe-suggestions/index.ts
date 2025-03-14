@@ -16,10 +16,20 @@ serve(async (req) => {
   }
 
   try {
-    const { type, data } = await req.json();
+    const { type, data, aiSettings } = await req.json();
     
     let prompt = '';
     let systemPrompt = 'You are an AI assistant specialized in recipe suggestions and meal planning. Be concise and provide practical advice.';
+    
+    // Adjust system prompt based on user's response style preference
+    if (aiSettings?.userPreferences?.responseStyle) {
+      const styleMap = {
+        concise: 'Be extremely concise and to the point in your responses.',
+        balanced: 'Provide moderately detailed responses with a balance of information.',
+        detailed: 'Provide comprehensive and detailed information in your responses.'
+      };
+      systemPrompt += ' ' + styleMap[aiSettings.userPreferences.responseStyle];
+    }
     
     // Process the user's food preferences if available
     const formatUserPreferences = (userFoodPreferences: any) => {
@@ -114,6 +124,10 @@ For EACH recipe, return in this JSON format:
       );
     }
 
+    // Get the selected model and temperature from user settings, or use defaults
+    const model = aiSettings?.model || 'gpt-4o-mini';
+    const temperature = aiSettings?.temperature !== undefined ? aiSettings.temperature : 0.7;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -121,12 +135,12 @@ For EACH recipe, return in this JSON format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: temperature,
       }),
     });
 
@@ -138,6 +152,36 @@ For EACH recipe, return in this JSON format:
     }
 
     const aiResponse = data_response.choices[0].message.content;
+    
+    // If prompt history is enabled and user ID is provided, store the prompt
+    if (aiSettings?.promptHistoryEnabled && data.userId) {
+      try {
+        const { error } = await fetch(
+          `${req.url.split('/functions/')[0]}/rest/v1/ai_prompt_history`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': Deno.env.get('SUPABASE_API_KEY') || '',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_API_KEY') || ''}`,
+            },
+            body: JSON.stringify({
+              user_id: data.userId,
+              endpoint: type,
+              prompt: prompt,
+              response_preview: aiResponse.substring(0, 200) + (aiResponse.length > 200 ? '...' : ''),
+              timestamp: new Date().toISOString(),
+            }),
+          }
+        ).then(res => res.json());
+        
+        if (error) {
+          console.error("Error saving prompt history:", error);
+        }
+      } catch (historyError) {
+        console.error("Failed to save prompt history:", historyError);
+      }
+    }
 
     return new Response(
       JSON.stringify({ result: aiResponse }),

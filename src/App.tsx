@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import FoodPreferences from "./pages/settings/FoodPreferences";
+import AISettings from "@/pages/settings/AISettings";
 
 const queryClient = new QueryClient();
 
@@ -85,21 +85,11 @@ const App = () => (
                 <FridgePage />
               </AuthGuard>
             } />
-            <Route path="/settings" element={
-              <AuthGuard>
-                <Settings />
-              </AuthGuard>
-            } />
-            <Route path="/settings/profile" element={
-              <AuthGuard>
-                <Profile />
-              </AuthGuard>
-            } />
-            <Route path="/settings/food-preferences" element={
-              <AuthGuard>
-                <FoodPreferences />
-              </AuthGuard>
-            } />
+            {/* Settings Routes */}
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings/food-preferences" element={<FoodPreferences />} />
+            <Route path="/ai-settings" element={<AISettings />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

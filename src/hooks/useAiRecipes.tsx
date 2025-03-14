@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -42,9 +43,20 @@ interface UserFoodPreferences {
   dietaryNotes?: string;
 }
 
+// Define a type for AI settings
+interface AISettings {
+  model?: string;
+  temperature?: number;
+  promptHistoryEnabled?: boolean;
+  userPreferences?: {
+    responseStyle?: "concise" | "balanced" | "detailed";
+  };
+}
+
 // Define a type for the preferences object shape
 interface UserPreferences {
   food?: UserFoodPreferences;
+  ai?: AISettings;
   [key: string]: any; // Allow other preference categories
 }
 
@@ -53,8 +65,11 @@ export const useAiRecipes = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const getUserFoodPreferences = async (): Promise<UserFoodPreferences | null> => {
-    if (!user) return null;
+  const getUserPreferences = async (): Promise<{
+    foodPreferences: UserFoodPreferences | null;
+    aiSettings: AISettings | null;
+  }> => {
+    if (!user) return { foodPreferences: null, aiSettings: null };
     
     try {
       const { data, error } = await supabase
@@ -65,19 +80,22 @@ export const useAiRecipes = () => {
         
       if (error) throw error;
       
-      // Make sure we safely access the food preferences object
+      // Make sure we safely access the preferences object
       if (data?.preferences && 
           typeof data.preferences === 'object' && 
           !Array.isArray(data.preferences)) {
-        // Cast to UserPreferences to access the food property
+        // Cast to UserPreferences to access the properties
         const userPrefs = data.preferences as UserPreferences;
-        return userPrefs.food || null;
+        return { 
+          foodPreferences: userPrefs.food || null,
+          aiSettings: userPrefs.ai || null
+        };
       }
       
-      return null;
+      return { foodPreferences: null, aiSettings: null };
     } catch (err) {
-      console.error("Error fetching food preferences:", err);
-      return null;
+      console.error("Error fetching user preferences:", err);
+      return { foodPreferences: null, aiSettings: null };
     }
   };
 
@@ -86,20 +104,22 @@ export const useAiRecipes = () => {
     setError(null);
     
     try {
-      // Get user's food preferences from the database
-      const userFoodPreferences = await getUserFoodPreferences();
+      // Get user's preferences from the database
+      const { foodPreferences, aiSettings } = await getUserPreferences();
       
       // Combine explicit preferences with stored user preferences
       const combinedData = {
         preferences,
         dietaryRestrictions,
-        userFoodPreferences
+        userFoodPreferences: foodPreferences,
+        userId: user?.id
       };
       
       const { data, error } = await supabase.functions.invoke("ai-recipe-suggestions", {
         body: {
           type: "suggest-recipes",
           data: combinedData,
+          aiSettings
         },
       });
 
@@ -122,10 +142,17 @@ export const useAiRecipes = () => {
     setError(null);
     
     try {
+      // Get user's AI settings from the database
+      const { aiSettings } = await getUserPreferences();
+      
       const { data, error } = await supabase.functions.invoke("ai-recipe-suggestions", {
         body: {
           type: "analyze-meal-plan",
-          data: { mealPlan },
+          data: { 
+            mealPlan,
+            userId: user?.id
+          },
+          aiSettings
         },
       });
 
@@ -148,13 +175,15 @@ export const useAiRecipes = () => {
     setError(null);
     
     try {
-      // Get user's food preferences from the database
-      const userFoodPreferences = await getUserFoodPreferences();
+      // Get user's preferences from the database
+      const { foodPreferences, aiSettings } = await getUserPreferences();
       
       const { data, error } = await supabase.functions.invoke("generate-recipe-from-fridge", {
         body: {
           ingredients,
-          userFoodPreferences
+          userFoodPreferences: foodPreferences,
+          aiSettings,
+          userId: user?.id
         },
       });
 
@@ -177,8 +206,8 @@ export const useAiRecipes = () => {
     setError(null);
     
     try {
-      // Get user's food preferences from the database
-      const userFoodPreferences = await getUserFoodPreferences();
+      // Get user's preferences from the database
+      const { foodPreferences, aiSettings } = await getUserPreferences();
       
       const { data, error } = await supabase.functions.invoke("ai-recipe-suggestions", {
         body: {
@@ -187,8 +216,10 @@ export const useAiRecipes = () => {
             mealType,
             season: season || getCurrentSeason(),
             additionalPreferences,
-            userFoodPreferences 
+            userFoodPreferences: foodPreferences,
+            userId: user?.id
           },
+          aiSettings
         },
       });
 
