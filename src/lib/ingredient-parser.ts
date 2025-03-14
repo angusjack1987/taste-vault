@@ -57,6 +57,7 @@ export function parseIngredientAmount(ingredient: string): { name: string; amoun
  * Parses an ingredient string to extract preparation instructions
  * Example: "Chicken Breast, diced" -> { mainText: "Chicken Breast", preparation: "diced" }
  * Example: "diced chicken" -> { mainText: "chicken", preparation: "diced" }
+ * Example: "blackberries cut up" -> { mainText: "blackberries", preparation: "cut up" }
  */
 export function parsePreparation(ingredient: string): { mainText: string; preparation: string | null } {
   // Check for empty input
@@ -64,12 +65,17 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     return { mainText: ingredient || '', preparation: null };
   }
   
-  // Common preparation words that might appear at the beginning
+  // Common preparation words and phrases that might appear at the beginning or end
   const prepWords = [
     'diced', 'chopped', 'minced', 'sliced', 'grated', 'crushed',
     'peeled', 'julienned', 'cubed', 'shredded', 'torn', 'crumbled',
     'pitted', 'halved', 'quartered', 'whole', 'ground', 'powdered',
-    'fresh', 'frozen', 'canned', 'dried'
+    'fresh', 'frozen', 'canned', 'dried', 'cut up', 'cut into pieces',
+    'trimmed', 'rinsed', 'washed', 'soaked', 'thawed', 'beaten',
+    'melted', 'softened', 'room temperature', 'chilled', 'cooked',
+    'boiled', 'fried', 'baked', 'roasted', 'grilled', 'steamed',
+    'mashed', 'pureed', 'blended', 'whisked', 'thinly sliced',
+    'roughly chopped', 'finely diced', 'coarsely ground'
   ];
   
   // Check for "ingredient, preparation" format (e.g., "chicken, diced")
@@ -83,29 +89,60 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     };
   }
   
+  // Check for multi-word preparation phrases like "cut up", "cut into pieces", etc.
+  for (const phrase of prepWords) {
+    if (phrase.includes(' ')) {
+      // For phrases with spaces like "cut up"
+      const phrasePattern = new RegExp(`^(.+?)\\s+(${phrase})$`, 'i');
+      const phraseMatch = ingredient.match(phrasePattern);
+      
+      if (phraseMatch) {
+        return {
+          mainText: phraseMatch[1].trim(),
+          preparation: phrase
+        };
+      }
+      
+      // Also check for phrase at beginning
+      const startPhrasePattern = new RegExp(`^(${phrase})\\s+(.+)$`, 'i');
+      const startPhraseMatch = ingredient.match(startPhrasePattern);
+      
+      if (startPhraseMatch) {
+        return {
+          mainText: startPhraseMatch[2].trim(),
+          preparation: phrase
+        };
+      }
+    }
+  }
+  
   // Check for "preparation ingredient" format (e.g., "diced chicken")
   for (const word of prepWords) {
-    const wordPattern = new RegExp(`^${word}\\s+(.+)$`, 'i');
-    const wordMatch = ingredient.match(wordPattern);
-    
-    if (wordMatch) {
-      return {
-        mainText: wordMatch[1].trim(),
-        preparation: word
-      };
+    if (!word.includes(' ')) {  // Skip multi-word phrases as they're handled above
+      const wordPattern = new RegExp(`^${word}\\s+(.+)$`, 'i');
+      const wordMatch = ingredient.match(wordPattern);
+      
+      if (wordMatch) {
+        return {
+          mainText: wordMatch[1].trim(),
+          preparation: word
+        };
+      }
     }
   }
   
   // Check for "ingredient preparation" format (e.g., "chicken diced")
   for (const word of prepWords) {
-    const wordPattern = new RegExp(`^(.+?)\\s+${word}$`, 'i');
-    const wordMatch = ingredient.match(wordPattern);
-    
-    if (wordMatch) {
-      return {
-        mainText: wordMatch[1].trim(),
-        preparation: word
-      };
+    if (!word.includes(' ')) {  // Skip multi-word phrases as they're handled above
+      const wordPattern = new RegExp(`^(.+?)\\s+${word}$`, 'i');
+      const wordMatch = ingredient.match(wordPattern);
+      
+      if (wordMatch) {
+        return {
+          mainText: wordMatch[1].trim(),
+          preparation: word
+        };
+      }
     }
   }
   

@@ -27,7 +27,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
       return <Beef className="h-4 w-4 text-sage-500" />;
     } else if (/fish|salmon|tuna|cod|tilapia|shrimp|prawn|seafood/i.test(lowerName)) {
       return <Fish className="h-4 w-4 text-sage-500" />;
-    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|cherries|strawberry|blueberry|raspberry/i.test(lowerName)) {
+    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|cherries|strawberry|blueberry|raspberry|blackberry|blackberries/i.test(lowerName)) {
       return <Apple className="h-4 w-4 text-sage-500" />;
     } else if (/egg|eggs/i.test(lowerName)) {
       return <Egg className="h-4 w-4 text-sage-500" />;
@@ -77,7 +77,7 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     return (
       <div className="flex items-start gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             {amount && (
               <span className="font-mono text-sm">{amount}</span>
             )}
