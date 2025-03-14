@@ -5,10 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 import useAuth from "./useAuth";
 import useAISettings from "./useAISettings";
 
+// Define interfaces for AISettings and UserPreferences
+export interface UserPreferences {
+  responseStyle?: "concise" | "balanced" | "detailed";
+  [key: string]: any;
+}
+
+export interface AISettings {
+  model?: string;
+  temperature?: number;
+  promptHistoryEnabled?: boolean;
+  userPreferences?: UserPreferences;
+}
+
 export const useAiRecipes = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const { aiSettings } = useAISettings();
+  const { useAISettingsQuery } = useAISettings();
+  const { data: aiSettings } = useAISettingsQuery();
 
   const makeEdgeFunctionRequest = async (
     endpoint: string,
@@ -36,7 +50,7 @@ export const useAiRecipes = () => {
               temperature: aiSettings?.temperature || 0.7,
               promptHistoryEnabled: aiSettings?.promptHistoryEnabled !== false,
               userPreferences: {
-                responseStyle: aiSettings?.responseStyle || "balanced",
+                responseStyle: aiSettings?.userPreferences?.responseStyle || "balanced",
               },
             },
           },
@@ -94,6 +108,18 @@ export const useAiRecipes = () => {
     );
   };
 
+  // Add the missing generateRecipe function for the fridge page
+  const generateRecipe = async (data: {
+    title: string;
+    ingredients: string[];
+  }) => {
+    return makeEdgeFunctionRequest(
+      "generate-recipe-from-fridge",
+      "generate-recipe",
+      data
+    );
+  };
+
   // Helper to determine current season
   const getCurrentSeason = () => {
     const month = new Date().getMonth();
@@ -108,6 +134,7 @@ export const useAiRecipes = () => {
     suggestRecipes,
     analyzeMealPlan,
     suggestMealForPlan,
+    generateRecipe,
   };
 };
 
