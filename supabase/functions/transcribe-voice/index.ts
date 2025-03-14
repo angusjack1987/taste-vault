@@ -191,6 +191,17 @@ function isFoodItem(text: string): boolean {
     }
   }
   
+  // If the input has preparation instructions in parentheses, it's likely a food item
+  const prepPhrases = ['chopped', 'diced', 'minced', 'sliced', 'grated', 'peeled', 'crushed',
+    'julienned', 'cubed', 'shredded', 'torn', 'crumbled', 'pitted', 'halved',
+    'quartered', 'finely', 'roughly', 'coarsely', 'thinly', 'to taste', 'for garnish'];
+  
+  for (const prep of prepPhrases) {
+    if (normalizedText.includes(prep)) {
+      return true;
+    }
+  }
+  
   // Default to accepting the item if it passes all our filters
   return true;
 }
@@ -219,8 +230,20 @@ function processFoodItems(text: string): string[] {
     const splitItems = item.split(/(?:i\s+need|i\s+want|please\s+add|add|get|buy)\s+/).filter(Boolean);
     
     for (const splitItem of splitItems) {
+      // Before cleaning, check if we have preparation instructions to preserve
+      const hasPrepInstructions = /(chopped|diced|minced|sliced|grated|finely|roughly|to taste)/i.test(splitItem);
+      
       // Clean up the item and remove any trailing punctuation
-      const cleanedItem = splitItem.trim().replace(/[.!?]$/, '');
+      let cleanedItem = splitItem.trim().replace(/[.!?]$/, '');
+      
+      // Remove measurement notes in parentheses but preserve preparation instructions
+      if (hasPrepInstructions) {
+        cleanedItem = cleanedItem.replace(/\(\s*about\s+[\d\/]+.*?\)/gi, '');
+      } else {
+        cleanedItem = cleanedItem.replace(/\([^)]*\)/g, '');
+      }
+      
+      cleanedItem = cleanedItem.trim();
       
       if (cleanedItem && isFoodItem(cleanedItem)) {
         processedItems.push(cleanedItem);

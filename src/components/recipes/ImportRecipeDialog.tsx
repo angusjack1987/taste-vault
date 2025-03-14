@@ -15,7 +15,7 @@ import {
 import useScrapedRecipes from "@/hooks/useScrapedRecipes";
 import { Label } from "@/components/ui/label";
 import { RecipeFormData } from "@/hooks/useRecipes";
-import { cleanIngredientString, parsePreparation, parseIngredientAmount } from "@/lib/ingredient-parser";
+import { cleanIngredientString, parsePreparation, parseIngredientAmount, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import IngredientInput from "./IngredientInput";
 
 interface ImportRecipeDialogProps {
@@ -39,9 +39,14 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     
     scrapeRecipe(url, {
       onSuccess: (data) => {
-        const cleanedIngredients = data.ingredients?.map(ingredient => 
-          cleanIngredientString(ingredient)
-        ) || [];
+        console.log("Raw scraped ingredients:", data.ingredients);
+        
+        // Enhanced cleaning of ingredients with better preservation of prep instructions
+        const cleanedIngredients = data.ingredients?.map(ingredient => {
+          const cleaned = cleanIngredientString(ingredient);
+          console.log(`Cleaned ingredient: "${ingredient}" -> "${cleaned}"`);
+          return cleaned;
+        }) || [];
         
         const cleanedData = {
           ...data,
@@ -294,19 +299,24 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
               <h4 className="font-medium mb-2">Ingredients</h4>
               <ul className="list-disc pl-5 space-y-1">
                 {(editedRecipe.ingredients || []).map((ingredient, index) => {
-                  // Process each ingredient to separate amount, name, and preparation
+                  console.log(`Processing ingredient for display: "${ingredient}"`);
+                  
+                  // First try to extract direct preparation instructions
+                  const preparationInstructions = extractPreparationInstructions(ingredient);
+                  
+                  // If that doesn't work, fall back to the standard parsing approach
                   const { mainText, preparation } = parsePreparation(ingredient);
                   const { name, amount } = parseIngredientAmount(mainText);
+                  
+                  console.log(`Parsed into: amount="${amount}", name="${name}", prep="${preparationInstructions || preparation}"`);
                   
                   return (
                     <li key={index} className="text-sm">
                       {amount && <span className="font-medium">{amount} </span>}
                       <span>{name}</span>
-                      {preparation && (
+                      {(preparationInstructions || preparation) && (
                         <span className="text-muted-foreground italic ml-1">
-                          {preparation.includes("finely chopped") || preparation.includes("about") ? 
-                            `, ${preparation}` : 
-                            ` (${preparation})`}
+                          {`, ${preparationInstructions || preparation}`}
                         </span>
                       )}
                     </li>

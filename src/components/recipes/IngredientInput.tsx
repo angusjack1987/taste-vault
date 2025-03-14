@@ -3,7 +3,7 @@ import React from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { parseIngredientAmount, parsePreparation, cleanIngredientString } from "@/lib/ingredient-parser";
+import { parseIngredientAmount, parsePreparation, cleanIngredientString, extractPreparationInstructions } from "@/lib/ingredient-parser";
 
 interface IngredientInputProps {
   ingredients: string[];
@@ -43,7 +43,10 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
   const renderIngredientItem = (ingredient: string, index: number, isInput: boolean) => {
     const cleanedIngredient = cleanIngredientString(ingredient);
     
-    // First parse the preparation instructions
+    // First try to extract direct preparation instructions
+    const prepInstructions = extractPreparationInstructions(cleanedIngredient);
+    
+    // If that doesn't work, fall back to the standard parsing approach
     const { mainText, preparation } = parsePreparation(cleanedIngredient);
     
     // Then parse the amount from the remaining text
@@ -90,8 +93,10 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                 <span className="text-sm">{name}</span>
               </div>
               
-              {preparation && (
-                <div className="text-xs text-muted-foreground italic ml-5">{preparation}</div>
+              {(prepInstructions || preparation) && (
+                <div className="text-xs text-muted-foreground italic ml-5">
+                  {prepInstructions || preparation}
+                </div>
               )}
             </div>
           </div>
@@ -114,12 +119,18 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
     if (!ingredient) return null;
     
     const cleanedIngredient = cleanIngredientString(ingredient);
+    console.log(`Live preview for: "${ingredient}" -> cleaned: "${cleanedIngredient}"`);
     
-    // First parse the preparation instructions
+    // First try the enhanced extraction
+    const prepInstructions = extractPreparationInstructions(cleanedIngredient);
+    
+    // Then try the standard approach as fallback
     const { mainText, preparation } = parsePreparation(cleanedIngredient);
     
     // Then parse the amount from the remaining text
     const { name, amount } = parseIngredientAmount(mainText);
+    
+    console.log(`Parsed preview: name="${name}", amount="${amount}", prep="${prepInstructions || preparation}"`);
 
     return (
       <div className="grid grid-cols-3 gap-2 px-2 mt-1">
@@ -134,14 +145,14 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
             {getIngredientIcon(name)}
             <span className="text-sm">{name}</span>
           </div>
-          {preparation && (
-            <div className="text-xs text-gray-500 italic">{preparation}</div>
+          {(prepInstructions || preparation) && (
+            <div className="text-xs text-gray-500 italic">{prepInstructions || preparation}</div>
           )}
         </div>
         
-        {preparation && !amount && (
+        {(prepInstructions || preparation) && !amount && (
           <div className="bg-sage-50 rounded-md p-2 text-xs flex items-center border border-sage-200">
-            <span className="italic text-gray-500">{preparation}</span>
+            <span className="italic text-gray-500">{prepInstructions || preparation}</span>
           </div>
         )}
       </div>
