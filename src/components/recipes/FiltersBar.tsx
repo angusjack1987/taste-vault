@@ -33,13 +33,13 @@ const FiltersBar = () => {
   return (
     <div className="flex items-center gap-2 overflow-x-auto py-3 pb-4 scrollbar-none">
       <Button 
-        variant={hasActiveFilters ? "secondary" : "outline"}
+        variant={hasActiveFilters ? "cheese" : "outline"}
         size="sm" 
         onClick={handleFilterClick}
-        className="flex items-center whitespace-nowrap border-2 rounded-full bg-background group"
+        className="flex items-center whitespace-nowrap group"
       >
-        <Filter className="h-4 w-4 mr-1 group-hover:animate-pulse-slow" />
-        <span className="group-hover:font-bold transition-all">
+        <Filter className="h-4 w-4 mr-1 group-hover:animate-spin-neo" />
+        <span className="font-bold uppercase">
           {hasActiveFilters ? `Filters: ${filterSummary}` : "Filters"}
         </span>
       </Button>

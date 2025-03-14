@@ -26,8 +26,9 @@ const RecipeGrid = ({
 }: RecipeGridProps) => {
   if (recipes.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        {emptyMessage}
+      <div className="text-center py-12 bg-white border-2 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+        <span className="text-5xl mb-4 block animate-neo-pulse">🍳</span>
+        <span className="font-bold uppercase">{emptyMessage}</span>
       </div>
     );
   }
@@ -38,7 +39,7 @@ const RecipeGrid = ({
         <div key={recipe.id} className="relative">
           {selectionMode && (
             <div 
-              className="absolute top-2 left-2 z-10 bg-background/80 rounded-full p-0.5 cursor-pointer"
+              className="absolute top-2 left-2 z-10 bg-white border-2 border-black p-1 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -58,7 +59,7 @@ const RecipeGrid = ({
               className="cursor-pointer"
             >
               <RecipeCard
-                id={recipe.id} // Ensure id is always passed
+                id={recipe.id}
                 title={recipe.title}
                 image={recipe.image}
                 time={recipe.time}
@@ -68,7 +69,7 @@ const RecipeGrid = ({
           ) : (
             <Link to={`/recipes/${recipe.id}`}>
               <RecipeCard
-                id={recipe.id} // Ensure id is always passed
+                id={recipe.id}
                 title={recipe.title}
                 image={recipe.image}
                 time={recipe.time}

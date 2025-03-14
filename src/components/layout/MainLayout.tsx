@@ -40,7 +40,7 @@ const MainLayout = ({
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-white overflow-hidden">
       <PageHeader
         title={title}
         showBackButton={showBackButton}
@@ -49,12 +49,13 @@ const MainLayout = ({
       />
       
       <main className="flex-1 pb-24 px-4 md:px-6 relative overflow-x-hidden overflow-y-auto">
-        {/* Subtle background elements */}
-        <div className="absolute top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl -z-10"></div>
-        <div className="absolute bottom-40 -left-20 w-40 h-40 bg-secondary/5 rounded-full blur-3xl -z-10"></div>
+        {/* Neo-brutalism background elements */}
+        <div className="absolute top-20 right-20 w-48 h-48 bg-yellow-400 border-2 border-black z-0 rotate-12"></div>
+        <div className="absolute bottom-40 left-10 w-32 h-32 bg-red-500 border-2 border-black z-0 -rotate-12"></div>
+        <div className="absolute top-40 left-10 w-24 h-24 bg-green-500 border-2 border-black z-0 rotate-45"></div>
         
         <div 
-          className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-300 ease-in-out ${
+          className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-300 ease-in-out z-10 ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
         >
@@ -66,7 +67,7 @@ const MainLayout = ({
       
       {/* Page transition overlay */}
       <div 
-        className={`fixed inset-0 bg-background pointer-events-none z-50 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-white pointer-events-none z-50 transition-opacity duration-300 ${
           mounted ? 'opacity-0' : 'opacity-100'
         }`}
       />

@@ -1,11 +1,120 @@
+
 #root {
   margin: 0 auto;
   text-align: center;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
   scroll-behavior: smooth;
+  background-color: white;
+}
+
+/* Neo-brutalism utilities */
+.neo-border {
+  border: 2px solid black;
+  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+}
+
+.neo-hover {
+  transition: all 0.2s ease;
+}
+.neo-hover:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+}
+
+/* Card animations */
+.card-hover {
+  transition: all 0.3s ease;
+  border: 2px solid black;
+  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+}
+.card-hover:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+}
+
+/* Button animation */
+.btn-hover {
+  transition: all 0.2s ease;
+  border: 2px solid black;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+}
+.btn-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+}
+.btn-hover:active {
+  transform: translate(0, 0);
+  box-shadow: 0px 0px 0px 0px rgba(0,0,0,1);
+}
+
+/* Neo-brutalism containers */
+.neo-container {
+  border: 2px solid black;
+  background-color: white;
+  padding: 20px;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+}
+
+.neo-card {
+  border: 2px solid black;
+  background-color: white;
+  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  transition: all 0.3s ease;
+}
+.neo-card:hover {
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+  transform: translate(-3px, -3px);
+}
+
+/* Food-themed color classes */
+.bg-tomato {
+  background-color: #FF6347;
+}
+
+.bg-lettuce {
+  background-color: #4CAF50;
+}
+
+.bg-cheese {
+  background-color: #FFC107;
+}
+
+.bg-bread {
+  background-color: #E0C097;
+}
+
+.bg-blueberry {
+  background-color: #3F51B5;
+}
+
+/* Bold outlines */
+.bold-outline {
+  border: 2px solid black;
+}
+
+/* Colorful backgrounds */
+.bg-gradient-cheese {
+  background: linear-gradient(135deg, #FFF9C4 0%, #FFEB3B 100%);
+}
+
+.bg-gradient-tomato {
+  background: linear-gradient(135deg, #FFCDD2 0%, #F44336 100%);
+}
+
+.bg-gradient-lettuce {
+  background: linear-gradient(135deg, #C8E6C9 0%, #4CAF50 100%);
+}
+
+/* Fun container style */
+.fun-container {
+  border-radius: 0;
+  border: 2px solid black;
+  background-color: white;
+  padding: 20px;
+  box-shadow: 8px 8px 0px 0px #000;
 }
 
 /* Animation utilities */
@@ -16,126 +125,20 @@ body {
   transform: scale(1.05);
 }
 
-/* Card animations */
-.card-hover {
-  transition: all 0.3s ease;
-}
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-}
-
-/* Button animation */
-.btn-hover {
-  transition: all 0.2s ease;
-}
-.btn-hover:hover {
-  transform: translateY(-2px);
-}
-
-/* Fancy button animation */
-.fancy-button {
-  position: relative;
-  overflow: hidden;
-}
-.fancy-button:after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.2);
-  transform: translateX(-100%);
-  transition: transform 0.6s ease;
-}
-.fancy-button:hover:after {
-  transform: translateX(0);
-}
-
-/* Highlight text */
-.highlight {
-  background: linear-gradient(to bottom, transparent 70%, hsla(49, 100%, 50%, 0.4) 30%);
-  display: inline;
-}
-
-/* AI suggestion highlight pulse */
-.ai-pulse {
-  animation: ai-pulse 2s infinite;
-}
-@keyframes ai-pulse {
+/* Neo-brutalism checkerboard animations */
+@keyframes checkerboard {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 214, 0, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 214, 0, 0);
+    background-position: 0 0;
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 214, 0, 0);
+    background-position: 20px 20px;
   }
 }
 
-/* Bold outlines */
-.bold-outline {
-  border: 2px solid currentColor;
-}
-
-.bold-outline-yellow {
-  border: 2px solid #FFDC72;
-}
-
-.bold-outline-green {
-  border: 2px solid #4CAF50;
-}
-
-.bold-outline-blue {
-  border: 2px solid #2196F3;
-}
-
-/* Colorful backgrounds */
-.bg-gradient-yellow {
-  background: linear-gradient(135deg, #FFF9C4 0%, #FFEB3B 100%);
-}
-
-.bg-gradient-green {
-  background: linear-gradient(135deg, #C8E6C9 0%, #4CAF50 100%);
-}
-
-.bg-gradient-blue {
-  background: linear-gradient(135deg, #BBDEFB 0%, #2196F3 100%);
-}
-
-/* Fun container style */
-.fun-container {
-  border-radius: 24px;
-  border: 2px solid #FFDC72;
-  background-color: white;
-  padding: 20px;
-  box-shadow: 8px 8px 0 0 #000;
-}
-
-/* Clean card style */
-.clean-card {
-  border-radius: 16px;
-  border: 1px solid #eaeaea;
-  background-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-.clean-card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-/* Professional card style */
-.pro-card {
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
-}
-.pro-card:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+.animate-checkerboard {
+  background-image: repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 8px);
+  background-size: 20px 20px;
+  animation: checkerboard 10s linear infinite;
 }
 
 /* Audio visualization animations */
@@ -183,27 +186,27 @@ body {
 .checked-items-section {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px dashed rgba(0,0,0,0.1);
+  border-top: 2px dashed black;
 }
 
-/* Professional section styling */
-.section-pro {
+/* Neo-brutalism section styling */
+.section-neo {
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  border-radius: 12px;
+  border: 2px solid black;
   background-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
 }
 
-/* Subtle dividers */
-.divider-subtle {
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(0,0,0,0.1), transparent);
+/* Subtly dividers */
+.divider-neo {
+  height: 2px;
+  background-color: black;
   margin: 1.5rem 0;
 }
 
-/* Slow spin animation for icons */
-@keyframes spin-slow {
+/* Animation for icons */
+@keyframes spin-neo {
   from {
     transform: rotate(0deg);
   }
@@ -212,33 +215,21 @@ body {
   }
 }
 
-.animate-spin-slow {
-  animation: spin-slow 1s ease-in-out;
-}
-
-/* Slow pulse animation for icons */
-@keyframes pulse-slow {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 1s ease-in-out;
+.animate-spin-neo {
+  animation: spin-neo 0.5s ease-in-out;
 }
 
 /* Button hover effect for view recipe */
 .view-recipe-btn {
-  opacity: 0.7;
+  border: 2px solid black;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
   transition: all 0.2s ease;
 }
 .view-recipe-btn:hover {
-  opacity: 1;
-  transform: scale(1.1);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+}
+.view-recipe-btn:active {
+  transform: translate(0, 0);
+  box-shadow: 0px 0px 0px 0px rgba(0,0,0,1);
 }
