@@ -171,6 +171,7 @@ export type Database = {
           difficulty: string | null
           id: string
           image: string | null
+          images: Json | null
           ingredients: Json
           instructions: Json
           servings: number | null
@@ -186,6 +187,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           image?: string | null
+          images?: Json | null
           ingredients?: Json
           instructions?: Json
           servings?: number | null
@@ -201,6 +203,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           image?: string | null
+          images?: Json | null
           ingredients?: Json
           instructions?: Json
           servings?: number | null

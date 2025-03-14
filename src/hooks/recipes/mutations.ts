@@ -10,6 +10,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
   const newRecipe = {
     ...recipeData,
     user_id: user.id,
+    images: recipeData.images || [],
   };
 
   const { data, error } = await supabase
@@ -37,6 +38,9 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
     tags: Array.isArray(data.tags) 
       ? data.tags.map(t => String(t)) 
       : [],
+    images: Array.isArray(data.images) 
+      ? data.images 
+      : [],
   };
 };
 
@@ -46,9 +50,14 @@ export const updateRecipe = async ({
 }: RecipeFormData & { id: string }, user: User | null): Promise<Recipe> => {
   if (!user) throw new Error("User not authenticated");
 
+  const updateData = {
+    ...recipeData,
+    images: recipeData.images || [],
+  };
+
   const { data, error } = await supabase
     .from("recipes")
-    .update(recipeData)
+    .update(updateData)
     .eq("id", id)
     .select()
     .single();
@@ -71,6 +80,9 @@ export const updateRecipe = async ({
       : [],
     tags: Array.isArray(data.tags) 
       ? data.tags.map(t => String(t)) 
+      : [],
+    images: Array.isArray(data.images) 
+      ? data.images 
       : [],
   };
 };

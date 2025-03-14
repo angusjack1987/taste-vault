@@ -5,6 +5,7 @@ export type Recipe = {
   id: string;
   title: string;
   image: string | null;
+  images: string[] | null;
   time: number | null;
   servings: number | null;
   difficulty: string | null;
