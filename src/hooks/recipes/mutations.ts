@@ -39,7 +39,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
       ? data.tags.map(t => String(t)) 
       : [],
     images: Array.isArray(data.images) 
-      ? data.images 
+      ? data.images.map(img => String(img)) 
       : [],
   };
 };
@@ -82,7 +82,7 @@ export const updateRecipe = async ({
       ? data.tags.map(t => String(t)) 
       : [],
     images: Array.isArray(data.images) 
-      ? data.images 
+      ? data.images.map(img => String(img)) 
       : [],
   };
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Mic, Utensils, AudioWaveform } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -14,7 +13,6 @@ import useRecipes from "@/hooks/useRecipes";
 import useMealPlans, { MealType } from "@/hooks/useMealPlans";
 import { format } from "date-fns";
 
-// Newly created components
 import FridgeAddItemForm from "@/components/fridge/FridgeAddItemForm";
 import VoiceInputSection from "@/components/fridge/VoiceInputSection";
 import FridgeItemsList from "@/components/fridge/FridgeItemsList";
@@ -53,7 +51,6 @@ const FridgePage = () => {
   const [savePlanDialogOpen, setSavePlanDialogOpen] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType>("dinner");
   
-  // Effect to animate processing progress
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -62,17 +59,14 @@ const FridgePage = () => {
       
       interval = setInterval(() => {
         setProcessingProgress(prev => {
-          // Slow down progress as it approaches 90%
           const increment = prev < 30 ? 10 : prev < 60 ? 5 : prev < 80 ? 2 : 1;
           const nextProgress = Math.min(prev + increment, 90);
           return nextProgress;
         });
       }, 300);
     } else {
-      // When processing is done, fill to 100%
       setProcessingProgress(isProcessingVoice ? 0 : 100);
       
-      // Reset to 0 after completion animation
       if (!isProcessingVoice && processingProgress === 100) {
         const timeout = setTimeout(() => {
           setProcessingProgress(0);
@@ -158,6 +152,7 @@ const FridgePage = () => {
         time: selected.time || null,
         servings: selected.servings || null,
         image: null,
+        images: [],
         difficulty: null,
         tags: selected.highlights || []
       });
@@ -186,7 +181,6 @@ const FridgePage = () => {
     }
     
     try {
-      // First save the recipe
       const selected = generatedRecipes[selectedRecipeIndex];
       
       const savedRecipe = await createRecipe.mutateAsync({
@@ -197,11 +191,11 @@ const FridgePage = () => {
         time: selected.time || null,
         servings: selected.servings || null,
         image: null,
+        images: [],
         difficulty: null,
         tags: selected.highlights || []
       });
       
-      // Then add to meal plan for today
       const today = new Date();
       
       await createMealPlan.mutateAsync({
@@ -219,10 +213,8 @@ const FridgePage = () => {
     }
   };
 
-  // Add "Always Available" to the categories
   const categories = ["All", "Always Available", "Fridge", "Pantry", "Freezer"];
 
-  // Filtering logic for the "Always Available" tab
   const getFilteredItems = (category: string) => {
     if (!fridgeItems) return [];
     
@@ -242,7 +234,6 @@ const FridgePage = () => {
   return (
     <MainLayout title="My Fridge" showBackButton>
       <div className="page-container max-w-2xl mx-auto px-4 pb-20">
-        {/* Add Item Form - Always visible at top */}
         <div className="mb-6 mt-4">
           <FridgeAddItemForm 
             newItemName={newItemName}
@@ -271,7 +262,6 @@ const FridgePage = () => {
           </div>
         </div>
         
-        {/* Categories and Item List */}
         <Tabs defaultValue="All" className="w-full">
           <div className="sticky top-[73px] z-10 bg-background pt-2 pb-2">
             <TabsList className="w-full rounded-full bg-muted">
@@ -308,7 +298,6 @@ const FridgePage = () => {
           ))}
         </Tabs>
         
-        {/* Recipe Options Dialog */}
         <RecipeOptionsDialog 
           open={recipeDialogOpen}
           onOpenChange={setRecipeDialogOpen}
@@ -320,7 +309,6 @@ const FridgePage = () => {
           onAddToMealPlan={handleAddToMealPlan}
         />
         
-        {/* Add to Meal Plan Dialog */}
         <SaveToMealPlanDialog 
           open={savePlanDialogOpen}
           onOpenChange={setSavePlanDialogOpen}

@@ -32,7 +32,7 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
       ? item.tags.map(t => String(t))
       : [],
     images: Array.isArray(item.images) 
-      ? item.images 
+      ? item.images.map(img => String(img)) 
       : [],
   }));
 };
@@ -66,7 +66,7 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
       ? data.tags.map(t => String(t)) 
       : [],
     images: Array.isArray(data.images) 
-      ? data.images 
+      ? data.images.map(img => String(img)) 
       : [],
   };
 };

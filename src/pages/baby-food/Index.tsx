@@ -123,6 +123,7 @@ const BabyFoodPage = () => {
         time: selected.time || null,
         servings: selected.servings || null,
         image: null,
+        images: [],
         difficulty: null,
         tags: [...(selected.highlights || []), "baby-food", `age-${selected.ageRange}`]
       });
@@ -161,6 +162,7 @@ const BabyFoodPage = () => {
         time: selected.time || null,
         servings: selected.servings || null,
         image: null,
+        images: [],
         difficulty: null,
         tags: [...(selected.highlights || []), "baby-food", `age-${selected.ageRange}`]
       });

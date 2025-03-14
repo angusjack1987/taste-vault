@@ -25,6 +25,7 @@ const RecipeForm = () => {
   const [formData, setFormData] = useState<RecipeFormData>({
     title: "",
     image: "",
+    images: [],
     time: 30,
     servings: 2,
     difficulty: "Easy",
@@ -44,6 +45,7 @@ const RecipeForm = () => {
       setFormData({
         title: existingRecipe.title,
         image: existingRecipe.image || "",
+        images: existingRecipe.images || [],
         time: existingRecipe.time || 30,
         servings: existingRecipe.servings || 2,
         difficulty: existingRecipe.difficulty || "Easy",
@@ -163,7 +165,8 @@ const RecipeForm = () => {
       
       setFormData({
         ...formData,
-        image: data.publicUrl
+        image: data.publicUrl,
+        images: [...(formData.images || []), data.publicUrl]
       });
       
       toast({
@@ -467,4 +470,3 @@ const RecipeForm = () => {
 };
 
 export default RecipeForm;
-

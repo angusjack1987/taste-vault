@@ -18,5 +18,5 @@ export type Recipe = {
 };
 
 export type RecipeFormData = Omit<Recipe, "id" | "created_at" | "updated_at"> & {
-  images?: string[]; // Optional array of images for the import process
+  images?: string[]; // Make images optional in the form data
 };
