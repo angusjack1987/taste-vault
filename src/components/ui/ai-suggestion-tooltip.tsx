@@ -18,7 +18,7 @@ const AiSuggestionTooltip = ({ children, content }: AiSuggestionTooltipProps) =>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent 
-          className="bg-white rounded-full py-1 px-3 border border-sunshine-200"
+          className="bg-white rounded-full py-1 px-3 border border-sunshine-200 z-50 max-w-[250px] sm:max-w-xs"
           sideOffset={5}
         >
           <div className="flex items-center gap-1.5">

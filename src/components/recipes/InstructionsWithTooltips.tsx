@@ -175,18 +175,8 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       }
     });
 
-    // Sort matches by index and remove overlaps
-    const filteredMatches = matches
-      .sort((a, b) => a.index - b.index)
-      .filter((match, i, arr) => {
-        if (i === 0) return true;
-        const prevMatch = arr[i - 1];
-        // Prevent overlapping matches
-        return match.index >= prevMatch.index + prevMatch.length;
-      });
-
-    // Only return the first match to maintain the one-tooltip-per-line requirement
-    return filteredMatches.length > 0 ? [filteredMatches[0]] : [];
+    // Sort matches by index to maintain correct text order
+    return matches.sort((a, b) => a.index - b.index);
   };
 
   // Function to render text with tooltips
@@ -198,7 +188,23 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
     const result: React.ReactNode[] = [];
     let lastIndex = 0;
 
-    ingredientMatches.forEach((match, i) => {
+    // Function to check if matches overlap
+    const isOverlapping = (match1: any, match2: any) => {
+      return match1.index < match2.index + match2.length && 
+             match2.index < match1.index + match1.length;
+    };
+
+    // Filter out overlapping matches
+    const filteredMatches = ingredientMatches.filter((match, i) => {
+      for (let j = 0; j < i; j++) {
+        if (isOverlapping(match, ingredientMatches[j])) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    filteredMatches.forEach((match, i) => {
       // Add text before the match
       if (match.index > lastIndex) {
         result.push(text.substring(lastIndex, match.index));
@@ -214,7 +220,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
                 {matchedText}
               </span>
             </TooltipTrigger>
-            <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200">
+            <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200 z-50 max-w-[250px] sm:max-w-xs">
               <div className="flex items-center gap-1.5">
                 <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
                   <span className="text-sunshine-600 text-xs font-medium">i</span>
@@ -244,47 +250,68 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       let currentText = step.step;
       let lastIndex = 0;
 
-      // Only process if we have tooltips
+      // Process all tooltips for this step
       if (step.tooltips && step.tooltips.length > 0) {
-        // We only use the first tooltip as per our limit
-        const tooltip = step.tooltips[0];
-        
-        if (tooltip && tooltip.text) {
-          const tooltipStart = currentText.toLowerCase().indexOf(tooltip.text.toLowerCase());
-          if (tooltipStart !== -1) {
-            // Add text before the tooltip
-            if (tooltipStart > lastIndex) {
-              result.push(currentText.substring(lastIndex, tooltipStart));
+        // Create a data structure similar to ingredient matches
+        const tooltipMatches = step.tooltips.map(tooltip => ({
+          text: tooltip.text,
+          ingredient: tooltip.ingredient,
+          explanation: tooltip.explanation,
+          index: currentText.toLowerCase().indexOf(tooltip.text.toLowerCase()),
+          length: tooltip.text.length
+        }))
+        .filter(match => match.index !== -1) // Filter out tooltips that don't match
+        .sort((a, b) => a.index - b.index); // Sort by position in text
+
+        // Function to check if tooltips overlap
+        const isOverlapping = (match1: any, match2: any) => {
+          return match1.index < match2.index + match2.length && 
+                match2.index < match1.index + match1.length;
+        };
+
+        // Filter out overlapping tooltips
+        const filteredTooltips = tooltipMatches.filter((match, i) => {
+          for (let j = 0; j < i; j++) {
+            if (isOverlapping(match, tooltipMatches[j])) {
+              return false;
             }
-
-            // Add the tooltip with the new simpler design
-            const tooltipText = currentText.substr(tooltipStart, tooltip.text.length);
-            result.push(
-              <TooltipProvider key={`enhanced-tooltip-${index}`}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-help text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
-                      {tooltipText}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
-                        <span className="text-sunshine-600 text-xs font-medium">i</span>
-                      </div>
-                      <p className="text-sm">{tooltip.ingredient}</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            );
-
-            lastIndex = tooltipStart + tooltip.text.length;
           }
-        }
+          return true;
+        });
+
+        filteredTooltips.forEach((tooltip, tooltipIndex) => {
+          // Add text before the tooltip
+          if (tooltip.index > lastIndex) {
+            result.push(currentText.substring(lastIndex, tooltip.index));
+          }
+
+          // Add the tooltip with the new simpler design
+          const tooltipText = currentText.substr(tooltip.index, tooltip.length);
+          result.push(
+            <TooltipProvider key={`enhanced-tooltip-${index}-${tooltipIndex}`}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
+                    {tooltipText}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200 z-50 max-w-[250px] sm:max-w-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
+                      <span className="text-sunshine-600 text-xs font-medium">i</span>
+                    </div>
+                    <p className="text-sm">{tooltip.ingredient}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+
+          lastIndex = tooltip.index + tooltip.length;
+        });
       }
 
-      // Add text after the tooltip (or all text if no tooltip was found)
+      // Add text after the last tooltip (or all text if no tooltip was found)
       if (lastIndex < currentText.length) {
         result.push(currentText.substring(lastIndex));
       }
@@ -306,7 +333,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         renderEnhancedInstructions()
       ) : (
         instructions.map((step, index) => {
-          // Get only one match per instruction for consistency with enhanced mode
+          // Get all matches per instruction (no longer limited to one)
           const matches = findIngredientMatches(step);
           return (
             <li key={index} className="flex gap-3 mb-4">
