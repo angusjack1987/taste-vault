@@ -46,9 +46,16 @@ export const updateRecipe = async ({
 }: RecipeFormData & { id: string }, user: User | null): Promise<Recipe> => {
   if (!user) throw new Error("User not authenticated");
 
+  const cleanedData = {
+    ...recipeData,
+    ingredients: Array.isArray(recipeData.ingredients) ? recipeData.ingredients : [],
+    instructions: Array.isArray(recipeData.instructions) ? recipeData.instructions : [],
+    tags: Array.isArray(recipeData.tags) ? recipeData.tags : [],
+  };
+
   const { data, error } = await supabase
     .from("recipes")
-    .update(recipeData)
+    .update(cleanedData)
     .eq("id", id)
     .select()
     .single();

@@ -19,7 +19,8 @@ import {
   Fish,
   Apple,
   Egg,
-  Wheat
+  Wheat,
+  Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,14 +72,16 @@ const RecipeDetail = () => {
   const [enhancedInstructions, setEnhancedInstructions] = useState<EnhancedInstruction[]>([]);
   const [isEnhancingInstructions, setIsEnhancingInstructions] = useState(false);
   const [isInstructionsEnhanced, setIsInstructionsEnhanced] = useState(false);
+  const [isSavingEnhancedInstructions, setIsSavingEnhancedInstructions] = useState(false);
   
-  const { useRecipe, useDeleteRecipe } = useRecipes();
+  const { useRecipe, useUpdateRecipe } = useRecipes();
   const { useAddManyShoppingListItems } = useShoppingList();
   const { suggestMealForPlan, enhanceRecipeInstructions, loading: aiLoading } = useAiRecipes();
   
   const { data: recipe, isLoading, error } = useRecipe(id);
   const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
-  const { mutateAsync: deleteRecipe } = useDeleteRecipe();
+  const { mutateAsync: updateRecipe } = useUpdateRecipe();
+  const { mutateAsync: deleteRecipe } = useRecipes().useDeleteRecipe();
   
   const getIngredientIcon = (ingredientName: string) => {
     const lowerName = ingredientName.toLowerCase();
@@ -259,6 +262,63 @@ const RecipeDetail = () => {
     }
   };
 
+  const handleSaveEnhancedInstructions = async () => {
+    if (!recipe || !id || !isInstructionsEnhanced || enhancedInstructions.length === 0) return;
+    
+    setIsSavingEnhancedInstructions(true);
+    
+    try {
+      const updatedInstructions = enhancedInstructions.map(enhanced => {
+        return enhanced.step;
+      });
+      
+      const enhancedInstructionsMetadata = enhancedInstructions.map(enhanced => ({
+        step: enhanced.step,
+        tooltips: enhanced.tooltips,
+      }));
+      
+      await updateRecipe({
+        id,
+        ...recipe,
+        instructions: updatedInstructions,
+        description: recipe.description + "\n\n<!-- ENHANCED_INSTRUCTIONS:" + 
+          JSON.stringify(enhancedInstructionsMetadata) + " -->"
+      });
+      
+      toast.success("Enhanced instructions saved to recipe");
+    } catch (error) {
+      console.error("Error saving enhanced instructions:", error);
+      toast.error("Failed to save enhanced instructions");
+    } finally {
+      setIsSavingEnhancedInstructions(false);
+    }
+  };
+
+  const extractEnhancedInstructionsFromMetadata = () => {
+    if (!recipe || !recipe.description) return null;
+    
+    const match = recipe.description.match(/<!-- ENHANCED_INSTRUCTIONS:(.*?) -->/);
+    if (match && match[1]) {
+      try {
+        return JSON.parse(match[1]) as EnhancedInstruction[];
+      } catch (e) {
+        console.error("Failed to parse enhanced instructions from metadata", e);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  React.useEffect(() => {
+    if (recipe && !isInstructionsEnhanced) {
+      const savedEnhancedInstructions = extractEnhancedInstructionsFromMetadata();
+      if (savedEnhancedInstructions) {
+        setEnhancedInstructions(savedEnhancedInstructions);
+        setIsInstructionsEnhanced(true);
+      }
+    }
+  }, [recipe, isInstructionsEnhanced]);
+
   if (isLoading) {
     return (
       <MainLayout title="Loading Recipe..." showBackButton={true}>
@@ -285,264 +345,10 @@ const RecipeDetail = () => {
     );
   }
   
-  return (
-    <MainLayout 
-      title={recipe.title} 
-      showBackButton={true}
-      action={
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" asChild>
-            <a href={`/recipes/${id}/edit`}>
-              <Edit className="h-5 w-5" />
-            </a>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Trash2 className="h-5 w-5 text-destructive" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this recipe? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={handleDeleteRecipe}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    <>Delete</>
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      }
-    >
-      <div>
-        <div className="relative">
-          {recipe.image ? (
-            <img 
-              src={recipe.image} 
-              alt={recipe.title} 
-              className="w-full h-48 md:h-64 object-cover"
-            />
-          ) : (
-            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
-              <p className="text-muted-foreground">No image available</p>
-            </div>
-          )}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-            <h1 className="text-white text-xl font-semibold">{recipe.title}</h1>
-          </div>
-        </div>
-        
-        <div className="page-container">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-4">
-              {recipe.time && (
-                <div className="flex items-center text-muted-foreground">
-                  <Clock className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{recipe.time} min</span>
-                </div>
-              )}
-              {recipe.servings && (
-                <div className="flex items-center text-muted-foreground">
-                  <Users className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{recipe.servings} servings</span>
-                </div>
-              )}
-              {recipe.difficulty && (
-                <div className="flex items-center text-muted-foreground">
-                  <ChefHat className="w-4 h-4 mr-1" />
-                  <span className="text-sm">{recipe.difficulty}</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsFavorited(!isFavorited)}
-              >
-                <Heart 
-                  className={`h-5 w-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} 
-                />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Bookmark className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Share2 className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-          
-          {recipe.description && (
-            <p className="text-muted-foreground mb-6">{recipe.description}</p>
-          )}
+  const displayDescription = recipe?.description ? 
+    recipe.description.replace(/<!-- ENHANCED_INSTRUCTIONS:.*? -->/, '') : 
+    null;
 
-          <div className="mb-6 flex flex-col sm:flex-row gap-3">
-            <AiSuggestionButton 
-              onClick={handleOpenVariationsDialog} 
-              label="Get AI Recipe Variations"
-              className="w-full md:w-auto"
-            />
-            
-            <AiSuggestionButton 
-              onClick={handleEnhanceInstructions} 
-              label={isInstructionsEnhanced ? "Instructions Enhanced" : "Enhance Instructions"}
-              variant="mint"
-              isLoading={isEnhancingInstructions}
-              className="w-full md:w-auto"
-            >
-              {isInstructionsEnhanced ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Instructions Enhanced
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
-                  Enhance Instructions
-                </>
-              )}
-            </AiSuggestionButton>
-          </div>
-          
-          <Tabs defaultValue="ingredients" className="mb-8">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
-              <TabsTrigger value="instructions">Instructions</TabsTrigger>
-            </TabsList>
-            <TabsContent value="ingredients" className="mt-4">
-              <ScrollArea maxHeight="350px">
-                <ul className="space-y-3">
-                  {recipe.ingredients.map((ingredient, index) => {
-                    const cleanedIngredient = cleanIngredientString(ingredient);
-                    const prepInstructions = extractPreparationInstructions(cleanedIngredient);
-                    const { mainText, preparation } = parsePreparation(cleanedIngredient);
-                    const { name, amount } = parseIngredientAmount(mainText);
-                    
-                    return (
-                      <li key={index} className="flex items-center p-2 bg-sage-50 rounded-md border border-sage-200 hover:bg-sage-100 transition-colors">
-                        <div className="flex-shrink-0 mr-3">
-                          {getIngredientIcon(name)}
-                        </div>
-                        
-                        <div className="flex-1 grid grid-cols-12 gap-2 items-center">
-                          {amount ? (
-                            <>
-                              <span className="font-mono text-sm col-span-3 text-sage-700">{amount}</span>
-                              <span className="text-sm font-medium col-span-9">{name}</span>
-                            </>
-                          ) : (
-                            <span className="text-sm font-medium col-span-12">{name}</span>
-                          )}
-                          
-                          {(prepInstructions || preparation) && (
-                            <div className="text-xs text-muted-foreground italic col-span-12 mt-1 ml-0">
-                              {prepInstructions || preparation}
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </ScrollArea>
-            </TabsContent>
-            <TabsContent value="instructions" className="mt-4">
-              <ScrollArea maxHeight="350px">
-                <InstructionsWithTooltips
-                  instructions={recipe.instructions}
-                  ingredients={recipe.ingredients}
-                  enhancedInstructions={enhancedInstructions}
-                  isEnhanced={isInstructionsEnhanced}
-                />
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-          
-          {recipe.tags && recipe.tags.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-medium mb-2">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {recipe.tags.map((tag) => (
-                  <span 
-                    key={tag} 
-                    className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <div className="mt-8 flex gap-3 justify-center">
-            <Button 
-              variant="outline" 
-              className="flex-1 max-w-40"
-              onClick={handleAddToShoppingList}
-              disabled={addingToShoppingList}
-            >
-              {addingToShoppingList ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <ShoppingBag className="h-4 w-4 mr-2" />
-              )}
-              Add to Shopping List
-            </Button>
-            <Button 
-              className="flex-1 max-w-40"
-              onClick={() => navigate("/meal-plan")}
-            >
-              Add to Meal Plan
-            </Button>
-          </div>
-        </div>
-      </div>
 
-      <SuggestMealDialog
-        open={suggestDialogOpen}
-        onOpenChange={setSuggestDialogOpen}
-        currentDay={null}
-        currentMealType={null}
-        suggestMealType={suggestMealType}
-        setSuggestMealType={setSuggestMealType}
-        aiLoading={aiLoading}
-        suggestedMeal={suggestedMeal}
-        parsingMealSuggestion={parsingMealSuggestion}
-        additionalPreferences={additionalPreferences}
-        setAdditionalPreferences={setAdditionalPreferences}
-        onSuggestMeal={handleSuggestMeal}
-        onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
-        onResetSuggestedMeal={handleResetSuggestedMeal}
-      />
 
-      <RecipeVariationsDialog
-        open={variationsDialogOpen}
-        onOpenChange={setVariationsDialogOpen}
-        recipeName={recipe.title}
-        onGenerateVariation={handleGenerateVariation}
-        isLoading={parsingMealSuggestion}
-      />
-    </MainLayout>
-  );
-};
 
-export default RecipeDetail;
