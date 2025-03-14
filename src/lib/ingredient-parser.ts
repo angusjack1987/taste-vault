@@ -1,4 +1,3 @@
-
 /**
  * Parses an ingredient string to separate the ingredient name from the amount/unit
  * Example: "500g Chicken Breast" -> { name: "Chicken Breast", amount: "500g" }
@@ -82,7 +81,26 @@ export function cleanIngredientString(ingredient: string): string {
     return ingredient || '';
   }
   
-  // Remove all text in parentheses (including nested parentheses)
+  // First check for preparation instructions in parentheses and preserve them
+  const prepInParentheses = /\((chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered)/i;
+  if (prepInParentheses.test(ingredient)) {
+    // Keep the first set of parentheses that has preparation instructions
+    const parenthesesMatch = ingredient.match(/\(([^)]*)\)/);
+    if (parenthesesMatch) {
+      const prepContent = parenthesesMatch[1];
+      // Remove all parentheses first
+      let cleaned = ingredient.replace(/\([^)]*\)/g, '');
+      // Then add back the preparation instruction as a comma-separated clause
+      cleaned = cleaned.trim() + ', ' + prepContent;
+      // Fix double commas
+      cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+      // Remove any trailing commas
+      cleaned = cleaned.replace(/,\s*$/, '');
+      return cleaned;
+    }
+  }
+  
+  // Standard approach for other ingredients
   let cleaned = ingredient;
   let previousCleaned = '';
   
@@ -135,7 +153,9 @@ export function parsePreparation(ingredient: string): { mainText: string; prepar
     'mashed', 'pureed', 'blended', 'whisked', 'thinly sliced',
     'roughly chopped', 'roughly diced', 'finely diced', 'finely chopped', 
     'finely sliced', 'coarsely chopped', 'thinly sliced', 'coarsely ground',
-    'finely minced', 'finely grated', 'lightly beaten', 'well beaten'
+    'finely minced', 'finely grated', 'lightly beaten', 'well beaten',
+    'to serve', 'to garnish', 'to taste', 'for decoration', 'for serving',
+    'for garnish'
   ];
   
   // Check for "ingredient, preparation" format (e.g., "chicken, diced")

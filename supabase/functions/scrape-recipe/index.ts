@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { Recipe } from './types.ts'
 import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts'
@@ -24,7 +23,23 @@ function handleCors(req: Request): Response | null {
 function cleanIngredient(ingredient: string): string {
   if (!ingredient) return '';
   
-  // Remove parentheses and their contents (including nested parentheses)
+  // Don't remove parentheses if they appear to contain preparation instructions
+  const prepInParentheses = /\((chopped|diced|minced|sliced|grated|peeled|crushed|julienned|cubed|shredded|torn|crumbled|pitted|halved|quartered)/i;
+  if (prepInParentheses.test(ingredient)) {
+    // Keep the first set of parentheses that has preparation instructions
+    const parenthesesMatch = ingredient.match(/\(([^)]*)\)/);
+    if (parenthesesMatch) {
+      const prepContent = parenthesesMatch[1];
+      // Remove all parentheses first
+      let cleaned = ingredient.replace(/\([^)]*\)/g, '');
+      // Then add back the preparation instruction as a comma-separated clause
+      cleaned = cleaned.trim() + ', ' + prepContent;
+      // Fix double commas
+      return cleaned.replace(/,\s*,/g, ',').trim();
+    }
+  }
+  
+  // Standard cleaning for other ingredients
   let cleaned = ingredient;
   let previousCleaned = '';
   
