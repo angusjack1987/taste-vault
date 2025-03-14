@@ -15,8 +15,10 @@ interface AiSuggestionTooltipProps {
 const AiSuggestionTooltip = ({ children, content }: AiSuggestionTooltipProps) => {
   return (
     <TooltipProvider>
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger className="cursor-pointer inline-flex" asChild>
+          {children}
+        </TooltipTrigger>
         <TooltipContent 
           className="bg-white rounded-full py-1 px-3 border border-sunshine-200 z-50 max-w-[250px] sm:max-w-xs"
           sideOffset={5}

@@ -1,12 +1,11 @@
-
 import React from "react";
-import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 
 interface InstructionsWithTooltipsProps {
   instructions: string[];
@@ -210,26 +209,14 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         result.push(text.substring(lastIndex, match.index));
       }
 
-      // Add the match with tooltip - using a simpler design now
+      // Add the match with tooltip using AiSuggestionTooltip
       const matchedText = text.substr(match.index, match.length);
       result.push(
-        <TooltipProvider key={`tooltip-${i}`}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-help text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
-                {matchedText}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200 z-50 max-w-[250px] sm:max-w-xs">
-              <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
-                  <span className="text-sunshine-600 text-xs font-medium">i</span>
-                </div>
-                <p className="text-sm">{match.ingredient}</p>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <AiSuggestionTooltip key={`tooltip-${i}`} content={match.ingredient}>
+          <span className="text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
+            {matchedText}
+          </span>
+        </AiSuggestionTooltip>
       );
 
       lastIndex = match.index + match.length;
@@ -285,26 +272,14 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
             result.push(currentText.substring(lastIndex, tooltip.index));
           }
 
-          // Add the tooltip with the new simpler design
+          // Add the tooltip with AiSuggestionTooltip
           const tooltipText = currentText.substr(tooltip.index, tooltip.length);
           result.push(
-            <TooltipProvider key={`enhanced-tooltip-${index}-${tooltipIndex}`}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
-                    {tooltipText}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200 z-50 max-w-[250px] sm:max-w-xs">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
-                      <span className="text-sunshine-600 text-xs font-medium">i</span>
-                    </div>
-                    <p className="text-sm">{tooltip.ingredient}</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <AiSuggestionTooltip key={`enhanced-tooltip-${index}-${tooltipIndex}`} content={tooltip.ingredient}>
+              <span className="text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
+                {tooltipText}
+              </span>
+            </AiSuggestionTooltip>
           );
 
           lastIndex = tooltip.index + tooltip.length;
