@@ -237,7 +237,8 @@ const MealPlan = () => {
         servings: selectedOption.servings || null,
         image: null,
         difficulty: null,
-        tags: []
+        tags: [],
+        images: [] // Add the missing images property
       });
       
       if (currentDay && currentMealType) {
