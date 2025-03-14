@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Sparkles, Lightbulb } from "lucide-react";
@@ -19,7 +18,7 @@ import SuggestMealDialog from "@/components/meal-plan/dialogs/SuggestMealDialog"
 import QuickAddMealDialog from "@/components/meal-plan/dialogs/QuickAddMealDialog";
 
 const MealPlan = () => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const todayRef = useRef<HTMLDivElement>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [addMealOpen, setAddMealOpen] = useState(false);
@@ -60,7 +59,6 @@ const MealPlan = () => {
   
   const { suggestRecipes, analyzeMealPlan, suggestMealForPlan, loading: aiLoading } = useAiRecipes();
   
-  // Scroll to today when on mobile
   useEffect(() => {
     if (isMobile && todayRef.current) {
       setTimeout(() => {
@@ -180,11 +178,9 @@ const MealPlan = () => {
       if (result) {
         setParsingMealSuggestion(true);
         try {
-          // If the result is already an object, use it directly
           if (typeof result === 'object' && result !== null) {
             setSuggestedMeal(result);
           } else if (typeof result === 'string') {
-            // For string responses, try to extract JSON
             let cleanJson = result;
             if (result.includes("```json")) {
               cleanJson = result.split("```json")[1].split("```")[0].trim();
@@ -227,7 +223,6 @@ const MealPlan = () => {
     try {
       const selectedOption = suggestedMeal.options[optionIndex];
       
-      // Create the recipe in the recipe library
       const newRecipe = await createRecipe({
         title: selectedOption.title,
         description: selectedOption.description,
@@ -240,7 +235,6 @@ const MealPlan = () => {
         tags: []
       });
       
-      // Now add it to the meal plan if a day and meal type were selected
       if (currentDay && currentMealType) {
         await createMealPlan({
           date: currentDay,
