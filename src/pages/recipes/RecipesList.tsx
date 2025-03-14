@@ -4,13 +4,14 @@ import { Plus, Search, Loader2, Download, Trash2, Edit2, Check, X } from "lucide
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import MainLayout from "@/components/layout/MainLayout";
 import RecipeGrid from "@/components/recipes/RecipeGrid";
 import FiltersBar from "@/components/recipes/FiltersBar";
+import FilterDrawer from "@/components/recipes/FilterDrawer";
 import ImportRecipeDialog from "@/components/recipes/ImportRecipeDialog";
 import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
 import BulkEditDialog from "@/components/recipes/BulkEditDialog";
+import { RecipeFiltersProvider, useRecipeFilters } from "@/contexts/RecipeFiltersContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,10 +21,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const RecipesList = () => {
+const RecipesListContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
@@ -31,16 +31,12 @@ const RecipesList = () => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedRecipes, setSelectedRecipes] = useState<string[]>([]);
   
+  const { categoryFilter, maxTimeInMinutes } = useRecipeFilters();
   const { useAllRecipes, useCreateRecipe, useBulkDeleteRecipes } = useRecipes();
   const { data: recipes, isLoading, error } = useAllRecipes();
   const { mutate: createRecipe } = useCreateRecipe();
   const { mutate: bulkDeleteRecipes, isPending: isDeleting } = useBulkDeleteRecipes();
   const navigate = useNavigate();
-  
-  const handleShowFilters = () => {
-    // This would show a filters dialog in a real implementation
-    console.log("Show filters dialog");
-  };
   
   const handleImportRecipe = (recipeData: Partial<RecipeFormData>) => {
     createRecipe(recipeData as RecipeFormData, {
@@ -81,13 +77,31 @@ const RecipesList = () => {
     });
   };
   
-  // Filter recipes based on search query
-  const filteredRecipes = recipes?.filter(recipe => 
-    recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (recipe.tags && recipe.tags.some(tag => 
-      typeof tag === 'string' && tag.toLowerCase().includes(searchQuery.toLowerCase())
-    ))
-  );
+  // Filter recipes based on search query and other filters
+  const filteredRecipes = recipes?.filter(recipe => {
+    // Search filter
+    const matchesSearch = 
+      recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (recipe.tags && recipe.tags.some(tag => 
+        typeof tag === 'string' && tag.toLowerCase().includes(searchQuery.toLowerCase())
+      ));
+    
+    if (!matchesSearch) return false;
+    
+    // Category filter
+    if (categoryFilter !== "all" && 
+        (!recipe.tags || !recipe.tags.includes(categoryFilter))) {
+      return false;
+    }
+    
+    // Time filter
+    if (maxTimeInMinutes !== null && 
+        (recipe.time === undefined || recipe.time > maxTimeInMinutes)) {
+      return false;
+    }
+    
+    return true;
+  });
   
   // Format recipes for the RecipeGrid component
   const gridRecipes = filteredRecipes?.map(recipe => ({
@@ -205,7 +219,8 @@ const RecipesList = () => {
           </div>
         </div>
         
-        <FiltersBar onFilterClick={handleShowFilters} />
+        <FiltersBar />
+        <FilterDrawer />
         
         <div className="mt-6">
           {isLoading ? (
@@ -229,8 +244,8 @@ const RecipesList = () => {
                 recipes={gridRecipes} 
                 selectionMode={selectionMode}
                 emptyMessage={
-                  searchQuery ? 
-                    "No recipes match your search" : 
+                  searchQuery || categoryFilter !== "all" || maxTimeInMinutes !== null ? 
+                    "No recipes match your filters" : 
                     "You haven't created any recipes yet. Click the + button to add your first recipe!"
                 } 
               />
@@ -283,6 +298,14 @@ const RecipesList = () => {
         </AlertDialog>
       </div>
     </MainLayout>
+  );
+};
+
+const RecipesList = () => {
+  return (
+    <RecipeFiltersProvider>
+      <RecipesListContent />
+    </RecipeFiltersProvider>
   );
 };
 
