@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Sparkles, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,19 @@ import useRecipes from "@/hooks/useRecipes";
 import useMealPlans, { MealType } from "@/hooks/useMealPlans";
 import useAiRecipes from "@/hooks/useAiRecipes";
 import { toast } from "sonner";
+import useMobile from "@/hooks/use-mobile";
 
-// Import our new components
+// Import our components
 import WeekView from "@/components/meal-plan/WeekView";
 import ShoppingList from "@/components/meal-plan/ShoppingList";
 import AddMealDialog from "@/components/meal-plan/dialogs/AddMealDialog";
 import AiSuggestionsDialog from "@/components/meal-plan/dialogs/AiSuggestionsDialog";
 import SuggestMealDialog from "@/components/meal-plan/dialogs/SuggestMealDialog";
+import QuickAddMealDialog from "@/components/meal-plan/dialogs/QuickAddMealDialog";
 
 const MealPlan = () => {
+  const isMobile = useMobile();
+  const todayRef = useRef<HTMLDivElement>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [addMealOpen, setAddMealOpen] = useState(false);
   const [currentDay, setCurrentDay] = useState<Date | null>(null);
@@ -30,6 +34,8 @@ const MealPlan = () => {
   const [additionalPreferences, setAdditionalPreferences] = useState("");
   const [suggestMealType, setSuggestMealType] = useState<MealType>("dinner");
   const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
+  
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -54,6 +60,15 @@ const MealPlan = () => {
   
   const { suggestRecipes, analyzeMealPlan, suggestMealForPlan, loading: aiLoading } = useAiRecipes();
   
+  // Scroll to today when on mobile
+  useEffect(() => {
+    if (isMobile && todayRef.current) {
+      setTimeout(() => {
+        todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [isMobile, mealPlansLoading]);
+  
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
     
@@ -67,9 +82,13 @@ const MealPlan = () => {
       dinner: dayMealPlans.find(m => m.meal_type === "dinner"),
     };
     
+    const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+    
     return {
       date,
       meals,
+      isToday,
+      ref: isToday ? todayRef : null
     };
   });
   
@@ -77,6 +96,30 @@ const MealPlan = () => {
     setCurrentDay(date);
     setCurrentMealType(mealType);
     setAddMealOpen(true);
+  };
+  
+  const handleQuickAddMeal = (date: Date, mealType: MealType) => {
+    setCurrentDay(date);
+    setCurrentMealType(mealType);
+    setQuickAddOpen(true);
+  };
+  
+  const handleSaveQuickMeal = async (note: string) => {
+    if (!currentDay || !currentMealType) return;
+    
+    try {
+      await createMealPlan({
+        date: currentDay,
+        meal_type: currentMealType,
+        note: note
+      });
+      
+      setQuickAddOpen(false);
+      toast.success("Meal note added to plan");
+    } catch (error) {
+      console.error("Error adding meal note to plan:", error);
+      toast.error("Failed to add meal note to plan");
+    }
   };
   
   const handleSelectRecipe = async (recipeId: string) => {
@@ -261,6 +304,7 @@ const MealPlan = () => {
           onAddMeal={handleAddMeal}
           onRemoveMeal={handleRemoveMeal}
           onSuggestMeal={openSuggestMealDialog}
+          onQuickAddMeal={handleQuickAddMeal}
         />
         
         <ShoppingList />
@@ -273,6 +317,14 @@ const MealPlan = () => {
         currentMealType={currentMealType}
         recipes={recipes}
         onSelectRecipe={handleSelectRecipe}
+      />
+
+      <QuickAddMealDialog
+        open={quickAddOpen}
+        onOpenChange={setQuickAddOpen}
+        currentDay={currentDay}
+        currentMealType={currentMealType}
+        onSave={handleSaveQuickMeal}
       />
 
       <AiSuggestionsDialog 

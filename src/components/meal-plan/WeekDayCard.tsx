@@ -1,6 +1,6 @@
 
 import { format } from 'date-fns';
-import { Plus, Lightbulb, X, Utensils, Coffee, Salad, ChefHat, Eye } from 'lucide-react';
+import { Plus, Lightbulb, X, Utensils, Coffee, Salad, ChefHat, Eye, StickyNote } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
@@ -27,6 +27,7 @@ interface WeekDayCardProps {
   onAddMeal: (date: Date, mealType: MealType) => void;
   onRemoveMeal: (mealPlanId: string) => void;
   onSuggestMeal: (date: Date, mealType: MealType) => void;
+  onQuickAddMeal: (date: Date, mealType: MealType) => void;
   showDateHeader?: boolean;
 }
 
@@ -49,6 +50,7 @@ const WeekDayCard = ({
   onAddMeal, 
   onRemoveMeal, 
   onSuggestMeal,
+  onQuickAddMeal,
   showDateHeader = true 
 }: WeekDayCardProps) => {
   const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
@@ -75,6 +77,17 @@ const WeekDayCard = ({
             <Button 
               variant="ghost" 
               size="sm" 
+              className="h-7 w-7 px-0 text-xs group" 
+              onClick={() => onQuickAddMeal(date, mealType)}
+              title="Quick add meal note"
+              type="button"
+            >
+              <StickyNote className="h-3 w-3 group-hover:animate-pulse-slow" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
               className="h-7 w-7 px-0 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" 
               onClick={() => onSuggestMeal(date, mealType)}
               title="Get AI suggestion"
@@ -94,10 +107,15 @@ const WeekDayCard = ({
           <span className="capitalize text-muted-foreground">{mealType}</span>
         </div>
         <div className="pr-7 text-xs font-medium line-clamp-2 mt-1">
-          {meal.recipe?.title || (
-            <span className="flex items-center text-muted-foreground text-xs">
-              <Utensils className="h-3 w-3 mr-1 group-hover:animate-pulse-slow" /> No recipe selected
-            </span>
+          {meal.recipe ? (
+            <Link to={`/recipes/${meal.recipe.id}`} className="hover:underline">
+              {meal.recipe.title}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <StickyNote className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>{meal.note || 'No details added'}</span>
+            </div>
           )}
         </div>
         

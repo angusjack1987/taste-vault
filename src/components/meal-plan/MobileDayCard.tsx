@@ -1,6 +1,6 @@
 
 import { format } from 'date-fns';
-import { Plus, Lightbulb, X, Eye } from 'lucide-react';
+import { Plus, Lightbulb, X, Eye, StickyNote } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
@@ -27,9 +27,17 @@ interface MobileDayCardProps {
   onAddMeal: (date: Date, mealType: MealType) => void;
   onRemoveMeal: (mealPlanId: string) => void;
   onSuggestMeal: (date: Date, mealType: MealType) => void;
+  onQuickAddMeal: (date: Date, mealType: MealType) => void;
 }
 
-const MobileDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: MobileDayCardProps) => {
+const MobileDayCard = ({ 
+  date, 
+  meals, 
+  onAddMeal, 
+  onRemoveMeal, 
+  onSuggestMeal,
+  onQuickAddMeal 
+}: MobileDayCardProps) => {
   const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
   
   const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
@@ -46,6 +54,16 @@ const MobileDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: 
             >
               <Plus className="h-4 w-4 mr-1" />
               Add
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 px-0" 
+              onClick={() => onQuickAddMeal(date, mealType)}
+              title="Quick add meal note"
+              type="button"
+            >
+              <StickyNote className="h-4 w-4" />
             </Button>
             <Button 
               variant="ghost" 
@@ -111,7 +129,18 @@ const MobileDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: 
             </AlertDialog>
           </div>
         </div>
-        <div className="font-medium mt-1">{meal.recipe?.title || 'No recipe selected'}</div>
+        <div className="font-medium mt-1">
+          {meal.recipe ? (
+            <Link to={`/recipes/${meal.recipe.id}`} className="hover:underline">
+              {meal.recipe.title}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <StickyNote className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>{meal.note || 'No details added'}</span>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
