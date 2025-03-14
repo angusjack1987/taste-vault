@@ -19,8 +19,7 @@ const MemoryInsightsSection = ({
   onOpenMemoryDialog,
   onGenerateInsights
 }: MemoryInsightsSectionProps) => {
-  // Removing the conditional return since we want to ensure this component is always rendered
-  // for debugging purposes, and we'll handle the memory disabled state inside the component
+  // Always render the component regardless of isMemoryEnabled
   
   return (
     <section className="mb-6">
@@ -41,20 +40,7 @@ const MemoryInsightsSection = ({
       
       <div className="playful-card bg-primary/10 border-primary/20 relative overflow-hidden">
         <div className="relative z-10">
-          {!isMemoryEnabled ? (
-            <div className="py-3">
-              <p>AI Memory is currently disabled in your settings.</p>
-              <Link to="/settings/ai-settings">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="mt-4"
-                >
-                  Enable AI Memory
-                </Button>
-              </Link>
-            </div>
-          ) : memoryLoading ? (
+          {memoryLoading ? (
             <div className="flex items-center gap-2 py-3">
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
               <p>Loading your cooking insights...</p>
@@ -74,15 +60,17 @@ const MemoryInsightsSection = ({
             </>
           ) : (
             <div className="py-3">
-              <p>No insights available yet. Keep using the app to get personalized cooking insights!</p>
+              <p>{isMemoryEnabled ? 
+                "No insights available yet. Keep using the app to get personalized cooking insights!" : 
+                "AI Memory is currently disabled in your settings. Enable it for personalized cooking insights."}</p>
               <Button 
                 variant="secondary" 
                 size="sm" 
                 className="mt-4"
-                onClick={onGenerateInsights}
+                onClick={isMemoryEnabled ? onGenerateInsights : onOpenMemoryDialog}
               >
                 <Brain className="h-4 w-4 mr-2" />
-                Generate Insights
+                {isMemoryEnabled ? "Generate Insights" : "Enable AI Memory"}
               </Button>
             </div>
           )}
