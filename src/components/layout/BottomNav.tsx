@@ -10,6 +10,7 @@ import {
   BookPlus, 
   ShoppingCart, 
   Refrigerator,
+  Baby 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +19,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import useAuth from "@/hooks/useAuth";
 
 const navItems = [
   { to: "/", label: "Home", Icon: Home },
@@ -30,6 +34,32 @@ const navItems = [
 const BottomNav = () => {
   const location = useLocation();
   const pathname = location.pathname;
+  const { user } = useAuth();
+  const [babyFoodEnabled, setBabyFoodEnabled] = useState(false);
+
+  useEffect(() => {
+    const fetchBabyFoodPreference = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('preferences')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data?.preferences?.food?.babyFoodEnabled) {
+          setBabyFoodEnabled(true);
+        }
+      } catch (error) {
+        console.error("Error fetching baby food preference:", error);
+      }
+    };
+    
+    fetchBabyFoodPreference();
+  }, [user]);
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
@@ -107,6 +137,14 @@ const BottomNav = () => {
                   Shopping List
                 </DropdownMenuItem>
               </Link>
+              {babyFoodEnabled && (
+                <Link to="/baby-food">
+                  <DropdownMenuItem className="cursor-pointer rounded-lg group">
+                    <Baby className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
+                    Baby Food
+                  </DropdownMenuItem>
+                </Link>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

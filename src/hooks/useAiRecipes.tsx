@@ -123,6 +123,51 @@ export const useAiRecipes = () => {
     );
   };
 
+  // Add new generateBabyFood function
+  const generateBabyFood = async (data: {
+    ingredients: string[];
+    babyFoodPreferences: {
+      babyAge?: string;
+      babyFoodPreferences?: string;
+      ingredientsToAvoid?: string;
+    };
+  }) => {
+    try {
+      const { data: response, error } = await supabase.functions.invoke(
+        "generate-baby-food",
+        {
+          body: {
+            ingredients: data.ingredients,
+            babyFoodPreferences: data.babyFoodPreferences,
+            userId: user?.id,
+            aiSettings: {
+              model: aiSettings?.model || "gpt-4o-mini",
+              temperature: aiSettings?.temperature || 0.7,
+              promptHistoryEnabled: aiSettings?.promptHistoryEnabled !== false,
+              userPreferences: {
+                responseStyle: aiSettings?.userPreferences?.responseStyle || "balanced",
+              },
+            },
+          },
+        }
+      );
+
+      if (error) {
+        console.error("Error calling generate-baby-food:", error);
+        toast.error(`Baby food generation failed: ${error.message}`);
+        throw error;
+      }
+
+      return response.recipes;
+    } catch (error) {
+      console.error("Unexpected error in generate-baby-food:", error);
+      toast.error(`Baby food generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Add the new enhanceRecipeInstructions function
   const enhanceRecipeInstructions = async (data: {
     recipeTitle: string;
@@ -162,6 +207,7 @@ export const useAiRecipes = () => {
     suggestMealForPlan,
     generateRecipe,
     enhanceRecipeInstructions,
+    generateBabyFood
   };
 };
 
