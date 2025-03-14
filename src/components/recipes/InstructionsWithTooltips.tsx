@@ -204,19 +204,21 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         result.push(text.substring(lastIndex, match.index));
       }
 
-      // Add the match with tooltip
+      // Add the match with tooltip - using a simpler design now
       const matchedText = text.substr(match.index, match.length);
       result.push(
         <TooltipProvider key={`tooltip-${i}`}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="cursor-help border-dotted border-b border-primary text-primary">
+              <span className="cursor-help text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
                 {matchedText}
               </span>
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 mt-0.5 text-primary" />
+            <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
+                  <span className="text-sunshine-600 text-xs font-medium">i</span>
+                </div>
                 <p className="text-sm">{match.ingredient}</p>
               </div>
             </TooltipContent>
@@ -255,25 +257,22 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
               result.push(currentText.substring(lastIndex, tooltipStart));
             }
 
-            // Add the tooltip
+            // Add the tooltip with the new simpler design
             const tooltipText = currentText.substr(tooltipStart, tooltip.text.length);
             result.push(
               <TooltipProvider key={`enhanced-tooltip-${index}`}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="cursor-help border-dotted border-b border-primary text-primary">
+                    <span className="cursor-help text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
                       {tooltipText}
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs bg-white">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 mt-0.5 text-primary" />
-                      <div>
-                        <p className="text-sm font-semibold mb-1">{tooltip.ingredient}</p>
-                        {tooltip.explanation && (
-                          <p className="text-xs text-muted-foreground">{tooltip.explanation}</p>
-                        )}
+                  <TooltipContent className="bg-white rounded-full py-1 px-3 border border-sunshine-200">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
+                        <span className="text-sunshine-600 text-xs font-medium">i</span>
                       </div>
+                      <p className="text-sm">{tooltip.ingredient}</p>
                     </div>
                   </TooltipContent>
                 </Tooltip>

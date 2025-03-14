@@ -6,7 +6,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sparkles } from "lucide-react";
 
 interface AiSuggestionTooltipProps {
   children: React.ReactNode;
@@ -19,12 +18,14 @@ const AiSuggestionTooltip = ({ children, content }: AiSuggestionTooltipProps) =>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent 
-          className="bg-sunshine-500 border-2 border-sunshine-600 p-3 max-w-xs rounded-xl shadow-vibrant"
+          className="bg-white rounded-full py-1 px-3 border border-sunshine-200"
           sideOffset={5}
         >
-          <div className="flex items-start gap-2">
-            <Sparkles className="h-4 w-4 mt-0.5 text-charcoal-800 animate-pulse" />
-            <p className="text-charcoal-800 text-sm font-medium">{content}</p>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-sunshine-100 flex items-center justify-center">
+              <span className="text-sunshine-600 text-xs font-medium">i</span>
+            </div>
+            <p className="text-sm">{content}</p>
           </div>
         </TooltipContent>
       </Tooltip>
