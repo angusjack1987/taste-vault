@@ -21,6 +21,12 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         clean: "bg-background border border-border shadow-sm hover:bg-accent/5 text-foreground",
         menu: "bg-transparent hover:bg-accent/10 w-full justify-start text-left font-normal",
+        // Add new color variants
+        sunshine: "bg-amber-500 text-white hover:bg-amber-600 border-amber-600 shadow-sm",
+        berry: "bg-purple-600 text-white hover:bg-purple-700 border-purple-700 shadow-sm",
+        ocean: "bg-blue-600 text-white hover:bg-blue-700 border-blue-700 shadow-sm",
+        mint: "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-700 shadow-sm",
+        forest: "bg-green-800 text-white hover:bg-green-700 border-green-900 shadow-sm"
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -28,6 +34,8 @@ const buttonVariants = cva(
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
         xs: "h-8 rounded-md px-2.5 text-xs",
+        // Add new size variant
+        xl: "h-12 rounded-md px-9 text-base"
       },
     },
     defaultVariants: {

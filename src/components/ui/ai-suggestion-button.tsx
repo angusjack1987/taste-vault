@@ -8,7 +8,7 @@ interface AiSuggestionButtonProps {
   onClick: () => void;
   label?: string;
   className?: string;
-  size?: "default" | "sm" | "lg" | "icon" | "xl";
+  size?: "default" | "sm" | "lg" | "icon" | "xs" | "xl";
   isLoading?: boolean;
   children?: React.ReactNode;
   variant?: "default" | "sunshine" | "berry" | "ocean" | "mint" | "forest";
@@ -44,6 +44,7 @@ const AiSuggestionButton = ({
       )}
       size={size}
       disabled={isLoading}
+      variant={variant}
     >
       <span className="absolute inset-0 w-full h-full bg-white/30 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
       {isLoading ? (
