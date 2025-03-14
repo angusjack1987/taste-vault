@@ -537,8 +537,8 @@ const RecipeDetail = () => {
         onOpenChange={setSuggestDialogOpen}
         suggestedMeal={suggestedMeal}
         aiLoading={aiLoading || parsingMealSuggestion}
-        onReset={handleResetSuggestedMeal}
-        onSave={handleSaveSuggestedRecipe}
+        onResetSuggestedMeal={handleResetSuggestedMeal}
+        onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
         additionalPreferences={additionalPreferences}
         currentDay={null}
         currentMealType={null}
