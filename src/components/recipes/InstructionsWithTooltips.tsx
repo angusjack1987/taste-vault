@@ -1,6 +1,7 @@
 
 import React from "react";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
+import { parseIngredientAmount, parsePreparation, cleanIngredientString } from "@/lib/ingredient-parser";
 
 interface InstructionsWithTooltipsProps {
   instructions: string[];
@@ -22,6 +23,21 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
   enhancedInstructions,
   isEnhanced = false,
 }) => {
+  // Process ingredients to extract amounts and preparations for enhanced tooltips
+  const processedIngredients = ingredients.map(ingredient => {
+    const cleanedIngredient = cleanIngredientString(ingredient);
+    const { mainText, preparation } = parsePreparation(cleanedIngredient);
+    const { name, amount } = parseIngredientAmount(mainText);
+    
+    return {
+      fullText: ingredient,
+      name,
+      amount,
+      preparation,
+      cleanedName: name.toLowerCase().trim(),
+    };
+  });
+
   // Improved function to find ingredients in instruction text
   const findIngredientMatches = (text: string) => {
     // Create a map to store matches
@@ -29,17 +45,19 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       ingredient: string;
       index: number;
       length: number;
+      amount?: string;
+      preparation?: string;
     }> = [];
 
     // Sort ingredients by length (descending) to match longest ingredients first
-    const sortedIngredients = [...ingredients].sort(
-      (a, b) => b.length - a.length
+    const sortedIngredients = [...processedIngredients].sort(
+      (a, b) => b.name.length - a.name.length
     );
 
     // Better ingredient processing for more comprehensive matching
     const ingredientKeywords = sortedIngredients.map((ingredient) => {
       // Extract the main ingredient name without quantity and preparation
-      const mainName = ingredient
+      const mainName = ingredient.name
         .replace(/^\d+\/\d+|\d+(\.\d+)?/g, "") // Remove fractions and decimals
         .replace(/(cup|cups|tablespoon|tablespoons|teaspoon|teaspoons|tbsp|tsp|g|kg|ml|l|oz|lb)/gi, "") // Remove units
         .replace(/^\s+|\s+$|\s+,/g, "") // Trim whitespace
@@ -48,13 +66,15 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         .trim();
 
       // Also extract potential cooking techniques or preparations
-      const preparations = ingredient.match(/(diced|chopped|minced|sliced|grated|julienned|cubed|crushed)/gi) || [];
+      const preparations = ingredient.preparation ? 
+        [ingredient.preparation] : 
+        ingredient.fullText.match(/(diced|chopped|minced|sliced|grated|julienned|cubed|crushed)/gi) || [];
       
       // Get specific ingredient forms that might be referenced
       const forms = [];
-      if (ingredient.toLowerCase().includes("sauce") || 
-          ingredient.toLowerCase().includes("dressing") ||
-          ingredient.toLowerCase().includes("marinade")) {
+      if (ingredient.fullText.toLowerCase().includes("sauce") || 
+          ingredient.fullText.toLowerCase().includes("dressing") ||
+          ingredient.fullText.toLowerCase().includes("marinade")) {
         forms.push(
           "sauce", 
           "dressing", 
@@ -64,10 +84,12 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       }
 
       return {
-        fullIngredient: ingredient,
+        fullIngredient: ingredient.fullText,
         mainName,
         preparations,
-        forms
+        forms,
+        amount: ingredient.amount,
+        preparation: ingredient.preparation
       };
     });
 
@@ -75,7 +97,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
     let lowerText = text.toLowerCase();
     
     ingredientKeywords.forEach((ingredientInfo) => {
-      const { fullIngredient, mainName, preparations, forms } = ingredientInfo;
+      const { fullIngredient, mainName, preparations, forms, amount, preparation } = ingredientInfo;
       
       if (mainName.length < 3) return; // Skip very short ingredients
       
@@ -89,10 +111,13 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         let fullMatch;
         
         while ((fullMatch = fullNameRegex.exec(text)) !== null) {
+          const tooltipText = `${amount ? amount + ' ' : ''}${mainName}${preparation ? ' (' + preparation + ')' : ''}`;
           matches.push({
-            ingredient: fullIngredient,
+            ingredient: tooltipText,
             index: fullMatch.index,
             length: fullMatch[0].length,
+            amount,
+            preparation
           });
         }
         
@@ -111,10 +136,13 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
             );
             
             if (!alreadyMatched) {
+              const tooltipText = `${amount ? amount + ' ' : ''}${mainName}${preparation ? ' (' + preparation + ')' : ''}`;
               matches.push({
-                ingredient: fullIngredient,
+                ingredient: tooltipText,
                 index: wordMatch.index,
                 length: wordMatch[0].length,
+                amount,
+                preparation
               });
             }
           }
@@ -125,10 +153,13 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         let match;
         
         while ((match = mainRegex.exec(text)) !== null) {
+          const tooltipText = `${amount ? amount + ' ' : ''}${mainName}${preparation ? ' (' + preparation + ')' : ''}`;
           matches.push({
-            ingredient: fullIngredient,
+            ingredient: tooltipText,
             index: match.index,
             length: match[0].length,
+            amount,
+            preparation
           });
         }
       }
@@ -149,10 +180,13 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
           const context = text.substring(contextStart, contextEnd).toLowerCase();
           
           if (context.includes(mainName.toLowerCase())) {
+            const tooltipText = `${amount ? amount + ' ' : ''}${mainName}${preparation ? ' (' + preparation + ')' : ''}`;
             matches.push({
-              ingredient: fullIngredient,
+              ingredient: tooltipText,
               index: matchItem.index,
               length: matchItem[0].length,
+              amount,
+              preparation
             });
           }
         }
@@ -179,10 +213,13 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
             );
             
             if (!alreadyMatched) {
+              const tooltipText = `${amount ? amount + ' ' : ''}${mainName}${preparation ? ' (' + preparation + ')' : ''}`;
               matches.push({
-                ingredient: fullIngredient,
+                ingredient: tooltipText,
                 index: matchPrep.index,
                 length: matchPrep[0].length,
+                amount,
+                preparation
               });
             }
           }
@@ -201,18 +238,22 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       
       while ((matchTerm = termRegex.exec(text)) !== null) {
         // Find related ingredients for this composite term
-        const relatedIngredients = ingredients.filter(ing => 
-          ing.toLowerCase().includes(term) || 
+        const relatedIngredients = processedIngredients.filter(ing => 
+          ing.fullText.toLowerCase().includes(term) || 
           // Also check if any ingredient is specifically for this composite
-          ing.toLowerCase().includes(`for ${term}`) ||
-          ing.toLowerCase().includes(`${term} ingredient`)
+          ing.fullText.toLowerCase().includes(`for ${term}`) ||
+          ing.fullText.toLowerCase().includes(`${term} ingredient`)
         );
         
         if (relatedIngredients.length > 0) {
+          const ingredientList = relatedIngredients.map(ing => 
+            `${ing.amount ? ing.amount + ' ' : ''}${ing.name}${ing.preparation ? ' (' + ing.preparation + ')' : ''}`
+          ).join(", ");
+          
           matches.push({
-            ingredient: `${term.charAt(0).toUpperCase() + term.slice(1)} (${relatedIngredients.join(", ")})`,
+            ingredient: `${term.charAt(0).toUpperCase() + term.slice(1)}: ${ingredientList}`,
             index: matchTerm.index,
-            length: matchTerm[0].length,
+            length: matchTerm[0].length
           });
         }
       }
@@ -281,18 +322,71 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       let currentText = step.step;
       let lastIndex = 0;
 
+      // If the step doesn't have explicit tooltips, find ingredients automatically
+      let tooltipsToUse = step.tooltips;
+      if (!tooltipsToUse || tooltipsToUse.length === 0) {
+        const autoMatches = findIngredientMatches(step.step);
+        tooltipsToUse = autoMatches.map(match => ({
+          text: match.ingredient,
+          ingredient: match.ingredient,
+          index: match.index,
+          length: match.length
+        }));
+      }
+
       // Process all tooltips for this step
-      if (step.tooltips && step.tooltips.length > 0) {
+      if (tooltipsToUse && tooltipsToUse.length > 0) {
         // Create a data structure similar to ingredient matches
-        const tooltipMatches = step.tooltips.map(tooltip => ({
-          text: tooltip.text,
-          ingredient: tooltip.ingredient,
-          explanation: tooltip.explanation,
-          index: currentText.toLowerCase().indexOf(tooltip.text.toLowerCase()),
-          length: tooltip.text.length
-        }))
-        .filter(match => match.index !== -1) // Filter out tooltips that don't match
-        .sort((a, b) => a.index - b.index); // Sort by position in text
+        const tooltipMatches = tooltipsToUse.map(tooltip => {
+          // Find the position of the tooltip text in the step
+          let tooltipTextLower = tooltip.text.toLowerCase();
+          let textIndex = currentText.toLowerCase().indexOf(tooltipTextLower);
+          
+          // If direct match not found, try to find a partial match
+          if (textIndex === -1 && tooltip.text.length > 4) {
+            // Try with first few words
+            const firstWords = tooltip.text.split(' ').slice(0, 2).join(' ');
+            if (firstWords.length > 3) {
+              textIndex = currentText.toLowerCase().indexOf(firstWords.toLowerCase());
+            }
+          }
+          
+          // If still not found, look for ingredient name
+          if (textIndex === -1) {
+            // Find any ingredient in the step that matches the tooltip
+            const ingredientName = tooltip.ingredient.split(' ')[0]; // Get first word of ingredient
+            if (ingredientName && ingredientName.length > 3) {
+              const ingredientRegex = new RegExp(`\\b${ingredientName}\\b`, 'gi');
+              const match = ingredientRegex.exec(currentText);
+              if (match) {
+                textIndex = match.index;
+                return {
+                  text: match[0],
+                  ingredient: tooltip.ingredient,
+                  explanation: tooltip.explanation,
+                  index: textIndex,
+                  length: match[0].length
+                };
+              }
+            }
+          }
+          
+          // Return the tooltip match if found
+          if (textIndex !== -1) {
+            return {
+              text: currentText.substr(textIndex, tooltip.text.length),
+              ingredient: tooltip.ingredient,
+              explanation: tooltip.explanation,
+              index: textIndex,
+              length: tooltip.text.length
+            };
+          }
+          
+          // If no match found, return null
+          return null;
+        })
+        .filter(match => match !== null) // Filter out tooltips that don't match
+        .sort((a, b) => a!.index - b!.index); // Sort by position in text
 
         // Function to check if tooltips overlap
         const isOverlapping = (match1: any, match2: any) => {
@@ -302,8 +396,9 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
 
         // Filter out overlapping tooltips
         const filteredTooltips = tooltipMatches.filter((match, i) => {
+          if (!match) return false;
           for (let j = 0; j < i; j++) {
-            if (isOverlapping(match, tooltipMatches[j])) {
+            if (tooltipMatches[j] && isOverlapping(match, tooltipMatches[j])) {
               return false;
             }
           }
@@ -311,6 +406,8 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         });
 
         filteredTooltips.forEach((tooltip, tooltipIndex) => {
+          if (!tooltip) return;
+          
           // Add text before the tooltip
           if (tooltip.index > lastIndex) {
             result.push(currentText.substring(lastIndex, tooltip.index));
@@ -318,8 +415,12 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
 
           // Add the tooltip with AiSuggestionTooltip
           const tooltipText = currentText.substr(tooltip.index, tooltip.length);
+          const tooltipContent = tooltip.explanation 
+            ? `${tooltip.ingredient}: ${tooltip.explanation}`
+            : tooltip.ingredient;
+            
           result.push(
-            <AiSuggestionTooltip key={`enhanced-tooltip-${index}-${tooltipIndex}`} content={tooltip.ingredient}>
+            <AiSuggestionTooltip key={`enhanced-tooltip-${index}-${tooltipIndex}`} content={tooltipContent}>
               <span className="text-sunshine-600 font-medium border-b border-dotted border-sunshine-400">
                 {tooltipText}
               </span>
@@ -346,24 +447,28 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
     });
   };
 
+  // If enhanced instructions not available, find ingredients automatically
+  const renderRegularInstructions = () => {
+    return instructions.map((step, index) => {
+      // Find all ingredient matches in this instruction
+      const matches = findIngredientMatches(step);
+      return (
+        <li key={index} className="flex gap-3 mb-4">
+          <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
+            {index + 1}
+          </span>
+          <span className="text-xs sm:text-sm">{renderTextWithTooltips(step, matches)}</span>
+        </li>
+      );
+    });
+  };
+
   return (
     <ol className="space-y-4">
-      {isEnhanced && enhancedInstructions ? (
-        renderEnhancedInstructions()
-      ) : (
-        instructions.map((step, index) => {
-          // Find all ingredient matches in this instruction
-          const matches = findIngredientMatches(step);
-          return (
-            <li key={index} className="flex gap-3 mb-4">
-              <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
-                {index + 1}
-              </span>
-              <span className="text-xs sm:text-sm">{renderTextWithTooltips(step, matches)}</span>
-            </li>
-          );
-        })
-      )}
+      {isEnhanced && enhancedInstructions && enhancedInstructions.length > 0 ? 
+        renderEnhancedInstructions() : 
+        renderRegularInstructions()
+      }
     </ol>
   );
 };

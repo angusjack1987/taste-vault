@@ -80,6 +80,12 @@ const RecipeDetail = () => {
   const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
   const { mutateAsync: deleteRecipe } = useDeleteRecipe();
   
+  useEffect(() => {
+    if (recipe && !isInstructionsEnhanced && !isEnhancingInstructions) {
+      handleEnhanceInstructions();
+    }
+  }, [recipe]);
+
   const getIngredientIcon = (ingredientName: string) => {
     const lowerName = ingredientName.toLowerCase();
     
@@ -461,12 +467,19 @@ const RecipeDetail = () => {
             </TabsContent>
             <TabsContent value="instructions" className="mt-4">
               <ScrollArea maxHeight="350px">
-                <InstructionsWithTooltips
-                  instructions={recipe.instructions}
-                  ingredients={recipe.ingredients}
-                  enhancedInstructions={enhancedInstructions}
-                  isEnhanced={isInstructionsEnhanced}
-                />
+                {isEnhancingInstructions ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                    <span>Enhancing instructions...</span>
+                  </div>
+                ) : (
+                  <InstructionsWithTooltips
+                    instructions={recipe.instructions}
+                    ingredients={recipe.ingredients}
+                    enhancedInstructions={enhancedInstructions}
+                    isEnhanced={isInstructionsEnhanced}
+                  />
+                )}
               </ScrollArea>
             </TabsContent>
           </Tabs>
