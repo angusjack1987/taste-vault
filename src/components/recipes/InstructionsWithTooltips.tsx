@@ -93,18 +93,20 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         
         // Custom logic for specific forms that might represent the ingredient
         const formRegex = new RegExp(`\\b${form}\\b`, "gi");
-        while ((match = formRegex.exec(text)) !== null) {
+        let matchItem; // Changed from 'match' to 'matchItem'
+        
+        while ((matchItem = formRegex.exec(text)) !== null) { // Changed from 'match' to 'matchItem'
           // Only add if this section of text likely refers to the ingredient
           // by checking nearby words
-          const contextStart = Math.max(0, match.index - 30);
-          const contextEnd = Math.min(text.length, match.index + form.length + 30);
+          const contextStart = Math.max(0, matchItem.index - 30); // Changed from 'match.index' to 'matchItem.index'
+          const contextEnd = Math.min(text.length, matchItem.index + form.length + 30); // Changed from 'match.index' to 'matchItem.index'
           const context = text.substring(contextStart, contextEnd).toLowerCase();
           
           if (context.includes(mainName.toLowerCase())) {
             matches.push({
               ingredient: fullIngredient,
-              index: match.index,
-              length: match[0].length,
+              index: matchItem.index, // Changed from 'match.index' to 'matchItem.index'
+              length: matchItem[0].length, // Changed from 'match[0].length' to 'matchItem[0].length'
             });
           }
         }
@@ -115,17 +117,19 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
         if (!prep || prep.length < 4) return;
         
         const prepRegex = new RegExp(`\\b${prep}\\b`, "gi");
-        while ((match = prepRegex.exec(text)) !== null) {
+        let matchPrep; // Changed from 'match' to 'matchPrep'
+        
+        while ((matchPrep = prepRegex.exec(text)) !== null) { // Changed from 'match' to 'matchPrep'
           // Check if the ingredient name is mentioned nearby
-          const contextStart = Math.max(0, match.index - 20);
-          const contextEnd = Math.min(text.length, match.index + prep.length + 20);
+          const contextStart = Math.max(0, matchPrep.index - 20); // Changed from 'match.index' to 'matchPrep.index'
+          const contextEnd = Math.min(text.length, matchPrep.index + prep.length + 20); // Changed from 'match.index' to 'matchPrep.index'
           const context = text.substring(contextStart, contextEnd).toLowerCase();
           
           if (context.includes(mainName.toLowerCase())) {
             matches.push({
               ingredient: fullIngredient,
-              index: match.index,
-              length: match[0].length,
+              index: matchPrep.index, // Changed from 'match.index' to 'matchPrep.index'
+              length: matchPrep[0].length, // Changed from 'match[0].length' to 'matchPrep[0].length'
             });
           }
         }
@@ -140,10 +144,12 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
     
     techniquesToMatch.forEach(technique => {
       const techniqueRegex = new RegExp(`\\b${technique}\\b`, "gi");
-      while ((match = techniqueRegex.exec(text)) !== null) {
+      let matchTech; // Changed from 'match' to 'matchTech'
+      
+      while ((matchTech = techniqueRegex.exec(text)) !== null) { // Changed from 'match' to 'matchTech'
         // Find which ingredients this technique might apply to
-        const contextEnd = Math.min(text.length, match.index + technique.length + 40);
-        const forwardContext = text.substring(match.index, contextEnd).toLowerCase();
+        const contextEnd = Math.min(text.length, matchTech.index + technique.length + 40); // Changed from 'match.index' to 'matchTech.index'
+        const forwardContext = text.substring(matchTech.index, contextEnd).toLowerCase(); // Changed from 'match.index' to 'matchTech.index'
         
         ingredientKeywords.forEach(({ fullIngredient, mainName }) => {
           if (mainName.length < 3) return;
@@ -151,7 +157,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
           if (forwardContext.includes(mainName.toLowerCase())) {
             matches.push({
               ingredient: fullIngredient,
-              index: match.index,
+              index: matchTech.index, // Changed from 'match.index' to 'matchTech.index'
               length: technique.length,
             });
           }
