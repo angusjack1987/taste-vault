@@ -1,9 +1,10 @@
 
 import { format } from 'date-fns';
-import { Plus, Lightbulb, X } from 'lucide-react';
+import { Plus, Lightbulb, X, Eye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MealPlanWithRecipe, MealType } from '@/hooks/useMealPlans';
+import { Link } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,34 +66,50 @@ const MobileDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: 
       <div className="flex-1 border rounded-md p-2 bg-card relative">
         <div className="flex justify-between items-center">
           <div className="text-sm capitalize text-muted-foreground">{mealType}</div>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <div className="flex">
+            {meal.recipe && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
+                className="h-7 w-7 text-primary"
+                title="View recipe"
+                asChild
               >
-                <X className="h-4 w-4" />
+                <Link to={`/recipes/${meal.recipe.id}`}>
+                  <Eye className="h-4 w-4" />
+                </Link>
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Remove Meal</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to remove this meal from your plan?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => onRemoveMeal(meal.id)}
+            )}
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
                 >
-                  Remove
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <X className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove Meal</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to remove this meal from your plan?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => onRemoveMeal(meal.id)}
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
         <div className="font-medium mt-1">{meal.recipe?.title || 'No recipe selected'}</div>
       </div>
