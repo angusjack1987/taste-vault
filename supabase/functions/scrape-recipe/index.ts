@@ -218,6 +218,8 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
           } else if (recipeData.image.url) {
             recipe.image = recipeData.image.url
           }
+          
+          console.log('Found recipe image in JSON-LD:', recipe.image)
         }
         
         // Extract tags/categories
@@ -311,20 +313,85 @@ async function extractRecipeData(html: string, url: string): Promise<Partial<Rec
     }
   }
   
-  // Image fallback
+  // Image fallback - improved to find the best hero image for the recipe
   if (!recipe.image) {
-    // Look for the first large image
-    const imgElements = doc.querySelectorAll('img')
-    for (let i = 0; i < imgElements.length; i++) {
-      const img = imgElements[i]
-      const src = img.getAttribute('src')
-      const dataSrc = img.getAttribute('data-src')
-      if (src && !src.includes('logo') && !src.includes('icon')) {
-        recipe.image = new URL(src, url).href
-        break
-      } else if (dataSrc && !dataSrc.includes('logo') && !dataSrc.includes('icon')) {
-        recipe.image = new URL(dataSrc, url).href
-        break
+    console.log('Looking for hero image in the page')
+    
+    // Helper function to score an image's likelihood of being a hero image
+    const scoreImage = (img: Element): number => {
+      let score = 0
+      const src = img.getAttribute('src') || img.getAttribute('data-src') || ''
+      
+      // Skip tracking pixels, icons, etc.
+      if (!src || 
+          src.includes('tracking') || 
+          src.includes('pixel') || 
+          src.includes('icon') || 
+          src.includes('logo') || 
+          src.includes('avatar') ||
+          src.length < 20) {
+        return -1
+      }
+
+      // Check image attributes
+      const alt = img.getAttribute('alt') || ''
+      const className = img.getAttribute('class') || ''
+      const id = img.getAttribute('id') || ''
+      
+      // Score based on size attributes
+      const width = parseInt(img.getAttribute('width') || '0', 10)
+      const height = parseInt(img.getAttribute('height') || '0', 10)
+      
+      if (width > 400 || height > 400) score += 20
+      if (width > 200 || height > 200) score += 10
+      
+      // Score based on position in document
+      const isInHeader = !!img.closest('header')
+      const isInArticle = !!img.closest('article')
+      
+      if (isInArticle) score += 15
+      if (isInHeader) score += 10
+      
+      // Score based on naming conventions that suggest a featured image
+      if (alt.includes('recipe') || alt.includes('dish') || alt.includes('food')) score += 25
+      if (className.includes('hero') || className.includes('featured') || className.includes('main')) score += 25
+      if (id.includes('hero') || id.includes('featured') || id.includes('main')) score += 25
+      
+      // Higher score for image names that include common food photo terms
+      if (src.includes('hero') || src.includes('featured') || src.includes('main')) score += 15
+      if (src.includes('recipe') || src.includes('dish') || src.includes('food')) score += 15
+      
+      return score
+    }
+    
+    // Try to find hero images first
+    const allImages = doc.querySelectorAll('img')
+    const scoredImages = Array.from(allImages)
+      .map(img => ({ 
+        element: img, 
+        score: scoreImage(img),
+        src: img.getAttribute('src') || img.getAttribute('data-src') || ''
+      }))
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+    
+    if (scoredImages.length > 0) {
+      const topImage = scoredImages[0]
+      console.log(`Found best hero image with score ${topImage.score}: ${topImage.src}`)
+      recipe.image = new URL(topImage.src, url).href
+    } else {
+      // Fallback to first large image if no hero found
+      for (let i = 0; i < allImages.length; i++) {
+        const img = allImages[i]
+        const src = img.getAttribute('src')
+        const dataSrc = img.getAttribute('data-src')
+        if (src && !src.includes('logo') && !src.includes('icon')) {
+          recipe.image = new URL(src, url).href
+          break
+        } else if (dataSrc && !dataSrc.includes('logo') && !dataSrc.includes('icon')) {
+          recipe.image = new URL(dataSrc, url).href
+          break
+        }
       }
     }
   }
