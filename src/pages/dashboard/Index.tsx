@@ -28,58 +28,6 @@ const Dashboard = () => {
   return (
     <MainLayout title="Flavor Librarian">
       <div className="page-container">
-        <section className="mb-8">
-          <h2 className="section-title flex items-center gap-2 mb-3">
-            <ChefHat className="h-5 w-5 text-secondary" />
-            <span>Today's Meal Plan</span>
-          </h2>
-          <div className="bg-gradient-to-br from-cream-50 to-cream-100 rounded-xl p-5 border-2 border-cream-200 shadow-sm">
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">Breakfast</h3>
-                <Link to="/meal-plan" className="block">
-                  <div className="rounded-lg p-3 border-2 border-dashed border-secondary/50 flex items-center justify-center hover:border-secondary hover:bg-secondary/5 transition-colors">
-                    <Button variant="ghost" size="sm" className="rounded-full">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Breakfast
-                    </Button>
-                  </div>
-                </Link>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">Lunch</h3>
-                <Link to="/meal-plan" className="block">
-                  <div className="rounded-lg p-3 border-2 border-dashed border-mint-400/50 flex items-center justify-center hover:border-mint-400 hover:bg-mint-50 transition-colors">
-                    <Button variant="ghost" size="sm" className="rounded-full">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Lunch
-                    </Button>
-                  </div>
-                </Link>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">Dinner</h3>
-                <Link to="/meal-plan" className="block">
-                  <div className="rounded-lg p-3 border-2 border-dashed border-sky-300/50 flex items-center justify-center hover:border-sky-300 hover:bg-sky-50 transition-colors">
-                    <Button variant="ghost" size="sm" className="rounded-full">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Dinner
-                    </Button>
-                  </div>
-                </Link>
-              </div>
-            </div>
-            
-            <div className="mt-4 flex justify-end">
-              <Link to="/meal-plan">
-                <Button variant="outline" size="sm" className="rounded-full hover:shadow-sm transition-all">View Full Plan</Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-        
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
