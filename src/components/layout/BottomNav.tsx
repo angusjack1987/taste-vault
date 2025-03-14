@@ -50,8 +50,15 @@ const BottomNav = () => {
           
         if (error) throw error;
         
-        if (data?.preferences?.food?.babyFoodEnabled) {
-          setBabyFoodEnabled(true);
+        if (data?.preferences) {
+          // Check if preferences is an object and not a string
+          const prefs = typeof data.preferences === 'object' ? data.preferences : {};
+          
+          // Only access food property if preferences is an object
+          if (prefs && typeof prefs === 'object' && 'food' in prefs && 
+              typeof prefs.food === 'object' && prefs.food && 'babyFoodEnabled' in prefs.food) {
+            setBabyFoodEnabled(true);
+          }
         }
       } catch (error) {
         console.error("Error fetching baby food preference:", error);

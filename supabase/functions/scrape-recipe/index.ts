@@ -18,7 +18,7 @@ function findRecipeImages(document: Document): string[] {
   const articleImages = document.querySelectorAll('article img, main img, .recipe img, .recipe-image img, [itemtype*="Recipe"] img');
   articleImages.forEach(img => {
     const src = img.getAttribute('src');
-    if (src && !src.includes('logo') && !src.includes('avatar') && !src.includes('icon') && src.endsWith('.jpg') || src.endsWith('.jpeg') || src.endsWith('.png')) {
+    if (src && !src.includes('logo') && !src.includes('avatar') && !src.includes('icon') && (src.endsWith('.jpg') || src.endsWith('.jpeg') || src.endsWith('.png'))) {
       // Ensure the URL is absolute
       if (src.startsWith('http')) {
         images.push(src);

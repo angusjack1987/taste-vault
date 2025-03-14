@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Baby, Leaf, Heart } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -13,8 +12,8 @@ import useMealPlans, { MealType } from "@/hooks/useMealPlans";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
-import { RecipeOptionsDialog } from "@/components/fridge/RecipeOptionsDialog";
-import { SaveToMealPlanDialog } from "@/components/fridge/SaveToMealPlanDialog";
+import RecipeOptionsDialog from "@/components/fridge/RecipeOptionsDialog";
+import SaveToMealPlanDialog from "@/components/fridge/SaveToMealPlanDialog";
 
 const BabyFoodPage = () => {
   const { user } = useAuth();
@@ -42,7 +41,6 @@ const BabyFoodPage = () => {
   const [savePlanDialogOpen, setSavePlanDialogOpen] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType>("lunch");
 
-  // Fetch user preferences
   useEffect(() => {
     const fetchUserPreferences = async () => {
       if (!user) return;
@@ -153,7 +151,6 @@ const BabyFoodPage = () => {
     }
     
     try {
-      // First save the recipe
       const selected = generatedRecipes[selectedRecipeIndex];
       
       const savedRecipe = await createRecipe.mutateAsync({
@@ -168,7 +165,6 @@ const BabyFoodPage = () => {
         tags: [...(selected.highlights || []), "baby-food", `age-${selected.ageRange}`]
       });
       
-      // Then add to meal plan for today
       const today = new Date();
       
       await createMealPlan.mutateAsync({

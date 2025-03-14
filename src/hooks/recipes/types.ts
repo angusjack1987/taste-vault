@@ -16,4 +16,6 @@ export type Recipe = {
   updated_at: string;
 };
 
-export type RecipeFormData = Omit<Recipe, "id" | "created_at" | "updated_at">;
+export type RecipeFormData = Omit<Recipe, "id" | "created_at" | "updated_at"> & {
+  images?: string[]; // Optional array of images for the import process
+};

@@ -53,18 +53,20 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
             return cleaned;
           }) || [];
           
-          // Handle multiple images
-          const imagesList = Array.isArray(data.images) ? data.images : 
-                            (data.image ? [data.image] : []);
+          // Handle extracted images if any
+          let extractedImages: string[] = [];
+          if (data.image) {
+            extractedImages = [data.image];
+          }
           
-          setImages(imagesList);
-          setSelectedImageIndex(imagesList.length > 0 ? 0 : -1);
+          setImages(extractedImages);
+          setSelectedImageIndex(extractedImages.length > 0 ? 0 : -1);
           
           const cleanedData = {
             ...data,
             ingredients: cleanedIngredients,
             // Set the first image as the default if available
-            image: imagesList.length > 0 ? imagesList[0] : null
+            image: extractedImages.length > 0 ? extractedImages[0] : null
           };
           
           setScrapedRecipe(cleanedData);
