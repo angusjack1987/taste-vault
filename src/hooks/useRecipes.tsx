@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,7 +31,7 @@ export const useRecipes = () => {
     const { data, error } = await supabase
       .from("recipes")
       .select("*")
-      .eq("user_id", user.id) // Only fetch recipes assigned to the current user
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -157,22 +156,121 @@ export const useRecipes = () => {
     };
   };
 
+  const bulkUpdateRecipes = async (
+    recipeUpdates: Array<{ id: string, updates: Partial<RecipeFormData> }>
+  ): Promise<void> => {
+    if (!user) throw new Error("User not authenticated");
+    
+    for (const { id, updates } of recipeUpdates) {
+      const { error } = await supabase
+        .from("recipes")
+        .update(updates)
+        .eq("id", id)
+        .eq("user_id", user.id);
+      
+      if (error) {
+        console.error(`Error updating recipe ${id}:`, error);
+        toast.error(`Failed to update recipe: ${error.message}`);
+        throw error;
+      }
+    }
+    
+    toast.success(`${recipeUpdates.length} recipes updated successfully`);
+    queryClient.invalidateQueries({ queryKey: ["recipes"] });
+  };
+
   const deleteRecipe = async (id: string): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
 
-    const { error } = await supabase
-      .from("recipes")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id); // Ensure we only delete recipes owned by the current user
+    try {
+      const { error: mealPlanError } = await supabase
+        .from("meal_plans")
+        .update({ recipe_id: null })
+        .eq("recipe_id", id)
+        .eq("user_id", user.id);
 
-    if (error) {
-      console.error("Error deleting recipe:", error);
-      toast.error("Failed to delete recipe");
+      if (mealPlanError) {
+        console.error("Error removing meal plan references:", mealPlanError);
+        toast.error("Failed to remove meal plan references");
+        throw mealPlanError;
+      }
+
+      const { error: shoppingListError } = await supabase
+        .from("shopping_list")
+        .delete()
+        .eq("recipe_id", id)
+        .eq("user_id", user.id);
+
+      if (shoppingListError) {
+        console.error("Error removing shopping list items:", shoppingListError);
+        toast.error("Failed to remove shopping list items");
+        throw shoppingListError;
+      }
+
+      const { error } = await supabase
+        .from("recipes")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error deleting recipe:", error);
+        toast.error("Failed to delete recipe");
+        throw error;
+      }
+
+      toast.success("Recipe deleted successfully");
+    } catch (error) {
+      console.error("Error in recipe deletion process:", error);
       throw error;
     }
+  };
 
-    toast.success("Recipe deleted successfully");
+  const bulkDeleteRecipes = async (ids: string[]): Promise<void> => {
+    if (!user) throw new Error("User not authenticated");
+    
+    try {
+      const { error: mealPlanError } = await supabase
+        .from("meal_plans")
+        .update({ recipe_id: null })
+        .in("recipe_id", ids)
+        .eq("user_id", user.id);
+
+      if (mealPlanError) {
+        console.error("Error removing meal plan references:", mealPlanError);
+        toast.error("Failed to remove meal plan references");
+        throw mealPlanError;
+      }
+
+      const { error: shoppingListError } = await supabase
+        .from("shopping_list")
+        .delete()
+        .in("recipe_id", ids)
+        .eq("user_id", user.id);
+
+      if (shoppingListError) {
+        console.error("Error removing shopping list items:", shoppingListError);
+        toast.error("Failed to remove shopping list items");
+        throw shoppingListError;
+      }
+
+      const { error } = await supabase
+        .from("recipes")
+        .delete()
+        .in("id", ids)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error deleting recipes:", error);
+        toast.error("Failed to delete recipes");
+        throw error;
+      }
+
+      toast.success(`${ids.length} recipes deleted successfully`);
+    } catch (error) {
+      console.error("Error in bulk recipe deletion process:", error);
+      throw error;
+    }
   };
 
   const useAllRecipes = () => {
@@ -210,9 +308,27 @@ export const useRecipes = () => {
     });
   };
 
+  const useBulkUpdateRecipes = () => {
+    return useMutation({
+      mutationFn: bulkUpdateRecipes,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      },
+    });
+  };
+
   const useDeleteRecipe = () => {
     return useMutation({
       mutationFn: deleteRecipe,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      },
+    });
+  };
+
+  const useBulkDeleteRecipes = () => {
+    return useMutation({
+      mutationFn: bulkDeleteRecipes,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["recipes"] });
       },
@@ -224,7 +340,9 @@ export const useRecipes = () => {
     useRecipe,
     useCreateRecipe,
     useUpdateRecipe,
+    useBulkUpdateRecipes,
     useDeleteRecipe,
+    useBulkDeleteRecipes,
   };
 };
 
