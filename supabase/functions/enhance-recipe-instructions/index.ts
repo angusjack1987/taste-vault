@@ -36,8 +36,8 @@ serve(async (req) => {
     console.log("Instructions count:", instructions.length);
     console.log("Ingredients count:", ingredients.length);
 
-    // Always use temperature=1 as requested
-    const temperature = 1.0;
+    // Always use temperature=0 as requested
+    const temperature = 0.0;
     // Use the AI model from settings if available, otherwise use default
     const model = aiSettings?.model || 'gpt-4o-mini';
 
