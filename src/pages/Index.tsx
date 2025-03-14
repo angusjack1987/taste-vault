@@ -46,7 +46,7 @@ const IndexPage = () => {
         }
       });
     }
-  }, [user, isMemoryEnabled]);
+  }, [user, isMemoryEnabled, insights, memoryLoading, getMemoryInsights]);
 
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
