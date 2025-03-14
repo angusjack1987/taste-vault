@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Info, Sparkles } from "lucide-react";
+import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -242,50 +241,50 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
       let currentText = step.step;
       let lastIndex = 0;
 
-      // Sort tooltips by their position in the text
-      const sortedTooltips = [...step.tooltips].sort((a, b) => 
-        currentText.toLowerCase().indexOf(a.text.toLowerCase()) - 
-        currentText.toLowerCase().indexOf(b.text.toLowerCase())
-      );
+      // Only process if we have tooltips
+      if (step.tooltips && step.tooltips.length > 0) {
+        // We only use the first tooltip as per our new limit
+        const tooltip = step.tooltips[0];
+        
+        if (tooltip && tooltip.text) {
+          const tooltipStart = currentText.toLowerCase().indexOf(tooltip.text.toLowerCase());
+          if (tooltipStart !== -1) {
+            // Add text before the tooltip
+            if (tooltipStart > lastIndex) {
+              result.push(currentText.substring(lastIndex, tooltipStart));
+            }
 
-      sortedTooltips.forEach((tooltip, i) => {
-        const tooltipStart = currentText.toLowerCase().indexOf(tooltip.text.toLowerCase());
-        if (tooltipStart === -1) return;
+            // Add the tooltip
+            const tooltipText = currentText.substr(tooltipStart, tooltip.text.length);
+            result.push(
+              <TooltipProvider key={`enhanced-tooltip-${index}`}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help border-dotted border-b border-primary text-primary">
+                      {tooltipText}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 mt-0.5 text-primary" />
+                      <div>
+                        <p className="text-sm font-semibold mb-1">{tooltip.ingredient}</p>
+                        {tooltip.explanation && (
+                          <p className="text-xs text-muted-foreground">{tooltip.explanation}</p>
+                        )}
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
 
-        // Add text before the tooltip
-        if (tooltipStart > lastIndex) {
-          result.push(currentText.substring(lastIndex, tooltipStart));
+            lastIndex = tooltipStart + tooltip.text.length;
+          }
         }
+      }
 
-        // Add the tooltip
-        const tooltipText = currentText.substr(tooltipStart, tooltip.text.length);
-        result.push(
-          <TooltipProvider key={`enhanced-tooltip-${index}-${i}`}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="cursor-help border-dotted border-b border-primary text-primary">
-                  {tooltipText}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <div className="flex items-start gap-2">
-                  <Info className="h-4 w-4 mt-0.5 text-primary" />
-                  <div>
-                    <p className="text-sm font-semibold mb-1">{tooltip.ingredient}</p>
-                    {tooltip.explanation && (
-                      <p className="text-xs text-muted-foreground">{tooltip.explanation}</p>
-                    )}
-                  </div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-
-        lastIndex = tooltipStart + tooltip.text.length;
-      });
-
-      // Add text after the last tooltip
+      // Add text after the tooltip (or all text if no tooltip was found)
       if (lastIndex < currentText.length) {
         result.push(currentText.substring(lastIndex));
       }
@@ -295,14 +294,14 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
           <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
             {index + 1}
           </span>
-          <span>{result.length > 0 ? result : currentText}</span>
+          <span className="text-xs sm:text-sm">{result.length > 0 ? result : currentText}</span>
         </li>
       );
     });
   };
 
   return (
-    <ol className="space-y-4 text-xs sm:text-sm">
+    <ol className="space-y-4">
       {isEnhanced && enhancedInstructions ? (
         renderEnhancedInstructions()
       ) : (
@@ -313,7 +312,7 @@ const InstructionsWithTooltips: React.FC<InstructionsWithTooltipsProps> = ({
               <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
                 {index + 1}
               </span>
-              <span>{renderTextWithTooltips(step, matches)}</span>
+              <span className="text-xs sm:text-sm">{renderTextWithTooltips(step, matches)}</span>
             </li>
           );
         })

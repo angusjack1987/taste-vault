@@ -54,16 +54,20 @@ serve(async (req) => {
             content: `
               You are a cooking expert AI that helps explain recipe instructions.
               You will analyze recipe instructions and ingredients to add helpful tooltips.
-              For each instruction step, identify key terms that benefit from tooltips.
               
-              For each tooltip, extract:
+              IMPORTANT: Add a MAXIMUM of ONE tooltip per instruction step.
+              
+              For each instruction step, identify the MOST IMPORTANT term that would benefit from a tooltip.
+              
+              For each tooltip, provide:
               1. The exact text in the instruction that needs a tooltip
-              2. The ingredient it relates to
+              2. The ingredient it relates to (if applicable)
               3. A brief explanation of the technique, why it's important, or tips for success
               
-              Format your response as a valid JSON array where each object has:
+              Your response must be VALID JSON without any markdown formatting, code blocks, or backticks.
+              Format your response as a JSON array where each object has:
               - step: the full instruction text
-              - tooltips: array of objects with {text, ingredient, explanation}
+              - tooltips: array with EXACTLY ONE object containing {text, ingredient, explanation}
             `
           },
           {
@@ -77,7 +81,7 @@ serve(async (req) => {
               Ingredients:
               ${ingredients.map(ing => `- ${ing}`).join('\n')}
               
-              Create concise, helpful tooltips for key terms in each instruction step.
+              Create ONE concise, helpful tooltip for the most important term in each instruction step.
             `
           }
         ],
@@ -93,9 +97,16 @@ serve(async (req) => {
     }
 
     const data_response = await response.json();
-    const enhancedInstructions = data_response.choices[0].message.content;
+    let enhancedInstructions = data_response.choices[0].message.content;
     
     console.log("Raw response from OpenAI:", enhancedInstructions.substring(0, 200) + "...");
+    
+    // Clean up the response - remove any markdown code blocks or backticks
+    enhancedInstructions = enhancedInstructions
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .replace(/`/g, '')
+      .trim();
     
     // Parse the response and validate it
     let parsedInstructions;
@@ -107,11 +118,23 @@ serve(async (req) => {
         throw new Error('Response is not an array');
       }
       
-      // Make sure the structure matches what we expect
-      parsedInstructions.forEach((instruction, i) => {
+      // Make sure the structure matches what we expect and limit to one tooltip
+      parsedInstructions = parsedInstructions.map((instruction, i) => {
         if (!instruction.step || !Array.isArray(instruction.tooltips)) {
-          throw new Error(`Invalid instruction format at index ${i}`);
+          // Create default structure if missing
+          return { 
+            step: instructions[i] || instruction.step || `Step ${i+1}`, 
+            tooltips: []
+          };
         }
+        
+        // Ensure there's only one tooltip per step
+        const limitedTooltips = instruction.tooltips.slice(0, 1);
+        
+        return {
+          step: instruction.step,
+          tooltips: limitedTooltips
+        };
       });
       
       // Make sure we have one entry per instruction
