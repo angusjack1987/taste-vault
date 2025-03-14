@@ -21,7 +21,6 @@ export default {
 			fontFamily: {
 				sans: ['Nunito', 'sans-serif'],
 				heading: ['Poppins', 'sans-serif'],
-				fun: ['"Pacifico"', 'cursive'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -179,10 +178,6 @@ export default {
 				'text-shine': {
 					'0%': { backgroundPosition: '0% 50%' },
 					'100%': { backgroundPosition: '100% 50%' }
-				},
-				'logo-spin': {
-					'0%': { transform: 'rotate(0deg)' },
-					'100%': { transform: 'rotate(360deg)' }
 				}
 			},
 			animation: {
@@ -192,8 +187,7 @@ export default {
 				'float': 'float 5s ease-in-out infinite',
 				'bounce-light': 'bounce-light 2s ease-in-out infinite',
 				'text-bounce': 'text-bounce 1s ease-in-out infinite',
-				'text-shine': 'text-shine 3s linear infinite',
-				'logo-spin': 'logo-spin 20s linear infinite'
+				'text-shine': 'text-shine 3s linear infinite'
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
