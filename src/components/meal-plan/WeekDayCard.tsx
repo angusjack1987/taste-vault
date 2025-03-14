@@ -55,7 +55,7 @@ const WeekDayCard = ({
   const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
     if (!meal) {
       return (
-        <div className="border border-dashed border-border rounded-md p-3 flex justify-between items-center gap-2 min-h-[70px] bg-background/50 hover:bg-background transition-colors">
+        <div className="border border-dashed border-border rounded-md p-3 flex justify-between items-center min-h-[80px] bg-background/50 hover:bg-background transition-colors">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -81,12 +81,12 @@ const WeekDayCard = ({
     }
     
     return (
-      <div className="border rounded-md p-3 bg-card min-h-[70px] relative hover:shadow-sm transition-shadow group">
-        <div className="text-xs font-medium flex items-start mb-1">
-          <span className="mt-0.5">{getMealIcon(mealType)}</span>
+      <div className="border rounded-md p-3 bg-card min-h-[80px] relative hover:shadow-sm transition-shadow group">
+        <div className="text-xs font-medium flex items-center mb-2">
+          {getMealIcon(mealType)}
           <span className="capitalize text-muted-foreground">{mealType}</span>
         </div>
-        <div className="pr-7 line-clamp-2 text-sm">
+        <div className="pr-7 text-sm font-medium line-clamp-2">
           {meal.recipe?.title || (
             <span className="flex items-center text-muted-foreground text-xs">
               <Utensils className="h-3 w-3 mr-1 group-hover:animate-pulse-slow" /> No recipe selected
@@ -98,7 +98,7 @@ const WeekDayCard = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 absolute top-2 right-2 hover:bg-destructive/10 hover:text-destructive"
+              className="h-7 w-7 absolute top-2 right-2 hover:bg-destructive/10 hover:text-destructive"
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -137,8 +137,8 @@ const WeekDayCard = ({
       )}
       
       <div className={cn(
-        "grid grid-cols-3 gap-4 flex-1",
-        showDateHeader && "space-y-4 flex flex-col"
+        "grid grid-cols-3 gap-6 flex-1",
+        showDateHeader && "space-y-6 flex flex-col"
       )}>
         <div>{renderMealSlot('breakfast', meals.breakfast)}</div>
         <div>{renderMealSlot('lunch', meals.lunch)}</div>

@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { format, addDays, startOfWeek, subDays, addWeeks, subWeeks } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface WeekDayData {
   date: Date;
@@ -49,32 +50,42 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
       </div>
       
       {/* Desktop view - stacked days */}
-      <div className="hidden md:block space-y-4">
-        {weekDays.map((day) => (
-          <div key={day.date.toString()} className="flex items-stretch">
-            {/* Day label for desktop view */}
-            <div className="w-32 mr-4 flex flex-col justify-center">
-              <p className="font-medium">{format(day.date, 'EEEE')}</p>
-              <p className="text-sm text-muted-foreground">{format(day.date, 'MMM d')}</p>
-              {format(new Date(), 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd') && (
-                <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full mt-1 inline-block w-fit">Today</span>
+      <div className="hidden md:block space-y-6">
+        {weekDays.map((day) => {
+          const isToday = format(new Date(), 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd');
+          
+          return (
+            <div 
+              key={day.date.toString()} 
+              className={cn(
+                "flex items-stretch p-4 rounded-lg",
+                isToday && "bg-primary/5 border border-primary"
               )}
+            >
+              {/* Day label for desktop view */}
+              <div className="w-40 mr-6 flex flex-col justify-center">
+                <p className={cn("font-medium", isToday && "text-primary")}>{format(day.date, 'EEEE')}</p>
+                <p className={cn("text-sm text-muted-foreground", isToday && "text-primary/70")}>{format(day.date, 'MMM d')}</p>
+                {isToday && (
+                  <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full mt-1 inline-block w-fit">Today</span>
+                )}
+              </div>
+              
+              {/* Meals container */}
+              <div className="flex-1 grid grid-cols-3 gap-6">
+                <WeekDayCard
+                  key={`${day.date.toString()}-desktop`}
+                  date={day.date}
+                  meals={day.meals}
+                  onAddMeal={onAddMeal}
+                  onRemoveMeal={onRemoveMeal}
+                  onSuggestMeal={onSuggestMeal}
+                  showDateHeader={false}
+                />
+              </div>
             </div>
-            
-            {/* Meals container */}
-            <div className="flex-1 grid grid-cols-3 gap-4">
-              <WeekDayCard
-                key={`${day.date.toString()}-desktop`}
-                date={day.date}
-                meals={day.meals}
-                onAddMeal={onAddMeal}
-                onRemoveMeal={onRemoveMeal}
-                onSuggestMeal={onSuggestMeal}
-                showDateHeader={false}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
       {/* Mobile view */}
