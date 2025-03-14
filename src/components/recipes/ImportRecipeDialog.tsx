@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { X, Loader2, Link, Check, Save, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import useScrapedRecipes from "@/hooks/useScrapedRecipes";
 import { Label } from "@/components/ui/label";
 import { RecipeFormData } from "@/hooks/useRecipes";
 import { cleanIngredientString, parsePreparation, parseIngredientAmount } from "@/lib/ingredient-parser";
+import IngredientInput from "./IngredientInput";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -86,6 +88,13 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
       ...editedRecipe,
       [field]: array
     });
+  };
+  
+  const handleIngredientKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddArrayItem('ingredients');
+    }
   };
   
   const handleSaveRecipe = () => {
@@ -215,32 +224,13 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
             
             <div className="space-y-3">
               <Label>Ingredients</Label>
-              {(editedRecipe.ingredients || []).map((ingredient, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    value={ingredient}
-                    onChange={(e) => handleArrayItemChange('ingredients', index, e.target.value)}
-                    placeholder={`Ingredient ${index + 1}`}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveArrayItem('ingredients', index)}
-                    disabled={(editedRecipe.ingredients || []).length <= 1}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleAddArrayItem('ingredients')}
-              >
-                Add Ingredient
-              </Button>
+              <IngredientInput 
+                ingredients={editedRecipe.ingredients || []}
+                onChange={(ingredients) => handleInputChange('ingredients', ingredients)}
+                onAdd={() => handleAddArrayItem('ingredients')}
+                onRemove={(index) => handleRemoveArrayItem('ingredients', index)}
+                onKeyDown={handleIngredientKeyDown}
+              />
             </div>
             
             <div className="space-y-3">
