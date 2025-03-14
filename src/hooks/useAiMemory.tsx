@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,14 +14,6 @@ interface MemoryInsight {
   insights: string;
   created_at: string;
 }
-
-// Define types for RPC function parameters and responses
-type GetLatestMemoryInsightsFn = (params: { user_id_param: string }) => Promise<{ data: MemoryInsight[] | null; error: any }>;
-type StoreMemoryInsightsFn = (params: { 
-  user_id_param: string; 
-  insights_param: string; 
-  created_at_param: string
-}) => Promise<{ data: null; error: any }>;
 
 export const useAiMemory = () => {
   const [loading, setLoading] = useState(false);
@@ -44,10 +35,13 @@ export const useAiMemory = () => {
     if (!user) return;
 
     try {
-      // Explicitly type the RPC function call
-      const { data, error } = await (supabase.rpc as any)('get_latest_memory_insights', { 
+      // Use type assertion after awaiting the Promise
+      const { data, error } = await supabase.rpc('get_latest_memory_insights', { 
         user_id_param: user.id 
-      }) as ReturnType<GetLatestMemoryInsightsFn>;
+      }) as unknown as { 
+        data: MemoryInsight[] | null; 
+        error: any 
+      };
 
       if (error) {
         console.error("Error fetching from RPC:", error);
@@ -167,15 +161,15 @@ export const useAiMemory = () => {
     if (!user) return;
     
     try {
-      // Store the raw markdown in Supabase using RPC with explicit typing
-      const { error } = await (supabase.rpc as any)(
+      // Use type assertion after awaiting the Promise
+      const { error } = await supabase.rpc(
         'store_memory_insights',
         { 
           user_id_param: user.id, 
           insights_param: rawInsights,
           created_at_param: new Date().toISOString()
         }
-      ) as ReturnType<StoreMemoryInsightsFn>;
+      ) as unknown as { data: null; error: any };
         
       if (error) {
         console.error("Error storing insights in database:", error);
