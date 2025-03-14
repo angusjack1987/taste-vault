@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Clock, 
@@ -349,6 +350,206 @@ const RecipeDetail = () => {
     recipe.description.replace(/<!-- ENHANCED_INSTRUCTIONS:.*? -->/, '') : 
     null;
 
+  return (
+    <MainLayout 
+      title={recipe.title} 
+      showBackButton={true}
+      action={
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsFavorited(!isFavorited)}
+            className={isFavorited ? "text-red-500" : ""}
+          >
+            <Heart className="h-5 w-5" fill={isFavorited ? "currentColor" : "none"} />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate(`/recipes/edit/${id}`)}
+          >
+            <Edit className="h-5 w-5" />
+          </Button>
+        </div>
+      }
+    >
+      <div className="page-container space-y-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="md:w-2/3 space-y-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm">{recipe.cooking_time || "30 min"}</span>
+              </div>
+              
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span className="text-sm">{recipe.servings || "4"} servings</span>
+              </div>
+              
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <ChefHat className="h-4 w-4" />
+                <span className="text-sm">{recipe.difficulty || "Medium"}</span>
+              </div>
+            </div>
+            
+            {displayDescription && (
+              <p className="text-muted-foreground whitespace-pre-line">
+                {displayDescription}
+              </p>
+            )}
+            
+            <div className="flex flex-wrap gap-2 mt-2">
+              {recipe.tags && recipe.tags.map((tag, index) => (
+                <span 
+                  key={index}
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+          
+          <div className="md:w-1/3 space-y-3 flex flex-col">
+            <Button 
+              variant="outline" 
+              className="w-full flex justify-between items-center"
+              onClick={handleAddToShoppingList}
+              disabled={addingToShoppingList}
+            >
+              <ShoppingBag className="mr-2 h-5 w-5" />
+              <span>{addingToShoppingList ? "Adding..." : "Add to Shopping List"}</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full flex justify-between items-center"
+              onClick={handleOpenVariationsDialog}
+            >
+              <Sparkles className="mr-2 h-5 w-5" />
+              <span>Generate Variations</span>
+            </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  className="w-full"
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="mr-2 h-5 w-5" />
+                  <span>{isDeleting ? "Deleting..." : "Delete Recipe"}</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this recipe and remove it from any meal plans.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteRecipe}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+        
+        <Tabs defaultValue="ingredients" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
+            <TabsTrigger value="instructions">Instructions</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="ingredients" className="py-4">
+            <ScrollArea className="max-h-[400px]">
+              <ul className="space-y-2">
+                {recipe.ingredients.map((ingredient, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    {getIngredientIcon(ingredient)}
+                    <span className="text-sm">{ingredient}</span>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="instructions" className="py-4">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium">Preparation Steps</h3>
+              <div className="flex items-center gap-2">
+                {isInstructionsEnhanced ? (
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={handleSaveEnhancedInstructions}
+                    disabled={isSavingEnhancedInstructions || !isInstructionsEnhanced}
+                  >
+                    {isSavingEnhancedInstructions ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                    )}
+                    Save Enhanced
+                  </Button>
+                ) : (
+                  <AiSuggestionButton
+                    onClick={handleEnhanceInstructions}
+                    loading={isEnhancingInstructions}
+                    title="Enhance Instructions"
+                    tooltip="Add helpful tooltips to instructions"
+                    className="h-8 w-8"
+                    iconSize={16}
+                  />
+                )}
+              </div>
+            </div>
+            
+            <ScrollArea className="max-h-[400px]">
+              {isInstructionsEnhanced ? (
+                <InstructionsWithTooltips 
+                  instructions={enhancedInstructions} 
+                />
+              ) : (
+                <ol className="list-decimal list-inside space-y-3">
+                  {recipe.instructions.map((instruction, index) => (
+                    <li key={index} className="text-sm">
+                      {instruction}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      <SuggestMealDialog
+        open={suggestDialogOpen}
+        onOpenChange={setSuggestDialogOpen}
+        suggestedMeal={suggestedMeal}
+        loading={parsingMealSuggestion}
+        onReset={handleResetSuggestedMeal}
+        onSave={handleSaveSuggestedRecipe}
+        additionalPreferences={additionalPreferences}
+      />
+      
+      <RecipeVariationsDialog 
+        open={variationsDialogOpen}
+        onOpenChange={setVariationsDialogOpen}
+        onGenerateVariation={handleGenerateVariation}
+        isLoading={parsingMealSuggestion}
+        recipeTitle={recipe.title}
+      />
+    </MainLayout>
+  );
+};
 
-
-
+export default RecipeDetail;
