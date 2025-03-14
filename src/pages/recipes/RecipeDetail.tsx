@@ -12,7 +12,14 @@ import {
   ShoppingBag,
   Check,
   Trash2,
-  Sparkles
+  Sparkles,
+  Utensils,
+  Carrot,
+  Beef,
+  Fish,
+  Apple,
+  Egg,
+  Wheat
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,7 +27,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useRecipes from "@/hooks/useRecipes";
 import useShoppingList, { ShoppingListItemInput, categorizeIngredient } from "@/hooks/useShoppingList";
-import { parseIngredientAmount } from "@/lib/ingredient-parser";
+import { parseIngredientAmount, parsePreparation, cleanIngredientString, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -38,7 +45,6 @@ import useAiRecipes from "@/hooks/useAiRecipes";
 import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
-import IngredientDetailAccordion from "@/components/recipes/IngredientDetailAccordion";
 
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +67,26 @@ const RecipeDetail = () => {
   const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
   const { mutateAsync: deleteRecipe } = useDeleteRecipe();
   
+  const getIngredientIcon = (ingredientName: string) => {
+    const lowerName = ingredientName.toLowerCase();
+    
+    if (/chicken|turkey|beef|meat|steak|pork|lamb|veal/i.test(lowerName)) {
+      return <Beef className="h-4 w-4 text-sage-500" />;
+    } else if (/fish|salmon|tuna|cod|tilapia|shrimp|prawn|seafood/i.test(lowerName)) {
+      return <Fish className="h-4 w-4 text-sage-500" />;
+    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|cherries|strawberry|blueberry|raspberry|blackberry|blackberries|cherry|cherries/i.test(lowerName)) {
+      return <Apple className="h-4 w-4 text-sage-500" />;
+    } else if (/egg|eggs/i.test(lowerName)) {
+      return <Egg className="h-4 w-4 text-sage-500" />;
+    } else if (/flour|bread|rice|pasta|grain|wheat|cereal|oat/i.test(lowerName)) {
+      return <Wheat className="h-4 w-4 text-sage-500" />;
+    } else if (/carrot|vegetable|tomato|potato|onion|garlic|pepper|cucumber|lettuce/i.test(lowerName)) {
+      return <Carrot className="h-4 w-4 text-sage-500" />;
+    } else {
+      return <Utensils className="h-4 w-4 text-sage-500" />;
+    }
+  };
+
   const handleAddToShoppingList = async () => {
     if (!recipe) return;
     
@@ -344,33 +370,37 @@ const RecipeDetail = () => {
             </TabsList>
             <TabsContent value="ingredients" className="mt-4">
               <ScrollArea className="max-h-[400px]">
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {recipe.ingredients.map((ingredient, index) => {
-                    const { name, amount } = parseIngredientAmount(ingredient);
+                    const cleanedIngredient = cleanIngredientString(ingredient);
+                    
+                    const prepInstructions = extractPreparationInstructions(cleanedIngredient);
+                    
+                    const { mainText, preparation } = parsePreparation(cleanedIngredient);
+                    
+                    const { name, amount } = parseIngredientAmount(mainText);
+                    
                     return (
-                      <li key={index} className="flex flex-col">
-                        <div className="flex items-baseline gap-2">
-                          <span className="w-2 h-2 rounded-full bg-sage-500 mt-1.5 flex-shrink-0"></span>
-                          <div className="flex-1">
-                            <AiSuggestionTooltip 
-                              content={index % 2 === 0 
-                                ? `Try substituting with ${name.includes("chicken") ? "tofu" : name.includes("beef") ? "mushrooms" : "a seasonal alternative"}`
-                                : `This ${name} pairs well with ${recipe.ingredients[(index + 3) % recipe.ingredients.length].split(" ").pop()}`
-                              }
-                            >
-                              <div className="cursor-help border-b border-dotted border-purple-300">{name}</div>
-                            </AiSuggestionTooltip>
+                      <li key={index} className="flex items-start gap-2 p-2 bg-sage-50 rounded-md border border-sage-200">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-2">
                             {amount && (
-                              <div className="text-xs text-muted-foreground">{amount}</div>
+                              <span className="font-mono text-sm">{amount}</span>
                             )}
+                            
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1">
+                                {getIngredientIcon(name)}
+                                <span className="text-sm">{name}</span>
+                              </div>
+                              
+                              {(prepInstructions || preparation) && (
+                                <div className="text-xs text-muted-foreground italic ml-5">
+                                  {prepInstructions || preparation}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="pl-4">
-                          <IngredientDetailAccordion 
-                            ingredient={ingredient} 
-                            index={index}
-                            allIngredients={recipe.ingredients}
-                          />
                         </div>
                       </li>
                     );
