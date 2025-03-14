@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { X, Loader2, Link, Check, Save, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import {
 import useScrapedRecipes from "@/hooks/useScrapedRecipes";
 import { Label } from "@/components/ui/label";
 import { RecipeFormData } from "@/hooks/useRecipes";
-import { cleanIngredientString } from "@/lib/ingredient-parser";
+import { cleanIngredientString, parsePreparation, parseIngredientAmount } from "@/lib/ingredient-parser";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -38,8 +37,6 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     
     scrapeRecipe(url, {
       onSuccess: (data) => {
-        // Clean the ingredients when importing, ensuring trailing brackets and parentheses are removed
-        // and preserving preparation instructions
         const cleanedIngredients = data.ingredients?.map(ingredient => 
           cleanIngredientString(ingredient)
         ) || [];
@@ -160,7 +157,6 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     return (
       <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
         {editMode ? (
-          // Edit mode
           <>
             <div className="space-y-2">
               <Label htmlFor="title">Recipe Title</Label>
@@ -285,7 +281,6 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
             </div>
           </>
         ) : (
-          // Preview mode
           <>
             <div>
               <h3 className="text-lg font-semibold">{editedRecipe.title}</h3>
@@ -309,7 +304,6 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
               <h4 className="font-medium mb-2">Ingredients</h4>
               <ul className="list-disc pl-5 space-y-1">
                 {(editedRecipe.ingredients || []).map((ingredient, index) => {
-                  // Parse the ingredient to show preparation instructions nicely
                   const { mainText, preparation } = parsePreparation(ingredient);
                   const { name, amount } = parseIngredientAmount(mainText);
                   
