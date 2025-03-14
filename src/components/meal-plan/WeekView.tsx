@@ -49,7 +49,7 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
       </div>
       
       {/* Desktop view - stacked days */}
-      <div className="hidden md:block space-y-3">
+      <div className="hidden md:block space-y-4">
         {weekDays.map((day) => (
           <div key={day.date.toString()} className="flex items-stretch">
             {/* Day label for desktop view */}
@@ -62,7 +62,7 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
             </div>
             
             {/* Meals container */}
-            <div className="flex-1 grid grid-cols-3 gap-3">
+            <div className="flex-1 grid grid-cols-3 gap-4">
               <WeekDayCard
                 key={`${day.date.toString()}-desktop`}
                 date={day.date}

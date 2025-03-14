@@ -55,11 +55,11 @@ const WeekDayCard = ({
   const renderMealSlot = (mealType: MealType, meal?: MealPlanWithRecipe) => {
     if (!meal) {
       return (
-        <div className="border border-dashed border-border rounded-md p-2 flex justify-between items-center gap-1 min-h-[60px] bg-background/50 hover:bg-background transition-colors">
+        <div className="border border-dashed border-border rounded-md p-3 flex justify-between items-center gap-2 min-h-[70px] bg-background/50 hover:bg-background transition-colors">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 px-2 text-xs group flex-1 justify-start" 
+            className="h-8 px-2 text-xs group flex-1 justify-start" 
             onClick={() => onAddMeal(date, mealType)}
           >
             <Plus className="h-3.5 w-3.5 mr-1 group-hover:animate-spin-slow" />
@@ -69,7 +69,7 @@ const WeekDayCard = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 w-7 px-0 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" 
+            className="h-8 w-8 px-0 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 group" 
             onClick={() => onSuggestMeal(date, mealType)}
             title="Get AI suggestion"
             type="button"
@@ -81,23 +81,24 @@ const WeekDayCard = ({
     }
     
     return (
-      <div className="border rounded-md p-2 bg-card min-h-[60px] relative hover:shadow-sm transition-shadow group">
-        <div className="text-xs font-medium line-clamp-2 pr-6 flex items-start">
+      <div className="border rounded-md p-3 bg-card min-h-[70px] relative hover:shadow-sm transition-shadow group">
+        <div className="text-xs font-medium flex items-start mb-1">
           <span className="mt-0.5">{getMealIcon(mealType)}</span>
-          <span className="flex-1">
-            {meal.recipe?.title || (
-              <span className="flex items-center text-muted-foreground">
-                <Utensils className="h-3 w-3 mr-1 group-hover:animate-pulse-slow" /> No recipe selected
-              </span>
-            )}
-          </span>
+          <span className="capitalize text-muted-foreground">{mealType}</span>
+        </div>
+        <div className="pr-7 line-clamp-2 text-sm">
+          {meal.recipe?.title || (
+            <span className="flex items-center text-muted-foreground text-xs">
+              <Utensils className="h-3 w-3 mr-1 group-hover:animate-pulse-slow" /> No recipe selected
+            </span>
+          )}
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 absolute top-1 right-1 hover:bg-destructive hover:text-destructive-foreground"
+              className="h-6 w-6 absolute top-2 right-2 hover:bg-destructive/10 hover:text-destructive"
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -136,8 +137,8 @@ const WeekDayCard = ({
       )}
       
       <div className={cn(
-        "grid grid-cols-3 gap-3 flex-1",
-        showDateHeader && "space-y-2 flex flex-col"
+        "grid grid-cols-3 gap-4 flex-1",
+        showDateHeader && "space-y-4 flex flex-col"
       )}>
         <div>{renderMealSlot('breakfast', meals.breakfast)}</div>
         <div>{renderMealSlot('lunch', meals.lunch)}</div>
