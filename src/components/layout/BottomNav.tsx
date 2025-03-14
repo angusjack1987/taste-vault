@@ -1,205 +1,119 @@
 
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { 
-  Home, 
-  Book, 
-  Plus,
-  Calendar,
-  Settings,
-  BookPlus, 
-  ShoppingCart, 
-  Refrigerator,
-  Baby 
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useLocation, Link } from "react-router-dom";
+import { Home, ChefHat, ShoppingBag, CalendarRange, User, RefrigeratorIcon, Baby } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import useAuth from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
-const navItems = [
-  { to: "/", label: "Home", Icon: Home },
-  { to: "/recipes", label: "Recipes", Icon: Book },
-  // Plus button will go here in the UI, but not in this array
-  { to: "/meal-plan", label: "Meal Plan", Icon: Calendar },
-  { to: "/settings", label: "Settings", Icon: Settings },
-];
+interface BottomNavProps {
+  className?: string;
+}
 
-const BottomNav = () => {
+const BottomNav = ({ className }: BottomNavProps) => {
   const location = useLocation();
-  const pathname = location.pathname;
   const { user } = useAuth();
-  const [babyFoodEnabled, setBabyFoodEnabled] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBabyFoodPreference = async () => {
-      if (!user) return;
-      
+    const fetchUserPreferences = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
-          .from('user_preferences')
-          .select('preferences')
-          .eq('user_id', user.id)
+          .from("user_preferences")
+          .select("preferences")
+          .eq("user_id", user.id)
           .single();
-          
-        if (error) throw error;
-        
-        if (data?.preferences?.food?.babyFoodEnabled) {
-          setBabyFoodEnabled(true);
+
+        if (error) {
+          console.error("Error fetching user preferences:", error);
+        } else if (data?.preferences) {
+          // Check if preferences is an object (not a string or array)
+          if (typeof data.preferences === 'object' && !Array.isArray(data.preferences)) {
+            setUserPreferences(data.preferences);
+          }
         }
-      } catch (error) {
-        console.error("Error fetching baby food preference:", error);
+      } catch (err) {
+        console.error("Error in fetchUserPreferences:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    fetchBabyFoodPreference();
+
+    fetchUserPreferences();
   }, [user]);
 
+  // Check if baby food is enabled in user preferences
+  const isBabyFoodEnabled = userPreferences?.food?.babyFoodEnabled || false;
+
+  // Get active route
+  const getActiveClass = (path: string) => {
+    const isActive = location.pathname === path || location.pathname.startsWith(`${path}/`);
+    return isActive
+      ? "text-primary border-t-4 pt-1 border-primary hover:text-primary"
+      : "text-muted-foreground border-t-4 pt-1 border-transparent hover:text-primary";
+  };
+
+  // Array of routes for the bottom nav
+  const routes = [
+    { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
+    { path: "/recipes", label: "Recipes", icon: <ChefHat className="h-5 w-5" /> },
+    { path: "/fridge", label: "Fridge", icon: <RefrigeratorIcon className="h-5 w-5" /> },
+    { path: "/meal-plan", label: "Meal Plan", icon: <CalendarRange className="h-5 w-5" /> },
+    { path: "/shopping", label: "Shopping", icon: <ShoppingBag className="h-5 w-5" /> },
+  ];
+  
+  // Only add Baby Food tab if enabled in preferences
+  if (isBabyFoodEnabled) {
+    routes.splice(3, 0, { 
+      path: "/baby-food", 
+      label: "Baby Food", 
+      icon: <Baby className="h-5 w-5" /> 
+    });
+  }
+
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
-      <div className="grid grid-cols-5 items-center bg-gradient-to-r from-primary/95 via-primary to-primary/95 text-primary-foreground rounded-full py-1 shadow-vibrant mx-auto max-w-md">
-        {/* First navigation item */}
-        <div className="flex justify-center">
-          <Link
-            to={navItems[0].to}
-            className={cn(
-              "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110",
-              pathname === navItems[0].to ? "text-secondary" : "text-primary-foreground"
-            )}
-          >
-            <div className="flex justify-center w-full">
-              {React.createElement(navItems[0].Icon, { 
-                className: cn(
-                  "w-4 h-4 mb-0.5 transition-all",
-                  pathname === navItems[0].to ? "text-secondary animate-pulse-slow" : "text-primary-foreground"
-                )
-              })}
-            </div>
-            <span className="text-[10px] font-medium">{navItems[0].label}</span>
-          </Link>
-        </div>
-
-        {/* Second navigation item */}
-        <div className="flex justify-center">
-          <Link
-            to={navItems[1].to}
-            className={cn(
-              "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110",
-              (pathname === navItems[1].to || (navItems[1].to !== "/" && pathname.startsWith(navItems[1].to)))
-                ? "text-secondary" 
-                : "text-primary-foreground"
-            )}
-          >
-            <div className="flex justify-center w-full">
-              {React.createElement(navItems[1].Icon, { 
-                className: cn(
-                  "w-4 h-4 mb-0.5 transition-all",
-                  (pathname === navItems[1].to || (navItems[1].to !== "/" && pathname.startsWith(navItems[1].to)))
-                    ? "text-secondary animate-pulse-slow" 
-                    : "text-primary-foreground"
-                )
-              })}
-            </div>
-            <span className="text-[10px] font-medium">{navItems[1].label}</span>
-          </Link>
-        </div>
-
-        {/* Center Action Button */}
-        <div className="flex justify-center relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 transition-all border-3 border-primary text-white shadow-md hover:-translate-y-1 active:translate-y-0 group">
-                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="center" className="w-56 mb-2 border-2 rounded-xl animate-in">
-              <Link to="/recipes/new">
-                <DropdownMenuItem className="cursor-pointer rounded-lg group">
-                  <BookPlus className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
-                  Add Recipe
-                </DropdownMenuItem>
-              </Link>
-              <Link to="/fridge">
-                <DropdownMenuItem className="cursor-pointer rounded-lg group">
-                  <Refrigerator className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
-                  Fridge
-                </DropdownMenuItem>
-              </Link>
-              <Link to="/shopping">
-                <DropdownMenuItem className="cursor-pointer rounded-lg group">
-                  <ShoppingCart className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
-                  Shopping List
-                </DropdownMenuItem>
-              </Link>
-              {babyFoodEnabled && (
-                <Link to="/baby-food">
-                  <DropdownMenuItem className="cursor-pointer rounded-lg group">
-                    <Baby className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
-                    Baby Food
-                  </DropdownMenuItem>
+    <nav
+      className={`fixed bottom-0 left-0 right-0 bg-background border-t border-border h-16 px-2 shadow-lg z-30 sm:hidden ${className}`}
+    >
+      <div className="flex justify-between items-center h-full">
+        <TooltipProvider>
+          {routes.map((route) => (
+            <Tooltip key={route.path} delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Link
+                  to={route.path}
+                  aria-label={route.label}
+                  className={`flex flex-1 flex-col items-center justify-center text-xs ${getActiveClass(route.path)}`}
+                >
+                  {route.icon}
+                  <span className="mt-1">{route.label}</span>
                 </Link>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Third navigation item */}
-        <div className="flex justify-center">
-          <Link
-            to={navItems[2].to}
-            className={cn(
-              "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110",
-              (pathname === navItems[2].to || (navItems[2].to !== "/" && pathname.startsWith(navItems[2].to)))
-                ? "text-secondary" 
-                : "text-primary-foreground"
-            )}
-          >
-            <div className="flex justify-center w-full">
-              {React.createElement(navItems[2].Icon, { 
-                className: cn(
-                  "w-4 h-4 mb-0.5 transition-all",
-                  (pathname === navItems[2].to || (navItems[2].to !== "/" && pathname.startsWith(navItems[2].to)))
-                    ? "text-secondary animate-pulse-slow" 
-                    : "text-primary-foreground"
-                )
-              })}
-            </div>
-            <span className="text-[10px] font-medium">{navItems[2].label}</span>
-          </Link>
-        </div>
-
-        {/* Fourth navigation item */}
-        <div className="flex justify-center">
-          <Link
-            to={navItems[3].to}
-            className={cn(
-              "flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110",
-              (pathname === navItems[3].to || (navItems[3].to !== "/" && pathname.startsWith(navItems[3].to)))
-                ? "text-secondary" 
-                : "text-primary-foreground"
-            )}
-          >
-            <div className="flex justify-center w-full">
-              {React.createElement(navItems[3].Icon, { 
-                className: cn(
-                  "w-4 h-4 mb-0.5 transition-all",
-                  (pathname === navItems[3].to || (navItems[3].to !== "/" && pathname.startsWith(navItems[3].to)))
-                    ? "text-secondary animate-pulse-slow" 
-                    : "text-primary-foreground"
-                )
-              })}
-            </div>
-            <span className="text-[10px] font-medium">{navItems[3].label}</span>
-          </Link>
-        </div>
+              </TooltipTrigger>
+              <TooltipContent>{route.label}</TooltipContent>
+            </Tooltip>
+          ))}
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <Link
+                to="/settings"
+                aria-label="Settings"
+                className={`flex flex-1 flex-col items-center justify-center text-xs ${getActiveClass("/settings")}`}
+              >
+                <User className="h-5 w-5" />
+                <span className="mt-1">Settings</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Settings</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-    </div>
+    </nav>
   );
 };
 
