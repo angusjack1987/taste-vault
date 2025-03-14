@@ -12,7 +12,7 @@ import { Link, useLocation } from "react-router-dom";
 interface Tab {
   title: string;
   icon: LucideIcon;
-  path?: string; // Add path for navigation
+  path?: string;
   type?: undefined;
 }
 
@@ -67,11 +67,12 @@ export function ExpandableTabs({
   // Find the selected tab index based on the current path
   const findSelectedTabIndex = () => {
     return tabs.findIndex(
-      (tab) => 
-        tab.type !== "separator" && 
-        tab.path && 
-        (pathname === tab.path || 
-         (tab.path !== "/" && pathname.startsWith(tab.path)))
+      (tab) => {
+        if (tab.type === "separator") return false;
+        return tab.path && 
+          (pathname === tab.path || 
+           (tab.path !== "/" && pathname.startsWith(tab.path)));
+      }
     );
   };
   
@@ -119,13 +120,14 @@ export function ExpandableTabs({
         }
 
         // Now TypeScript knows this is a Tab
-        const Icon = tab.icon;
+        const tabItem = tab as Tab;
+        const Icon = tabItem.icon;
         const isSelected = selected === index;
         
         // Determine if this tab should be considered active based on the URL path
-        const isActive = tab.path && 
-          (tab.path === pathname || 
-           (tab.path !== "/" && pathname.startsWith(tab.path)));
+        const isActive = tabItem.path && 
+          (tabItem.path === pathname || 
+           (tabItem.path !== "/" && pathname.startsWith(tabItem.path)));
         
         // Select UI classNames based on whether tab is active
         const tabClassName = cn(
@@ -161,17 +163,17 @@ export function ExpandableTabs({
                   transition={transition}
                   className="overflow-hidden text-[10px] font-medium"
                 >
-                  {tab.title}
+                  {tabItem.title}
                 </motion.span>
               )}
             </AnimatePresence>
           </motion.div>
         );
 
-        return tab.path ? (
+        return tabItem.path ? (
           <Link 
-            key={tab.title}
-            to={tab.path} 
+            key={tabItem.title}
+            to={tabItem.path} 
             className="flex justify-center"
             onClick={() => handleSelect(index)}
           >
@@ -179,7 +181,7 @@ export function ExpandableTabs({
           </Link>
         ) : (
           <button
-            key={tab.title}
+            key={tabItem.title}
             onClick={() => handleSelect(index)}
             className="flex justify-center"
           >
