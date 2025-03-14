@@ -37,7 +37,7 @@ const FilterDrawer = () => {
     colorClass: string 
   }) => (
     <Button 
-      variant={categoryFilter === value ? "sunshine" : "outline"} 
+      variant={categoryFilter === value ? "cheese" : "outline"} 
       size="sm" 
       className={`whitespace-nowrap ${categoryFilter !== value ? colorClass : ''} group rounded-full`}
       onClick={() => setCategoryFilter(value as any)}

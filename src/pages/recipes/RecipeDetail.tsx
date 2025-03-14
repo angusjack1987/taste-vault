@@ -403,15 +403,9 @@ const RecipeDetail = () => {
 
           <div className="mb-6 flex flex-col sm:flex-row gap-3">
             <AiSuggestionButton 
-              onClick={handleOpenVariationsDialog} 
-              label="Get AI Recipe Variations"
-              className="w-full md:w-auto"
-            />
-            
-            <AiSuggestionButton 
               onClick={handleEnhanceInstructions} 
               label={isInstructionsEnhanced ? "Instructions Enhanced" : "Enhance Instructions"}
-              variant="mint"
+              variant="lettuce"
               isLoading={isEnhancingInstructions}
               className="w-full md:w-auto"
             >

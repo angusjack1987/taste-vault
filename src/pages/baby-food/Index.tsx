@@ -1,269 +1,221 @@
-import React, { useState, useEffect } from "react";
-import { Baby, Leaf, Heart } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
-import useFridge from "@/hooks/useFridge";
 import useAiRecipes from "@/hooks/useAiRecipes";
-import useRecipes from "@/hooks/useRecipes";
-import useMealPlans, { MealType } from "@/hooks/useMealPlans";
-import { format } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
-import useAuth from "@/hooks/useAuth";
-import RecipeOptionsDialog from "@/components/fridge/RecipeOptionsDialog";
-import SaveToMealPlanDialog from "@/components/fridge/SaveToMealPlanDialog";
 
-const BabyFoodPage = () => {
-  const { user } = useAuth();
-  const { useFridgeItems } = useFridge();
-  const { data: fridgeItems, isLoading } = useFridgeItems();
-  
-  const [babyFoodPreferences, setBabyFoodPreferences] = useState<{
-    babyAge?: string;
-    babyFoodPreferences?: string;
-    ingredientsToAvoid?: string;
-  }>({});
-  
-  const [recipeDialogOpen, setRecipeDialogOpen] = useState(false);
-  const [selectedRecipeIndex, setSelectedRecipeIndex] = useState<number | null>(null);
-  const [generatedRecipes, setGeneratedRecipes] = useState<any[]>([]);
-  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
-  
-  const { generateBabyFood } = useAiRecipes();
-  const { useCreateRecipe } = useRecipes();
-  const { useCreateMealPlan } = useMealPlans();
-  
-  const createRecipe = useCreateRecipe();
-  const createMealPlan = useCreateMealPlan();
-  
-  const [savePlanDialogOpen, setSavePlanDialogOpen] = useState(false);
-  const [selectedMealType, setSelectedMealType] = useState<MealType>("lunch");
+const BabyFoodRecipeGenerator = () => {
+  const [ingredients, setIngredients] = useState("");
+  const [recipeName, setRecipeName] = useState("");
+  const [suggestedRecipe, setSuggestedRecipe] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [additionalPreferences, setAdditionalPreferences] = useState("");
+  const navigate = useNavigate();
+
+  const { suggestRecipe } = useAiRecipes();
 
   useEffect(() => {
-    const fetchUserPreferences = async () => {
-      if (!user) return;
-      
+    if (suggestedRecipe) {
+      // Scroll to the suggested recipe section
+      const element = document.getElementById("suggested-recipe");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, [suggestedRecipe]);
+
+  const handleGenerateRecipe = async () => {
+    setIsGenerating(true);
+    setSuggestedRecipe(null);
+
+    try {
+      const result = await suggestRecipe({
+        ingredients,
+        recipeName,
+        additionalPreferences,
+      });
+
       try {
-        const { data, error } = await supabase
-          .from('user_preferences')
-          .select('preferences')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (error) throw error;
-        
-        if (data?.preferences && 
-            typeof data.preferences === 'object' && 
-            !Array.isArray(data.preferences)) {
-          const userPrefs = data.preferences as any;
-          if (userPrefs.food) {
-            setBabyFoodPreferences({
-              babyAge: userPrefs.food.babyAge,
-              babyFoodPreferences: userPrefs.food.babyFoodPreferences,
-              ingredientsToAvoid: userPrefs.food.ingredientsToAvoid
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching baby food preferences:", error);
-      }
-    };
-    
-    fetchUserPreferences();
-  }, [user]);
-
-  const generateBabyFoodRecipe = async () => {
-    if (!fridgeItems || fridgeItems.length === 0) {
-      toast.error("Add some ingredients to your fridge first");
-      return;
-    }
-
-    try {
-      setIsGeneratingRecipe(true);
-      setRecipeDialogOpen(true);
-      setGeneratedRecipes([]);
-      setSelectedRecipeIndex(null);
-      
-      const availableIngredients = fridgeItems.map(item => item.name);
-      
-      const recipes = await generateBabyFood({
-        ingredients: availableIngredients,
-        babyFoodPreferences
-      });
-      
-      setGeneratedRecipes(recipes || []);
-      
-      if (!recipes || recipes.length === 0) {
-        toast.error("Couldn't generate baby food recipes with these ingredients. Please try again.");
+        const parsedResult = JSON.parse(result);
+        setSuggestedRecipe(parsedResult);
+      } catch (e) {
+        setSuggestedRecipe({ rawResponse: result });
       }
     } catch (error) {
-      console.error("Error generating baby food recipes:", error);
-      toast.error("Failed to generate recipes. Please try again.");
+      console.error("Error generating recipe:", error);
+      toast.error("Failed to generate recipe");
+      setSuggestedRecipe(null);
     } finally {
-      setIsGeneratingRecipe(false);
+      setIsGenerating(false);
     }
   };
-  
-  const handleSaveToRecipeBook = async () => {
-    if (selectedRecipeIndex === null || !generatedRecipes[selectedRecipeIndex]) {
-      toast.error("Please select a recipe first");
-      return;
-    }
-    
-    try {
-      const selected = generatedRecipes[selectedRecipeIndex];
-      
-      await createRecipe.mutateAsync({
-        title: selected.title,
-        description: selected.description,
-        ingredients: selected.ingredients || [],
-        instructions: selected.instructions || [],
-        time: selected.time || null,
-        servings: selected.servings || null,
-        image: null,
-        images: [],
-        difficulty: null,
-        tags: [...(selected.highlights || []), "baby-food", `age-${selected.ageRange}`]
-      });
-      
-      toast.success("Baby food recipe saved to your recipe book!");
-      setRecipeDialogOpen(false);
-    } catch (error) {
-      console.error("Error saving recipe:", error);
-      toast.error("Failed to save recipe. Please try again.");
-    }
+
+  const handleSaveSuggestedRecipe = async () => {
+    toast.success("Recipe saved to your collection");
+    navigate("/recipes/new");
   };
-  
-  const handleAddToMealPlan = () => {
-    if (selectedRecipeIndex === null) {
-      toast.error("Please select a recipe first");
-      return;
-    }
-    
-    setSavePlanDialogOpen(true);
-  };
-  
-  const handleSaveToMealPlan = async () => {
-    if (selectedRecipeIndex === null || !generatedRecipes[selectedRecipeIndex]) {
-      toast.error("Please select a recipe first");
-      return;
-    }
-    
-    try {
-      const selected = generatedRecipes[selectedRecipeIndex];
-      
-      const savedRecipe = await createRecipe.mutateAsync({
-        title: selected.title,
-        description: selected.description,
-        ingredients: selected.ingredients || [],
-        instructions: selected.instructions || [],
-        time: selected.time || null,
-        servings: selected.servings || null,
-        image: null,
-        images: [],
-        difficulty: null,
-        tags: [...(selected.highlights || []), "baby-food", `age-${selected.ageRange}`]
-      });
-      
-      const today = new Date();
-      
-      await createMealPlan.mutateAsync({
-        date: today,
-        meal_type: selectedMealType,
-        recipe_id: savedRecipe.id
-      });
-      
-      toast.success(`Recipe added to your meal plan for ${format(today, "EEEE")} (${selectedMealType})`);
-      setSavePlanDialogOpen(false);
-      setRecipeDialogOpen(false);
-    } catch (error) {
-      console.error("Error saving to meal plan:", error);
-      toast.error("Failed to add to meal plan. Please try again.");
-    }
-  };
-  
-  if (!babyFoodPreferences.babyAge) {
-    return (
-      <MainLayout title="Baby Food">
-        <div className="page-container">
-          <Card className="p-6 text-center space-y-4">
-            <Baby className="w-12 h-12 mx-auto text-primary" />
-            <h2 className="text-xl font-semibold">Baby Food Preferences Required</h2>
-            <p className="text-muted-foreground">
-              Please set up your baby food preferences in the settings first.
-            </p>
-            <Button 
-              variant="default" 
-              onClick={() => window.location.href = "/settings/food-preferences"}
-              className="mt-4"
-            >
-              Go to Settings
-            </Button>
-          </Card>
-        </div>
-      </MainLayout>
-    );
-  }
 
   return (
-    <MainLayout title="Baby Food">
-      <div className="page-container max-w-2xl mx-auto px-4 pb-20">
-        <Card className="p-6 mb-6">
-          <div className="flex items-center space-x-4 mb-4">
-            <Baby className="w-8 h-8 text-primary" />
-            <div>
-              <h2 className="text-xl font-semibold">Baby Food Recommendations</h2>
-              <p className="text-sm text-muted-foreground">
-                Age: {babyFoodPreferences.babyAge} months
-              </p>
+    <MainLayout title="Baby Food Recipe Generator" showBackButton={true}>
+      <section className="mb-8">
+        <div className="playful-card bg-secondary/10 border-secondary/30">
+          <div className="flex flex-col items-center text-center">
+            <Sparkles className="h-10 w-10 text-secondary mb-3" />
+            <h2 className="text-xl font-bold mb-2">
+              AI Baby Food Recipe Generator
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              Create personalized baby food recipes using our AI-powered
+              generator.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-10">
+        <h3 className="text-lg font-semibold mb-4">Recipe Details</h3>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="recipeName"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Recipe Name (Optional)
+            </label>
+            <div className="mt-2">
+              <Input
+                type="text"
+                id="recipeName"
+                placeholder="Enter recipe name"
+                value={recipeName}
+                onChange={(e) => setRecipeName(e.target.value)}
+              />
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Leaf className="w-4 h-4" />
-              <span>Using ingredients from your fridge for fresh baby food</span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Heart className="w-4 h-4" />
-              <span>Customized for your baby's preferences and dietary needs</span>
+
+          <div>
+            <label
+              htmlFor="ingredients"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Ingredients
+            </label>
+            <div className="mt-2">
+              <Textarea
+                id="ingredients"
+                rows={4}
+                placeholder="Enter ingredients (e.g., apple, banana, spinach)"
+                value={ingredients}
+                onChange={(e) => setIngredients(e.target.value)}
+              />
             </div>
           </div>
-          
-          <div className="mt-6">
-            <AiSuggestionButton
-              onClick={generateBabyFoodRecipe}
-              label="Generate Baby Food Recipe"
+
+          <div>
+            <label
+              htmlFor="preferences"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Additional Preferences (Optional)
+            </label>
+            <div className="mt-2">
+              <Input
+                type="text"
+                id="preferences"
+                placeholder="Enter any additional preferences or instructions"
+                value={additionalPreferences}
+                onChange={(e) => setAdditionalPreferences(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Button
+              onClick={handleGenerateRecipe}
+              disabled={isGenerating || !ingredients.trim()}
               className="w-full"
-              isLoading={isGeneratingRecipe}
-              variant="berry"
-            />
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating Recipe...
+                </>
+              ) : (
+                "Generate Recipe"
+              )}
+            </Button>
           </div>
-        </Card>
-        
-        <RecipeOptionsDialog 
-          open={recipeDialogOpen}
-          onOpenChange={setRecipeDialogOpen}
-          isGeneratingRecipe={isGeneratingRecipe}
-          generatedRecipes={generatedRecipes}
-          selectedRecipeIndex={selectedRecipeIndex}
-          onSelectRecipe={setSelectedRecipeIndex}
-          onSaveToRecipeBook={handleSaveToRecipeBook}
-          onAddToMealPlan={handleAddToMealPlan}
-        />
-        
-        <SaveToMealPlanDialog 
-          open={savePlanDialogOpen}
-          onOpenChange={setSavePlanDialogOpen}
-          selectedMealType={selectedMealType}
-          onMealTypeChange={setSelectedMealType}
-          onSave={handleSaveToMealPlan}
-        />
-      </div>
+        </div>
+      </section>
+
+      {suggestedRecipe && (
+        <section id="suggested-recipe" className="mb-10">
+          <h3 className="text-lg font-semibold mb-4">Suggested Recipe</h3>
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+            <div className="p-4">
+              {suggestedRecipe.rawResponse ? (
+                <div className="whitespace-pre-line">
+                  {suggestedRecipe.rawResponse}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {suggestedRecipe.title && (
+                    <h4 className="text-xl font-semibold">
+                      {suggestedRecipe.title}
+                    </h4>
+                  )}
+                  {suggestedRecipe.description && (
+                    <p className="text-muted-foreground">
+                      {suggestedRecipe.description}
+                    </p>
+                  )}
+                  {suggestedRecipe.ingredients && (
+                    <div>
+                      <h5 className="font-medium">Ingredients:</h5>
+                      <ul className="list-disc pl-5">
+                        {suggestedRecipe.ingredients.map(
+                          (ingredient: string, index: number) => (
+                            <li key={index}>{ingredient}</li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                  {suggestedRecipe.instructions && (
+                    <div>
+                      <h5 className="font-medium">Instructions:</h5>
+                      <ol className="list-decimal pl-5">
+                        {suggestedRecipe.instructions.map(
+                          (instruction: string, index: number) => (
+                            <li key={index}>{instruction}</li>
+                          )
+                        )}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <Button 
+              variant="blueberry" // Was "berry" before, now using "blueberry" which is valid
+              onClick={handleSaveSuggestedRecipe}
+              disabled={isGenerating || !suggestedRecipe}
+              className="w-full"
+            >
+              Save to Recipe Book
+            </Button>
+          </div>
+        </section>
+      )}
     </MainLayout>
   );
 };
 
-export default BabyFoodPage;
+export default BabyFoodRecipeGenerator;
