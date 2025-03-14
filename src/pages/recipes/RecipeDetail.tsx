@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Clock, 
@@ -443,21 +443,15 @@ const RecipeDetail = () => {
                           {getIngredientIcon(name)}
                         </div>
                         
-                        <div className="flex-1 grid grid-cols-12 gap-2 items-center">
-                          {amount ? (
-                            <>
-                              <span className="font-mono text-sm col-span-3 text-sage-700">{amount}</span>
-                              <span className="text-sm font-medium col-span-9">{name}</span>
-                            </>
-                          ) : (
-                            <span className="text-sm font-medium col-span-12">{name}</span>
-                          )}
-                          
-                          {(prepInstructions || preparation) && (
-                            <div className="text-xs text-muted-foreground italic col-span-12 mt-1 ml-0">
-                              {prepInstructions || preparation}
-                            </div>
-                          )}
+                        <div className="flex-1">
+                          <span className="text-sm">
+                            {amount ? `${amount} ${name}` : name}
+                            {(prepInstructions || preparation) && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                {prepInstructions || preparation}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </li>
                     );
