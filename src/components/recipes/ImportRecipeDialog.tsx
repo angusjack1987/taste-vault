@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { X, Loader2, Link, Check, Save, Edit, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { RecipeFormData } from "@/hooks/useRecipes";
 import { cleanIngredientString, parsePreparation, parseIngredientAmount, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import IngredientInput from "./IngredientInput";
-import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -27,7 +26,6 @@ interface ImportRecipeDialogProps {
 
 const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps) => {
   const [url, setUrl] = useState("");
-  const [useAI, setUseAI] = useState(false);
   const [scrapedRecipe, setScrapedRecipe] = useState<Partial<RecipeFormData> | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editedRecipe, setEditedRecipe] = useState<Partial<RecipeFormData> | null>(null);
@@ -40,7 +38,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     if (!url) return;
     
     scrapeRecipe(
-      { url, useAI },
+      url,
       {
         onSuccess: (data) => {
           console.log("Raw scraped ingredients:", data.ingredients);
@@ -119,7 +117,6 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     setEditedRecipe(null);
     setEditMode(false);
     setUrl("");
-    setUseAI(false);
     onClose();
   };
   
@@ -144,21 +141,10 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
       
       <div className="flex items-center space-x-2 mt-4">
         <div className="flex items-center space-x-2">
-          <Switch
-            id="use-ai"
-            checked={useAI}
-            onCheckedChange={setUseAI}
-          />
-          <Label htmlFor="use-ai" className="cursor-pointer">
-            {useAI ? (
-              <span className="flex items-center">
-                <Sparkles className="w-4 h-4 mr-1 text-sage-500" />
-                Use AI to extract recipe (better for complex websites)
-              </span>
-            ) : (
-              "Use web scraper (faster, works for most recipe sites)"
-            )}
-          </Label>
+          <span className="flex items-center text-sm text-muted-foreground">
+            <Sparkles className="w-4 h-4 mr-1 text-sage-500" />
+            Using AI to extract recipe (optimized for all websites)
+          </span>
         </div>
       </div>
       
@@ -181,10 +167,10 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {useAI ? "Analyzing with AI..." : "Importing..."}
+              Analyzing with AI...
             </>
           ) : (
-            useAI ? "Extract with AI" : "Import Recipe"
+            "Extract Recipe"
           )}
         </Button>
       </DialogFooter>
