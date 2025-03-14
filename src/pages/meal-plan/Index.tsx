@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Sparkles, Lightbulb } from "lucide-react";
@@ -135,25 +136,43 @@ const MealPlan = () => {
       if (result) {
         setParsingMealSuggestion(true);
         try {
-          let cleanJson = result;
-          if (result.includes("```json")) {
-            cleanJson = result.split("```json")[1].split("```")[0].trim();
-          } else if (result.includes("```")) {
-            cleanJson = result.split("```")[1].split("```")[0].trim();
+          // If the result is already an object, use it directly
+          if (typeof result === 'object' && result !== null) {
+            setSuggestedMeal(result);
+          } else if (typeof result === 'string') {
+            // For string responses, try to extract JSON
+            let cleanJson = result;
+            if (result.includes("```json")) {
+              cleanJson = result.split("```json")[1].split("```")[0].trim();
+            } else if (result.includes("```")) {
+              cleanJson = result.split("```")[1].split("```")[0].trim();
+            }
+            
+            try {
+              const parsedMeal = JSON.parse(cleanJson);
+              setSuggestedMeal(parsedMeal);
+            } catch (parseError) {
+              console.error("Error parsing suggestion:", parseError);
+              setSuggestedMeal({ 
+                rawResponse: result 
+              });
+            }
+          } else {
+            setSuggestedMeal({ 
+              rawResponse: String(result) 
+            });
           }
-          
-          const parsedMeal = JSON.parse(cleanJson);
-          setSuggestedMeal(parsedMeal);
-        } catch (parseError) {
-          console.error("Error parsing suggestion:", parseError);
+        } catch (error) {
+          console.error("Error handling suggestion:", error);
           setSuggestedMeal({ 
-            rawResponse: result 
+            rawResponse: typeof result === 'string' ? result : JSON.stringify(result) 
           });
         }
         setParsingMealSuggestion(false);
       }
     } catch (error) {
       console.error("Error getting meal suggestion:", error);
+      toast.error("Failed to get meal suggestions. Please try again.");
       setParsingMealSuggestion(false);
     }
   };

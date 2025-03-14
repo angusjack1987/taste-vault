@@ -74,6 +74,7 @@ serve(async (req: Request) => {
         } catch (error) {
           console.error("Error parsing meal suggestion:", error);
           // Fall back to the raw response if parsing fails
+          result = { rawResponse: result };
         }
         break;
       default:
@@ -280,11 +281,24 @@ async function parseMealSuggestion(response: string, aiSettings?: AISettings): P
     
     if (jsonMatch) {
       const jsonString = jsonMatch[0];
-      const parsedResponse = JSON.parse(jsonString);
-      
-      // Validate expected structure
-      if (parsedResponse && parsedResponse.options && Array.isArray(parsedResponse.options)) {
-        return parsedResponse;
+      try {
+        const parsedResponse = JSON.parse(jsonString);
+        
+        // Validate expected structure
+        if (parsedResponse && typeof parsedResponse === 'object') {
+          // Check if options exist and is an array
+          if (parsedResponse.options && Array.isArray(parsedResponse.options)) {
+            return parsedResponse;
+          }
+          
+          // If no options array but we have a valid object, wrap it
+          return { 
+            options: [parsedResponse] 
+          };
+        }
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError);
+        // Continue to fallback parsing if direct JSON parsing fails
       }
     }
     
@@ -316,7 +330,14 @@ Ensure all data is accurately extracted from the text.`;
     // Extract JSON from the resulting text
     const parsedJsonMatch = parsedResult.match(/\{[\s\S]*\}/);
     if (parsedJsonMatch) {
-      return JSON.parse(parsedJsonMatch[0]);
+      try {
+        const finalParsed = JSON.parse(parsedJsonMatch[0]);
+        if (finalParsed && typeof finalParsed === 'object') {
+          return finalParsed;
+        }
+      } catch (finalParseError) {
+        console.error("Final parse error:", finalParseError);
+      }
     }
     
     // If all parsing attempts fail, return the original response

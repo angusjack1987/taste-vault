@@ -134,7 +134,7 @@ const SuggestMealDialog = ({
                 <div className="mt-4 p-4 bg-muted rounded-md text-sm whitespace-pre-line">
                   {suggestedMeal.rawResponse}
                 </div>
-              ) : suggestedMeal.options && suggestedMeal.options.length > 0 ? (
+              ) : suggestedMeal.options && Array.isArray(suggestedMeal.options) && suggestedMeal.options.length > 0 ? (
                 <div className="space-y-6">
                   <h3 className="text-lg font-medium text-center">Select a meal option:</h3>
                   
@@ -165,7 +165,7 @@ const SuggestMealDialog = ({
                         
                         <p className="text-muted-foreground mb-4">{option.description}</p>
                         
-                        {option.highlights && option.highlights.length > 0 && (
+                        {option.highlights && Array.isArray(option.highlights) && option.highlights.length > 0 && (
                           <div className="mb-4">
                             <div className="flex flex-wrap gap-2">
                               {option.highlights.map((highlight, hidx) => (
@@ -197,7 +197,7 @@ const SuggestMealDialog = ({
                   </div>
                   
                   <div className="space-y-2">
-                    {selectedOption !== null && (
+                    {selectedOption !== null && suggestedMeal.options && suggestedMeal.options[selectedOption] && (
                       <div className="border-t pt-4">
                         <h4 className="font-medium mb-2 flex items-center">
                           <ChefHat className="h-4 w-4 mr-2" />
@@ -208,7 +208,9 @@ const SuggestMealDialog = ({
                           <div>
                             <h5 className="text-sm font-medium text-muted-foreground mb-1">Ingredients:</h5>
                             <ul className="list-disc pl-5 text-sm space-y-1">
-                              {suggestedMeal.options[selectedOption].ingredients?.map((ingredient, idx) => (
+                              {suggestedMeal.options[selectedOption].ingredients && 
+                               Array.isArray(suggestedMeal.options[selectedOption].ingredients) && 
+                               suggestedMeal.options[selectedOption].ingredients?.map((ingredient, idx) => (
                                 <li key={idx}>{ingredient}</li>
                               ))}
                             </ul>
@@ -217,7 +219,9 @@ const SuggestMealDialog = ({
                           <div>
                             <h5 className="text-sm font-medium text-muted-foreground mb-1">Instructions:</h5>
                             <ol className="list-decimal pl-5 text-sm space-y-2">
-                              {suggestedMeal.options[selectedOption].instructions?.map((step, idx) => (
+                              {suggestedMeal.options[selectedOption].instructions && 
+                               Array.isArray(suggestedMeal.options[selectedOption].instructions) && 
+                               suggestedMeal.options[selectedOption].instructions?.map((step, idx) => (
                                 <li key={idx}>{step}</li>
                               ))}
                             </ol>
@@ -245,7 +249,7 @@ const SuggestMealDialog = ({
             >
               Back
             </Button>
-            {suggestedMeal.options && suggestedMeal.options.length > 0 && (
+            {suggestedMeal.options && Array.isArray(suggestedMeal.options) && suggestedMeal.options.length > 0 && (
               <Button 
                 onClick={() => selectedOption !== null && onSaveSuggestedRecipe(selectedOption)}
                 className="sm:flex-1"
