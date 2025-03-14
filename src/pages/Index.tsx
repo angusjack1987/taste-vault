@@ -21,7 +21,7 @@ const IndexPage = () => {
   const { useAllRecipes } = useRecipes();
   const { useTodaysMeals } = useMealPlans();
   const { suggestMealForPlan, loading: aiLoading } = useAiRecipes();
-  const { getMemoryInsights, insights, loading: memoryLoading, isMemoryEnabled } = useAiMemory();
+  const { getMemoryInsights, insights, loading: memoryLoading, isMemoryEnabled, lastUpdated } = useAiMemory();
   
   const { data: recipes = [], isLoading: recipesLoading } = useAllRecipes();
   const { data: todaysMeals = [], isLoading: mealsLoading } = useTodaysMeals();
@@ -134,9 +134,10 @@ const IndexPage = () => {
         <MemoryInsightsSection 
           memoryLoading={memoryLoading}
           memoryPreview={memoryPreview}
-          isMemoryEnabled={true} // Always show this section regardless of settings
+          isMemoryEnabled={isMemoryEnabled}
           onOpenMemoryDialog={() => setMemoryDialogOpen(true)}
           onGenerateInsights={getMemoryInsights}
+          lastUpdated={lastUpdated}
         />
         
         {/* Today's Meals Section */}

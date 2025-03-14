@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_memory_insights: {
+        Row: {
+          created_at: string
+          id: string
+          insights: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insights: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insights?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_prompt_history: {
         Row: {
           endpoint: string
