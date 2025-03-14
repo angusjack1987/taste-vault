@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { ChevronDown, InfoIcon, Trash, History, Sparkles, Server } from "lucide-react";
+import { ChevronDown, InfoIcon, Trash, History, Sparkles, Server, Brain } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { 
   Card, 
@@ -32,6 +32,7 @@ import useAuth from "@/hooks/useAuth";
 import useAISettings, { PromptHistoryItem } from "@/hooks/useAISettings";
 import { AISettings as AISettingsType } from "@/hooks/useAiRecipes";
 import { format } from "date-fns";
+import AiMemoryDialog from "@/components/meal-plan/dialogs/AiMemoryDialog";
 
 const modelOptions = [
   { value: "gpt-4o", label: "GPT-4o (Most Capable)" },
@@ -53,11 +54,14 @@ const AISettings = () => {
   const { mutate: updateSettings, isPending: isUpdating } = useUpdateAISettings();
   const { mutate: clearHistory, isPending: isClearing } = useClearPromptHistory();
   
+  const [aiMemoryOpen, setAiMemoryOpen] = useState(false);
+  
   // Local state for form values
   const [localSettings, setLocalSettings] = useState<AISettingsType>({
     model: aiSettings?.model || "gpt-3.5-turbo",
     temperature: aiSettings?.temperature || 0.7,
     promptHistoryEnabled: aiSettings?.promptHistoryEnabled ?? true,
+    useMemory: aiSettings?.useMemory ?? true,
     userPreferences: {
       responseStyle: aiSettings?.userPreferences?.responseStyle || "balanced"
     }
@@ -70,6 +74,7 @@ const AISettings = () => {
         model: aiSettings.model || "gpt-3.5-turbo",
         temperature: aiSettings.temperature || 0.7,
         promptHistoryEnabled: aiSettings.promptHistoryEnabled ?? true,
+        useMemory: aiSettings.useMemory ?? true,
         userPreferences: {
           responseStyle: aiSettings.userPreferences?.responseStyle || "balanced"
         }
@@ -201,17 +206,44 @@ const AISettings = () => {
                   </Select>
                 </div>
                 
-                <div className="flex items-center justify-between pt-2">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Save Prompt History</label>
-                    <p className="text-xs text-muted-foreground">Store prompts for future reference</p>
+                <Separator className="my-4" />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <label className="text-sm font-medium">Save Prompt History</label>
+                      <p className="text-xs text-muted-foreground">Store prompts for future reference</p>
+                    </div>
+                    <Switch
+                      checked={localSettings.promptHistoryEnabled}
+                      onCheckedChange={(checked) => 
+                        setLocalSettings({...localSettings, promptHistoryEnabled: checked})
+                      }
+                    />
                   </div>
-                  <Switch
-                    checked={localSettings.promptHistoryEnabled}
-                    onCheckedChange={(checked) => 
-                      setLocalSettings({...localSettings, promptHistoryEnabled: checked})
-                    }
-                  />
+                  
+                  <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:items-center sm:justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium">AI Memory</label>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setAiMemoryOpen(true)}
+                        >
+                          <Brain className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Use your recipe history to personalize AI suggestions</p>
+                    </div>
+                    <Switch
+                      checked={localSettings.useMemory}
+                      onCheckedChange={(checked) => 
+                        setLocalSettings({...localSettings, useMemory: checked})
+                      }
+                    />
+                  </div>
                 </div>
               </CardContent>
               <CardFooter>
@@ -316,6 +348,11 @@ const AISettings = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <AiMemoryDialog
+        open={aiMemoryOpen}
+        onOpenChange={setAiMemoryOpen}
+      />
     </MainLayout>
   );
 };

@@ -1,35 +1,53 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/components/layout/MainLayout';
-import { Clock, ChefHat, Calendar, Sparkles, Utensils, ArrowRight } from 'lucide-react';
+import { Clock, ChefHat, Calendar, Sparkles, Utensils, ArrowRight, Brain } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import useRecipes from '@/hooks/useRecipes';
 import useMealPlans from '@/hooks/useMealPlans';
 import CategorySection from '@/components/recipes/CategorySection';
 import SuggestMealDialog from '@/components/meal-plan/dialogs/SuggestMealDialog';
 import useAiRecipes from '@/hooks/useAiRecipes';
+import useAiMemory from '@/hooks/useAiMemory';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
+import AiMemoryDialog from '@/components/meal-plan/dialogs/AiMemoryDialog';
 
 const IndexPage = () => {
   const { user } = useAuth();
   const { useAllRecipes } = useRecipes();
   const { useTodaysMeals } = useMealPlans();
   const { suggestMealForPlan, loading: aiLoading } = useAiRecipes();
+  const { getMemoryInsights, insights, loading: memoryLoading, isMemoryEnabled } = useAiMemory();
   
   const { data: recipes = [], isLoading: recipesLoading } = useAllRecipes();
   const { data: todaysMeals = [], isLoading: mealsLoading } = useTodaysMeals();
 
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
+  const [memoryDialogOpen, setMemoryDialogOpen] = useState(false);
   const [suggestedMeal, setSuggestedMeal] = useState<any>(null);
   const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
   const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
   const [additionalPreferences, setAdditionalPreferences] = useState("");
+  const [memoryPreview, setMemoryPreview] = useState<string | null>(null);
 
   const recentRecipes = recipes.slice(0, 4);
   const popularRecipes = [...recipes].sort(() => 0.5 - Math.random()).slice(0, 4); // Random for demo
   
+  // Fetch memory insights on page load if enabled
+  useEffect(() => {
+    if (user && isMemoryEnabled && !insights && !memoryLoading) {
+      getMemoryInsights().then(insights => {
+        if (insights) {
+          // Create a short preview of the insights
+          const firstParagraph = insights.split('\n\n')[0];
+          setMemoryPreview(firstParagraph);
+        }
+      });
+    }
+  }, [user, isMemoryEnabled]);
+
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
   };
@@ -171,6 +189,44 @@ const IndexPage = () => {
           </section>
         )}
         
+        {/* AI Memory Insights Section */}
+        {isMemoryEnabled && memoryPreview && (
+          <section className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-bold">Cooking Insights</h2>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setMemoryDialogOpen(true)}
+                className="text-sm font-medium flex items-center"
+              >
+                View all <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            
+            <div className="playful-card bg-primary/10 border-primary/20 relative overflow-hidden">
+              <div className="relative z-10">
+                <p className="text-base">{memoryPreview}</p>
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => setMemoryDialogOpen(true)}
+                >
+                  <Brain className="h-4 w-4 mr-2" />
+                  See Full Insights
+                </Button>
+              </div>
+              <div className="absolute top-[-20px] right-[-20px] opacity-10">
+                <Brain className="h-32 w-32 text-primary" />
+              </div>
+            </div>
+          </section>
+        )}
+        
         {/* Recipe Sections */}
         <CategorySection 
           title="Recent Recipes" 
@@ -221,6 +277,11 @@ const IndexPage = () => {
         onSuggestMeal={handleSuggestMeal}
         onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
         onResetSuggestedMeal={handleResetSuggestedMeal}
+      />
+
+      <AiMemoryDialog
+        open={memoryDialogOpen}
+        onOpenChange={setMemoryDialogOpen}
       />
     </MainLayout>
   );

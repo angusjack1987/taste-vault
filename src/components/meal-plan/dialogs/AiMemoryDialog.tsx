@@ -3,7 +3,8 @@ import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, Loader2 } from 'lucide-react';
+import { Brain, Loader2, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import useAiMemory from '@/hooks/useAiMemory';
 
 interface AiMemoryDialogProps {
@@ -12,13 +13,13 @@ interface AiMemoryDialogProps {
 }
 
 const AiMemoryDialog = ({ open, onOpenChange }: AiMemoryDialogProps) => {
-  const { loading, insights, getMemoryInsights } = useAiMemory();
+  const { loading, insights, getMemoryInsights, isMemoryEnabled } = useAiMemory();
 
   useEffect(() => {
-    if (open && !insights && !loading) {
+    if (open && !insights && !loading && isMemoryEnabled) {
       getMemoryInsights();
     }
-  }, [open, insights, loading]);
+  }, [open, insights, loading, isMemoryEnabled]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,7 +35,18 @@ const AiMemoryDialog = ({ open, onOpenChange }: AiMemoryDialogProps) => {
         </DialogHeader>
         
         <ScrollArea className="max-h-[calc(85vh-140px)] -mr-6 pr-6">
-          {loading ? (
+          {!isMemoryEnabled ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <Brain className="h-12 w-12 text-muted-foreground" />
+              <p className="text-muted-foreground">AI Memory is currently disabled.</p>
+              <Link to="/settings/ai">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Enable in AI Settings
+                </Button>
+              </Link>
+            </div>
+          ) : loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <p className="text-muted-foreground">Analyzing your cooking journey...</p>
@@ -55,20 +67,22 @@ const AiMemoryDialog = ({ open, onOpenChange }: AiMemoryDialogProps) => {
         </ScrollArea>
         
         <DialogFooter>
-          <Button 
-            onClick={() => getMemoryInsights()} 
-            disabled={loading}
-            variant="outline"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Refreshing...
-              </>
-            ) : (
-              'Refresh Insights'
-            )}
-          </Button>
+          {isMemoryEnabled && (
+            <Button 
+              onClick={() => getMemoryInsights()} 
+              disabled={loading}
+              variant="outline"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                'Refresh Insights'
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

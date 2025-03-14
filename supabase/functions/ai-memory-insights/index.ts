@@ -15,6 +15,7 @@ const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
 interface AISettings {
   model?: string;
   temperature?: number;
+  useMemory?: boolean;
 }
 
 serve(async (req: Request) => {
@@ -40,6 +41,22 @@ serve(async (req: Request) => {
     }
 
     console.log("Generating insights for user:", userId);
+    
+    // Check if memory feature is disabled
+    if (aiSettings?.useMemory === false) {
+      return new Response(
+        JSON.stringify({ 
+          insights: "AI Memory feature is currently disabled in your settings. Enable it to get personalized cooking insights based on your recipe history."
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
 
     // Fetch user's recipes
     const { data: recipes, error: recipesError } = await supabaseClient

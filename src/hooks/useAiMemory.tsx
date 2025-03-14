@@ -30,6 +30,7 @@ export const useAiMemory = () => {
             aiSettings: {
               model: aiSettings?.model || "gpt-4o-mini",
               temperature: aiSettings?.temperature || 0.7,
+              useMemory: aiSettings?.useMemory ?? true,
             },
           },
         }
@@ -56,6 +57,7 @@ export const useAiMemory = () => {
     loading,
     insights,
     getMemoryInsights,
+    isMemoryEnabled: aiSettings?.useMemory ?? true,
   };
 };
 
