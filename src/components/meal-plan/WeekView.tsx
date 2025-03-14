@@ -50,7 +50,7 @@ const WeekView = ({ weekDays, onAddMeal, onRemoveMeal, onSuggestMeal }: WeekView
       
       {/* Desktop view */}
       <div className="hidden md:block">
-        <div className="grid grid-cols-7 gap-2 text-center text-sm mb-2">
+        <div className="grid grid-cols-7 gap-3 text-center text-sm mb-2">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
             <div key={day} className="font-medium text-muted-foreground">
               {day}

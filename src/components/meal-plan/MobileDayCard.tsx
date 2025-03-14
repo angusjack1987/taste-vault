@@ -37,11 +37,23 @@ const MobileDayCard = ({ date, meals, onAddMeal, onRemoveMeal, onSuggestMeal }: 
         <div className="flex-1 border border-dashed border-border rounded-md p-2 flex justify-between items-center min-h-[48px]">
           <div className="text-sm capitalize text-muted-foreground">{mealType}</div>
           <div className="flex gap-1">
-            <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => onAddMeal(date, mealType)}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2" 
+              onClick={() => onAddMeal(date, mealType)}
+            >
               <Plus className="h-4 w-4 mr-1" />
               Add
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 px-0" onClick={() => onSuggestMeal(date, mealType)}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 px-0" 
+              onClick={() => onSuggestMeal(date, mealType)}
+              title="Get AI suggestion"
+              type="button"
+            >
               <Lightbulb className="h-4 w-4" />
             </Button>
           </div>

@@ -54,7 +54,7 @@ const MainLayout = ({
         <div className="absolute bottom-40 -left-20 w-40 h-40 bg-secondary/5 rounded-full blur-3xl -z-10"></div>
         
         <div 
-          className={`max-w-6xl mx-auto w-full relative main-content transition-all duration-300 ease-in-out ${
+          className={`max-w-7xl mx-auto w-full relative main-content transition-all duration-300 ease-in-out ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
         >
