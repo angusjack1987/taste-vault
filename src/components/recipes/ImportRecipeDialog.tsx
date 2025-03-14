@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { X, Loader2, Link, Check, Save, Edit } from "lucide-react";
+import { X, Loader2, Link, Check, Save, Edit, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { RecipeFormData } from "@/hooks/useRecipes";
 import { cleanIngredientString, parsePreparation, parseIngredientAmount, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import IngredientInput from "./IngredientInput";
+import { Switch } from "@/components/ui/switch";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ interface ImportRecipeDialogProps {
 
 const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps) => {
   const [url, setUrl] = useState("");
+  const [useAI, setUseAI] = useState(false);
   const [scrapedRecipe, setScrapedRecipe] = useState<Partial<RecipeFormData> | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editedRecipe, setEditedRecipe] = useState<Partial<RecipeFormData> | null>(null);
@@ -37,26 +39,29 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     e.preventDefault();
     if (!url) return;
     
-    scrapeRecipe(url, {
-      onSuccess: (data) => {
-        console.log("Raw scraped ingredients:", data.ingredients);
-        
-        // Enhanced cleaning of ingredients with better preservation of prep instructions
-        const cleanedIngredients = data.ingredients?.map(ingredient => {
-          const cleaned = cleanIngredientString(ingredient);
-          console.log(`Cleaned ingredient: "${ingredient}" -> "${cleaned}"`);
-          return cleaned;
-        }) || [];
-        
-        const cleanedData = {
-          ...data,
-          ingredients: cleanedIngredients
-        };
-        
-        setScrapedRecipe(cleanedData);
-        setEditedRecipe(cleanedData);
+    scrapeRecipe(
+      { url, useAI },
+      {
+        onSuccess: (data) => {
+          console.log("Raw scraped ingredients:", data.ingredients);
+          
+          // Enhanced cleaning of ingredients with better preservation of prep instructions
+          const cleanedIngredients = data.ingredients?.map(ingredient => {
+            const cleaned = cleanIngredientString(ingredient);
+            console.log(`Cleaned ingredient: "${ingredient}" -> "${cleaned}"`);
+            return cleaned;
+          }) || [];
+          
+          const cleanedData = {
+            ...data,
+            ingredients: cleanedIngredients
+          };
+          
+          setScrapedRecipe(cleanedData);
+          setEditedRecipe(cleanedData);
+        }
       }
-    });
+    );
   };
   
   const handleInputChange = (field: keyof RecipeFormData, value: any) => {
@@ -114,6 +119,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     setEditedRecipe(null);
     setEditMode(false);
     setUrl("");
+    setUseAI(false);
     onClose();
   };
   
@@ -136,6 +142,26 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
         </div>
       </div>
       
+      <div className="flex items-center space-x-2 mt-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="use-ai"
+            checked={useAI}
+            onCheckedChange={setUseAI}
+          />
+          <Label htmlFor="use-ai" className="cursor-pointer">
+            {useAI ? (
+              <span className="flex items-center">
+                <Sparkles className="w-4 h-4 mr-1 text-sage-500" />
+                Use AI to extract recipe (better for complex websites)
+              </span>
+            ) : (
+              "Use web scraper (faster, works for most recipe sites)"
+            )}
+          </Label>
+        </div>
+      </div>
+      
       {isError && (
         <div className="mt-2 text-sm text-destructive">
           {(error as Error)?.message || "Failed to import recipe. Please try again."}
@@ -155,10 +181,10 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Importing...
+              {useAI ? "Analyzing with AI..." : "Importing..."}
             </>
           ) : (
-            "Import Recipe"
+            useAI ? "Extract with AI" : "Import Recipe"
           )}
         </Button>
       </DialogFooter>
