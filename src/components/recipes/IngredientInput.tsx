@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -102,14 +103,11 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                     <div className="flex items-center gap-1">
                       {getIngredientIcon(name)}
                       <span className="text-sm">{name}</span>
+                      {preparation && (
+                        <span className="text-xs text-gray-500 italic ml-1">{preparation}</span>
+                      )}
                     </div>
                   </div>
-                  
-                  {preparation && (
-                    <div className="mt-1 ml-6">
-                      <span className="text-xs text-gray-500 italic">{preparation}</span>
-                    </div>
-                  )}
                 </div>
                 
                 <Button
@@ -132,14 +130,14 @@ const IngredientInput: React.FC<IngredientInputProps> = ({
                   </div>
                 )}
                 
-                <div className="bg-sage-50 rounded-md p-2 flex flex-col border border-sage-200">
+                <div className="bg-sage-50 rounded-md p-2 flex items-center border border-sage-200">
                   <div className="flex items-center gap-2">
                     {getIngredientIcon(name)}
                     <span className="text-sm">{name}</span>
+                    {preparation && (
+                      <span className="text-xs text-gray-500 italic ml-1">{preparation}</span>
+                    )}
                   </div>
-                  {preparation && (
-                    <span className="text-xs text-gray-500 mt-1 italic">{preparation}</span>
-                  )}
                 </div>
                 
                 {preparation && !amount && (
