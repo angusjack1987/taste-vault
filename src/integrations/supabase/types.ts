@@ -81,6 +81,7 @@ export type Database = {
           date: string
           id: string
           meal_type: string
+          note: string | null
           recipe_id: string | null
           updated_at: string
           user_id: string
@@ -90,6 +91,7 @@ export type Database = {
           date: string
           id?: string
           meal_type: string
+          note?: string | null
           recipe_id?: string | null
           updated_at?: string
           user_id: string
@@ -99,6 +101,7 @@ export type Database = {
           date?: string
           id?: string
           meal_type?: string
+          note?: string | null
           recipe_id?: string | null
           updated_at?: string
           user_id?: string
