@@ -66,14 +66,15 @@ export function ExpandableTabs({
   
   // Find the selected tab index based on the current path
   const findSelectedTabIndex = () => {
-    return tabs.findIndex(
-      (tab) => {
-        if (tab.type === "separator") return false;
-        return tab.path && 
-          (pathname === tab.path || 
-           (tab.path !== "/" && pathname.startsWith(tab.path)));
-      }
-    );
+    return tabs.findIndex((tab) => {
+      // Check if it's a Tab (not a Separator)
+      if ('type' in tab && tab.type === "separator") return false;
+      
+      const tabItem = tab as Tab;
+      return tabItem.path && 
+        (pathname === tabItem.path || 
+         (tabItem.path !== "/" && pathname.startsWith(tabItem.path)));
+    });
   };
   
   const [selected, setSelected] = React.useState<number | null>(() => {
@@ -91,7 +92,7 @@ export function ExpandableTabs({
 
   useOnClickOutside(outsideClickRef, () => {
     // Don't clear selection on outside click for navigation tabs
-    if (!tabs.some(tab => tab.type !== "separator" && tab.path)) {
+    if (!tabs.some(tab => !('type' in tab && tab.type === "separator") && (tab as Tab).path)) {
       setSelected(null);
       onChange?.(null);
     }
@@ -115,7 +116,7 @@ export function ExpandableTabs({
       )}
     >
       {tabs.map((tab, index) => {
-        if (tab.type === "separator") {
+        if ('type' in tab && tab.type === "separator") {
           return <Separator key={`separator-${index}`} />;
         }
 
