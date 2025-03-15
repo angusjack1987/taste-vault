@@ -13,7 +13,8 @@ import { Json } from "@/integrations/supabase/types";
 import { debounce } from "lodash";
 import { Switch } from "@/components/ui/switch";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
-import { Baby } from "lucide-react";
+import { Baby, ChefHat } from "lucide-react";
+import BabyProfilesForm from "@/components/baby-food/BabyProfilesForm";
 
 interface FoodPreferences {
   favoriteCuisines: string;
@@ -23,6 +24,8 @@ interface FoodPreferences {
   babyFoodEnabled?: boolean;
   babyFoodPreferences?: string;
   babyAge?: string;
+  babyLedWeaning?: boolean;
+  suitableBabyIngredients?: string;
 }
 
 interface UserPreferences {
@@ -41,12 +44,15 @@ const FoodPreferences = () => {
     dietaryNotes: "",
     babyFoodEnabled: false,
     babyFoodPreferences: "",
-    babyAge: ""
+    babyAge: "",
+    babyLedWeaning: false,
+    suitableBabyIngredients: ""
   });
 
   const [cuisineTags, setCuisineTags] = useState<string[]>([]);
   const [chefTags, setChefTags] = useState<string[]>([]);
   const [avoidTags, setAvoidTags] = useState<string[]>([]);
+  const [babyIngredientTags, setBabyIngredientTags] = useState<string[]>([]);
   
   const debouncedSave = useRef(
     debounce(async (prefsToSave: FoodPreferences) => {
@@ -87,7 +93,9 @@ const FoodPreferences = () => {
               dietaryNotes: userPrefs.food.dietaryNotes || "",
               babyFoodEnabled: userPrefs.food.babyFoodEnabled || false,
               babyFoodPreferences: userPrefs.food.babyFoodPreferences || "",
-              babyAge: userPrefs.food.babyAge || ""
+              babyAge: userPrefs.food.babyAge || "",
+              babyLedWeaning: userPrefs.food.babyLedWeaning || false,
+              suitableBabyIngredients: userPrefs.food.suitableBabyIngredients || ""
             });
 
             if (userPrefs.food.favoriteCuisines) {
@@ -98,6 +106,9 @@ const FoodPreferences = () => {
             }
             if (userPrefs.food.ingredientsToAvoid) {
               setAvoidTags(userPrefs.food.ingredientsToAvoid.split(',').map(tag => tag.trim()).filter(Boolean));
+            }
+            if (userPrefs.food.suitableBabyIngredients) {
+              setBabyIngredientTags(userPrefs.food.suitableBabyIngredients.split(',').map(tag => tag.trim()).filter(Boolean));
             }
           }
         }
@@ -122,10 +133,10 @@ const FoodPreferences = () => {
     debouncedSave(updatedPreferences);
   };
 
-  const handleSwitchChange = (checked: boolean) => {
+  const handleSwitchChange = (checked: boolean, field: keyof FoodPreferences) => {
     const updatedPreferences = {
       ...preferences,
-      babyFoodEnabled: checked
+      [field]: checked
     };
     setPreferences(updatedPreferences);
     
@@ -162,7 +173,9 @@ const FoodPreferences = () => {
         dietaryNotes: prefsToSave.dietaryNotes,
         babyFoodEnabled: prefsToSave.babyFoodEnabled,
         babyFoodPreferences: prefsToSave.babyFoodPreferences,
-        babyAge: prefsToSave.babyAge
+        babyAge: prefsToSave.babyAge,
+        babyLedWeaning: prefsToSave.babyLedWeaning,
+        suitableBabyIngredients: prefsToSave.suitableBabyIngredients
       };
       
       if (existingPrefs) {
@@ -307,42 +320,81 @@ const FoodPreferences = () => {
                     <Switch
                       id="babyFoodEnabled"
                       checked={preferences.babyFoodEnabled}
-                      onCheckedChange={handleSwitchChange}
+                      onCheckedChange={(checked) => handleSwitchChange(checked, 'babyFoodEnabled')}
                     />
                   </AiSuggestionTooltip>
                 </div>
               </div>
 
               {preferences.babyFoodEnabled && (
-                <div className="space-y-4 mt-4 bg-secondary/10 p-4 rounded-lg">
-                  <div>
-                    <Label htmlFor="babyAge">Baby Age (months)</Label>
-                    <Textarea
-                      id="babyAge"
-                      name="babyAge"
-                      placeholder="Enter baby's age in months (e.g. 6, 9, 12)"
-                      value={preferences.babyAge || ""}
-                      onChange={handleChange}
-                      className="h-10 resize-none"
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      This helps recommend age-appropriate baby foods
-                    </p>
-                  </div>
+                <div className="space-y-6 mt-4 bg-secondary/10 p-5 rounded-lg">
+                  {/* Baby Profiles */}
+                  <BabyProfilesForm />
                   
-                  <div>
-                    <Label htmlFor="babyFoodPreferences">Baby Food Preferences</Label>
-                    <Textarea
-                      id="babyFoodPreferences"
-                      name="babyFoodPreferences"
-                      placeholder="Any preferences for baby food (allergies, textures, etc.)"
-                      value={preferences.babyFoodPreferences || ""}
-                      onChange={handleChange}
-                      className="min-h-[100px]"
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Note any preferences, allergies, or foods your baby enjoys
-                    </p>
+                  <div className="border-t pt-4">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <ChefHat className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Baby Food Preferences</h3>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="babyLedWeaning"
+                          checked={preferences.babyLedWeaning}
+                          onCheckedChange={(checked) => handleSwitchChange(checked, 'babyLedWeaning')}
+                        />
+                        <Label htmlFor="babyLedWeaning" className="cursor-pointer">
+                          Baby-Led Weaning
+                        </Label>
+                        <AiSuggestionTooltip content="Focus on finger foods that baby can self-feed, rather than purees" />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="babyAge">Baby Age (months)</Label>
+                        <Textarea
+                          id="babyAge"
+                          name="babyAge"
+                          placeholder="Enter baby's age in months (e.g. 6, 9, 12)"
+                          value={preferences.babyAge || ""}
+                          onChange={handleChange}
+                          className="h-10 resize-none"
+                        />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          This helps recommend age-appropriate baby foods
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="suitableBabyIngredients">Suitable Baby Ingredients</Label>
+                        <TagInput
+                          id="suitableBabyIngredients"
+                          tags={babyIngredientTags}
+                          setTags={setBabyIngredientTags}
+                          placeholder="Type ingredient and press Enter"
+                          onTagsChange={(tags) => handleTagsChange(tags, 'suitableBabyIngredients')}
+                          preserveFocus={true}
+                        />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Ingredients you prefer to use for baby food
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="babyFoodPreferences">Additional Baby Food Preferences</Label>
+                        <Textarea
+                          id="babyFoodPreferences"
+                          name="babyFoodPreferences"
+                          placeholder="Any preferences for baby food (allergies, textures, etc.)"
+                          value={preferences.babyFoodPreferences || ""}
+                          onChange={handleChange}
+                          className="min-h-[100px]"
+                        />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          E.g., Boob to Food approach, vegan options, iron-rich foods, etc.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

@@ -22,6 +22,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import FoodPreferences from "./pages/settings/FoodPreferences";
 import AISettings from "@/pages/settings/AISettings";
+import BabyFoodPage from "./pages/baby-food/BabyFoodPage";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,11 @@ const App = () => (
             <Route path="/fridge" element={
               <AuthGuard>
                 <FridgePage />
+              </AuthGuard>
+            } />
+            <Route path="/baby-food" element={
+              <AuthGuard>
+                <BabyFoodPage />
               </AuthGuard>
             } />
             {/* Settings Routes */}

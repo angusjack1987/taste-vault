@@ -66,6 +66,78 @@ export type Database = {
         }
         Relationships: []
       }
+      baby_food_recipes: {
+        Row: {
+          age_range: string | null
+          created_at: string
+          description: string | null
+          id: string
+          ingredients: Json
+          instructions: Json
+          nutritional_benefits: Json | null
+          preparation_time: number | null
+          storage_tips: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_range?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          ingredients?: Json
+          instructions?: Json
+          nutritional_benefits?: Json | null
+          preparation_time?: number | null
+          storage_tips?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_range?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          ingredients?: Json
+          instructions?: Json
+          nutritional_benefits?: Json | null
+          preparation_time?: number | null
+          storage_tips?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      baby_profiles: {
+        Row: {
+          age_in_months: number
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_in_months: number
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_in_months?: number
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fridge_items: {
         Row: {
           category: string | null
