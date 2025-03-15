@@ -20,6 +20,13 @@ const RecipeCard = ({
   rating,
   className,
 }: RecipeCardProps) => {
+  // Generate a random vibrant background color for placeholder images
+  const placeholderColors = [
+    'bg-yellow-400', 'bg-orange-400', 'bg-red-400', 
+    'bg-green-400', 'bg-teal-400', 'bg-blue-400', 'bg-purple-400'
+  ];
+  const randomColor = placeholderColors[Math.floor(Math.random() * placeholderColors.length)];
+
   return (
     <Link to={`/recipes/${id}`} className={cn("block group", className)}>
       <div className="rounded-xl overflow-hidden border-4 border-black bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1">
@@ -31,8 +38,8 @@ const RecipeCard = ({
               className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full bg-yellow-200 flex items-center justify-center">
-              <Utensils className="h-12 w-12 text-black" />
+            <div className={`w-full h-full ${randomColor} flex items-center justify-center`}>
+              <Utensils className="h-12 w-12 text-white" />
             </div>
           )}
           {rating && (

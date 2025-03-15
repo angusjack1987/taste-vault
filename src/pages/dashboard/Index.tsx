@@ -33,11 +33,11 @@ const Dashboard = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : recipes?.length === 0 ? (
-          <div className="text-center py-16 px-6 rounded-xl bg-gradient-to-b from-cream-50 to-cream-100 border-2 border-cream-200">
-            <ChefHat className="h-16 w-16 mx-auto mb-4 text-secondary animate-bounce" />
-            <p className="text-lg mb-4">{emptyStateMessage}</p>
+          <div className="text-center py-16 px-6 rounded-xl bg-gradient-to-b from-yellow-200 to-orange-200 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <ChefHat className="h-16 w-16 mx-auto mb-4 text-orange-500 animate-bounce" />
+            <p className="text-lg mb-4 font-bold">{emptyStateMessage}</p>
             <Link to="/recipes/new" className="mt-4 inline-block">
-              <Button className="rounded-full px-6 py-5 shadow-md hover:shadow-lg transition-all bg-secondary text-secondary-foreground hover:bg-secondary/90">
+              <Button variant="tomato" className="rounded-xl px-6 py-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all">
                 <Plus className="h-5 w-5 mr-2" />
                 Create First Recipe
               </Button>
@@ -47,7 +47,7 @@ const Dashboard = () => {
           <>
             {recentlyAdded.length > 0 && (
               <CategorySection 
-                title={<span>Recently Added <span className="text-sm font-normal text-mint-600 ml-2">Fresh & New</span></span>}
+                title={<span className="flex items-center">Recently Added <span className="text-sm font-normal bg-green-300 ml-2 px-2 py-1 rounded-lg border-2 border-black">Fresh & New</span></span>}
                 recipes={recentlyAdded} 
                 viewAllLink="/recipes?sort=newest"
               />
@@ -55,7 +55,7 @@ const Dashboard = () => {
             
             {favorites.length > 0 && (
               <CategorySection 
-                title={<span>Favorites <span className="text-sm font-normal text-cream-700 ml-2">Your Top Picks</span></span>}
+                title={<span className="flex items-center">Favorites <span className="text-sm font-normal bg-red-300 ml-2 px-2 py-1 rounded-lg border-2 border-black">Your Top Picks</span></span>}
                 recipes={favorites} 
                 viewAllLink="/recipes?filter=favorites"
               />
@@ -66,7 +66,7 @@ const Dashboard = () => {
                 title={
                   <div className="flex items-center">
                     <span>Popular Recipes</span>
-                    <Sparkles className="h-4 w-4 text-secondary ml-2" />
+                    <Sparkles className="h-5 w-5 text-yellow-500 ml-2 animate-pulse" />
                   </div>
                 }
                 recipes={popular} 

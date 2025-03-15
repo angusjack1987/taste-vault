@@ -17,10 +17,21 @@ const CategorySection = ({
   viewAllLink,
   emptyMessage = "No recipes found",
 }: CategorySectionProps) => {
+  // Create a rotating color scheme for different sections
+  const sectionColors = [
+    "bg-gradient-to-r from-yellow-300 to-amber-300", // Yellow/amber for first section
+    "bg-gradient-to-r from-red-300 to-orange-300",   // Red/orange for second section
+    "bg-gradient-to-r from-green-300 to-teal-300",   // Green/teal for third section
+  ];
+  
+  // Randomly select a color scheme
+  const colorIndex = Math.floor(Math.random() * sectionColors.length);
+  const sectionColor = sectionColors[colorIndex];
+  
   return (
-    <section className="mb-8 relative z-10">
-      <div className="flex items-center justify-between mb-6 p-4 section-yellow rounded-xl">
-        <h2 className="section-title font-black uppercase text-xl flex items-center">
+    <section className="mb-10 relative z-10 transform transition-all hover:-translate-y-1 duration-300">
+      <div className={`flex items-center justify-between mb-6 p-4 ${sectionColor} rounded-xl border-4 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]`}>
+        <h2 className="section-title font-black uppercase text-xl flex items-center text-black">
           {title}
         </h2>
         
@@ -35,7 +46,7 @@ const CategorySection = ({
       </div>
       
       {recipes.length === 0 ? (
-        <div className="text-center py-10 px-6 text-black section-pink rounded-xl">
+        <div className="text-center py-10 px-6 text-black section-pink rounded-xl border-4 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
           <div className="flex flex-col items-center">
             <span className="text-5xl mb-3 animate-character">🍽️</span>
             <span className="font-bold uppercase">{emptyMessage}</span>

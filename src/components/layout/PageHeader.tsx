@@ -46,23 +46,36 @@ const PageHeader = ({
   };
 
   const firstName = user?.user_metadata?.first_name || 'Chef';
+  
+  // Generate random background gradient for the banner
+  const gradients = [
+    'from-[#FF9AA2] to-[#FFB7B2]', // Pink to light pink
+    'from-[#FFB347] to-[#FFCC33]', // Orange to yellow
+    'from-[#AAFFA9] to-[#11FFBD]', // Green to teal
+    'from-[#C9FFE5] to-[#7FFFD4]', // Light mint to aquamarine
+  ];
+  
+  const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
 
   return (
-    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md px-4 pt-6 pb-3 border-b border-border/30">
-      <div className="flex items-center justify-between max-w-5xl mx-auto">
+    <header className={`sticky top-0 z-20 bg-gradient-to-r ${randomGradient} backdrop-blur-md pt-6 pb-3 border-b-4 border-black`}>
+      <div className="flex items-center justify-between max-w-5xl mx-auto px-4">
         <div className="flex items-center gap-3">
           {showBackButton && (
             <Button
-              variant="ghost"
+              variant="cheese"
               size="icon"
               onClick={() => navigate(-1)}
               aria-label="Go back"
-              className="rounded-full"
+              className="rounded-full animate-neo-shake"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <h1 className="font-heading text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">{title}</h1>
+          <h1 className="font-heading text-2xl font-black uppercase text-black relative inline-block">
+            {title}
+            <span className="absolute -bottom-1 left-0 w-full h-1 bg-black"></span>
+          </h1>
         </div>
         
         <div className="flex items-center gap-2">
@@ -72,10 +85,10 @@ const PageHeader = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
-                  variant="ghost" 
+                  variant="outline" 
                   size="icon" 
                   aria-label="User menu"
-                  className="rounded-full bg-secondary/20 h-9 w-9 p-0 overflow-hidden border-2 border-transparent hover:border-secondary"
+                  className="rounded-full bg-white h-9 w-9 p-0 overflow-hidden border-2 border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1"
                 >
                   {user?.user_metadata?.avatar_url ? (
                     <img 
@@ -88,26 +101,26 @@ const PageHeader = ({
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl border-2 border-border animate-in">
-                <div className="px-3 py-2 text-sm font-bold text-center">
+              <DropdownMenuContent align="end" className="rounded-xl border-4 border-black animate-in shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+                <div className="px-3 py-2 text-sm font-bold text-center bg-yellow-300">
                   Hi, <span className="text-secondary font-bold">{firstName}</span>!
                 </div>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="border-t-2 border-black" />
                 <Link to="/profile">
-                  <DropdownMenuItem className="cursor-pointer rounded-lg font-medium">
+                  <DropdownMenuItem className="cursor-pointer rounded-lg font-medium hover:bg-blue-100">
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
                 </Link>
                 <Link to="/settings">
-                  <DropdownMenuItem className="cursor-pointer rounded-lg font-medium">
+                  <DropdownMenuItem className="cursor-pointer rounded-lg font-medium hover:bg-green-100">
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="border-t-2 border-black" />
                 <DropdownMenuItem 
-                  className="cursor-pointer text-red-500 focus:text-red-500 rounded-lg font-medium" 
+                  className="cursor-pointer bg-red-100 text-red-500 focus:text-red-500 rounded-lg font-medium" 
                   onClick={handleSignOut}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
