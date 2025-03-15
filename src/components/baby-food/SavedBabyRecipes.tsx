@@ -1,14 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, Clock, Baby, Search, ChefHat } from 'lucide-react';
+import { Trash2, Clock, Baby, Search, ChefHat, Utensils } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BabyFoodRecipe {
@@ -91,94 +91,97 @@ const SavedBabyRecipes = () => {
           <p>Loading saved recipes...</p>
         </div>
       ) : filteredRecipes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Accordion type="single" collapsible className="space-y-4">
           {filteredRecipes.map((recipe) => (
-            <Card key={recipe.id} className="overflow-hidden">
-              <CardHeader className="bg-primary/10">
-                <CardTitle className="flex justify-between items-start">
-                  <span>{recipe.title}</span>
-                  <Badge variant="outline" className="ml-2 whitespace-nowrap">
-                    {recipe.age_range}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <p className="text-sm">{recipe.description}</p>
-                
-                <div className="flex items-center text-sm space-x-4">
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{recipe.preparation_time} mins</span>
+            <AccordionItem 
+              key={recipe.id} 
+              value={recipe.id}
+              className="border-2 border-black rounded-xl bg-white overflow-hidden transition-all duration-300 hover:bg-[#f4f4f0]"
+            >
+              <AccordionTrigger className="px-6 py-4 text-left">
+                <div className="flex justify-between items-center w-full">
+                  <div className="flex items-center space-x-2">
+                    <Utensils className="h-5 w-5 text-primary" />
+                    <span className="font-bold">{recipe.title}</span>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Baby className="h-4 w-4 text-muted-foreground" />
-                    <span>{recipe.age_range}</span>
+                  <div className="flex items-center space-x-3">
+                    <Badge variant="outline" className="whitespace-nowrap">
+                      {recipe.age_range}
+                    </Badge>
+                    <div className="flex items-center text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground mr-1" />
+                      <span>{recipe.preparation_time} mins</span>
+                    </div>
                   </div>
                 </div>
-                
-                <div>
-                  <h4 className="font-bold mb-2">Ingredients:</h4>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {recipe.ingredients.map((ingredient, idx) => (
-                      <li key={idx} className="text-sm">{ingredient}</li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="font-bold mb-2">Instructions:</h4>
-                  <ol className="list-decimal pl-5 space-y-1">
-                    {recipe.instructions.map((step, idx) => (
-                      <li key={idx} className="text-sm">{step}</li>
-                    ))}
-                  </ol>
-                </div>
-                
-                {recipe.nutritional_benefits && recipe.nutritional_benefits.length > 0 && (
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                <div className="space-y-4">
+                  <p className="text-sm">{recipe.description}</p>
+                  
                   <div>
-                    <h4 className="font-bold mb-2">Nutritional Benefits:</h4>
+                    <h4 className="font-bold mb-2">Ingredients:</h4>
                     <ul className="list-disc pl-5 space-y-1">
-                      {recipe.nutritional_benefits.map((benefit, idx) => (
-                        <li key={idx} className="text-sm">{benefit}</li>
+                      {recipe.ingredients.map((ingredient, idx) => (
+                        <li key={idx} className="text-sm">{ingredient}</li>
                       ))}
                     </ul>
                   </div>
-                )}
-                
-                {recipe.storage_tips && (
+                  
                   <div>
-                    <h4 className="font-bold mb-2">Storage Tips:</h4>
-                    <p className="text-sm">{recipe.storage_tips}</p>
+                    <h4 className="font-bold mb-2">Instructions:</h4>
+                    <ol className="list-decimal pl-5 space-y-1">
+                      {recipe.instructions.map((step, idx) => (
+                        <li key={idx} className="text-sm">{step}</li>
+                      ))}
+                    </ol>
                   </div>
-                )}
-              </CardContent>
-              <CardFooter className="bg-muted/10 border-t border-border px-6 py-4">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Recipe
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete this recipe? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteMutation.mutate(recipe.id)}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardFooter>
-            </Card>
+                  
+                  {recipe.nutritional_benefits && recipe.nutritional_benefits.length > 0 && (
+                    <div>
+                      <h4 className="font-bold mb-2">Nutritional Benefits:</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {recipe.nutritional_benefits.map((benefit, idx) => (
+                          <li key={idx} className="text-sm">{benefit}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {recipe.storage_tips && (
+                    <div>
+                      <h4 className="font-bold mb-2">Storage Tips:</h4>
+                      <p className="text-sm">{recipe.storage_tips}</p>
+                    </div>
+                  )}
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="mt-4">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Recipe
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this recipe? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteMutation.mutate(recipe.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       ) : (
         <div className="text-center py-10 border-2 border-dashed border-muted-foreground/20 rounded-lg">
           <ChefHat className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

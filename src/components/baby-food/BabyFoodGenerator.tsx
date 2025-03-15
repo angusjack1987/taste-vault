@@ -8,11 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
-import { Sprout, Baby, Clock, Heart, Save, ChefHat } from 'lucide-react';
+import { Sprout, Baby, Clock, Heart, Save, ChefHat, ChevronDown, ChevronUp, Utensils } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from '@/components/ui/accordion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BabyFoodGeneratorProps {
   babyAge: string;
@@ -37,6 +44,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
   const { loading: aiLoading, generateBabyFood } = useAiRecipes();
   const { useFridgeItems } = useFridge();
   const { data: fridgeItems, isLoading: isFridgeLoading } = useFridgeItems();
+  const isMobile = useIsMobile();
   
   const [shouldUseFridge, setShouldUseFridge] = useState(true);
   const [customPrompt, setCustomPrompt] = useState('');
@@ -44,6 +52,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
   const [availableIngredients, setAvailableIngredients] = useState<string[]>([]);
   const [generatedRecipes, setGeneratedRecipes] = useState<BabyFoodRecipe[]>([]);
   const [savedRecipes, setSavedRecipes] = useState<Record<string, boolean>>({});
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (fridgeItems && fridgeItems.length > 0) {
@@ -78,6 +87,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
       return;
     }
 
+    setIsGenerating(true);
     try {
       const ingredients = [...selectedIngredients];
       const babyFoodPrefs = {
@@ -99,6 +109,8 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
     } catch (error) {
       console.error('Error generating recipes:', error);
       toast.error('Error generating recipes. Please try again.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -201,84 +213,99 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
         />
       </div>
 
-      {generatedRecipes.length > 0 && (
+      {isGenerating && (
+        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-white border-2 border-black rounded-lg shadow-md">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
+          <p className="text-lg font-medium">Creating baby-friendly recipes...</p>
+          <div className="flex space-x-2">
+            <div className="w-3 h-3 rounded-full bg-primary animate-bounce"></div>
+            <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-3 h-3 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+        </div>
+      )}
+
+      {generatedRecipes.length > 0 && !isGenerating && (
         <div className="space-y-6">
           <h2 className="text-xl font-black uppercase">Generated Recipes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Accordion type="single" collapsible className="space-y-4">
             {generatedRecipes.map((recipe, index) => (
-              <Card key={index} className="overflow-hidden">
-                <CardHeader className="bg-primary/10">
-                  <CardTitle className="flex justify-between items-start">
-                    <span>{recipe.title}</span>
-                    <Badge variant="outline" className="ml-2 whitespace-nowrap">
-                      {recipe.ageRange}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <p className="text-sm">{recipe.description}</p>
-                  
-                  <div className="flex items-center text-sm space-x-4">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{recipe.time} mins</span>
+              <AccordionItem 
+                key={index} 
+                value={`recipe-${index}`}
+                className="border-2 border-black rounded-xl bg-white overflow-hidden transition-all duration-300 hover:bg-[#f4f4f0]"
+              >
+                <AccordionTrigger className="px-6 py-4 text-left">
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center space-x-2">
+                      <Utensils className="h-5 w-5 text-primary" />
+                      <span className="font-bold">{recipe.title}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Baby className="h-4 w-4 text-muted-foreground" />
-                      <span>{recipe.ageRange}</span>
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="outline" className="whitespace-nowrap">
+                        {recipe.ageRange}
+                      </Badge>
+                      <div className="flex items-center text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground mr-1" />
+                        <span>{recipe.time} mins</span>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <h4 className="font-bold mb-2">Ingredients:</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {recipe.ingredients.map((ingredient, idx) => (
-                        <li key={idx} className="text-sm">{ingredient}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-bold mb-2">Instructions:</h4>
-                    <ol className="list-decimal pl-5 space-y-1">
-                      {recipe.instructions.map((step, idx) => (
-                        <li key={idx} className="text-sm">{step}</li>
-                      ))}
-                    </ol>
-                  </div>
-                  
-                  {recipe.nutritionalBenefits && recipe.nutritionalBenefits.length > 0 && (
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <div className="space-y-4">
+                    <p className="text-sm">{recipe.description}</p>
+                    
                     <div>
-                      <h4 className="font-bold mb-2">Nutritional Benefits:</h4>
+                      <h4 className="font-bold mb-2">Ingredients:</h4>
                       <ul className="list-disc pl-5 space-y-1">
-                        {recipe.nutritionalBenefits.map((benefit, idx) => (
-                          <li key={idx} className="text-sm">{benefit}</li>
+                        {recipe.ingredients.map((ingredient, idx) => (
+                          <li key={idx} className="text-sm">{ingredient}</li>
                         ))}
                       </ul>
                     </div>
-                  )}
-                  
-                  {recipe.storageTips && (
+                    
                     <div>
-                      <h4 className="font-bold mb-2">Storage Tips:</h4>
-                      <p className="text-sm">{recipe.storageTips}</p>
+                      <h4 className="font-bold mb-2">Instructions:</h4>
+                      <ol className="list-decimal pl-5 space-y-1">
+                        {recipe.instructions.map((step, idx) => (
+                          <li key={idx} className="text-sm">{step}</li>
+                        ))}
+                      </ol>
                     </div>
-                  )}
-                </CardContent>
-                <CardFooter className="bg-muted/10 border-t border-border px-6 py-4">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => saveRecipe(recipe)}
-                    disabled={savedRecipes[recipe.title]}
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    {savedRecipes[recipe.title] ? 'Saved' : 'Save Recipe'}
-                  </Button>
-                </CardFooter>
-              </Card>
+                    
+                    {recipe.nutritionalBenefits && recipe.nutritionalBenefits.length > 0 && (
+                      <div>
+                        <h4 className="font-bold mb-2">Nutritional Benefits:</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          {recipe.nutritionalBenefits.map((benefit, idx) => (
+                            <li key={idx} className="text-sm">{benefit}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {recipe.storageTips && (
+                      <div>
+                        <h4 className="font-bold mb-2">Storage Tips:</h4>
+                        <p className="text-sm">{recipe.storageTips}</p>
+                      </div>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      className="w-full mt-4"
+                      onClick={() => saveRecipe(recipe)}
+                      disabled={savedRecipes[recipe.title]}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      {savedRecipes[recipe.title] ? 'Saved' : 'Save Recipe'}
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         </div>
       )}
     </div>

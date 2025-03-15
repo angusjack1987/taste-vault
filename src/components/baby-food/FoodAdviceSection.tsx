@@ -2,12 +2,19 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Carrot, Apple, Info } from 'lucide-react';
+import { Baby, Carrot, Apple, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FoodAdviceSectionProps {
   babyAge: string;
@@ -18,6 +25,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
   const [food, setFood] = useState('');
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const handleGetAdvice = async () => {
     if (!food.trim()) {
@@ -38,7 +46,13 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
 
       if (error) throw error;
       
-      setAdvice(data.advice);
+      // Clean the HTML tags if they exist
+      let cleanedAdvice = data.advice;
+      if (cleanedAdvice.startsWith('```html')) {
+        cleanedAdvice = cleanedAdvice.replace(/```html|```/g, '').trim();
+      }
+      
+      setAdvice(cleanedAdvice);
       toast.success(`Generated advice for serving ${food}!`);
     } catch (error) {
       console.error('Error getting food advice:', error);
@@ -109,18 +123,35 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
         </div>
       </div>
 
-      {advice && (
+      {loading && (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <span className="ml-3 text-lg font-medium">Generating advice...</span>
+        </div>
+      )}
+
+      {advice && !loading && (
         <Card className="overflow-hidden border-2 border-black">
-          <CardHeader className="bg-secondary/20 pb-3">
-            <CardTitle className="text-lg">
-              How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <div className="prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: advice }} />
-            </div>
-          </CardContent>
+          <Collapsible
+            defaultOpen={true}
+            className="rounded-lg transition-all duration-300 ease-in-out hover:bg-[#f4f4f0]"
+          >
+            <CollapsibleTrigger className="flex w-full items-center justify-between px-6 py-4 text-left font-semibold">
+              <div className="text-lg">
+                How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}
+              </div>
+              {open => (
+                <div className="relative flex h-7 items-center">
+                  <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+                </div>
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-6 pb-6 pt-0 data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+              <div className="prose max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: advice }} />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
       )}
     </div>
