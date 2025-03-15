@@ -7,7 +7,7 @@ import BabyFoodGenerator from '@/components/baby-food/BabyFoodGenerator';
 import FoodAdviceSection from '@/components/baby-food/FoodAdviceSection';
 import SavedBabyRecipes from '@/components/baby-food/SavedBabyRecipes';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
+import { Settings, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -110,26 +110,44 @@ const BabyFoodPage = () => {
         </div>
 
         <Tabs defaultValue="generator" className="space-y-6">
-          <TabsList className="w-full grid grid-cols-3 p-1 bg-muted/20 rounded-xl border-2 border-black mb-6">
-            <TabsTrigger 
-              value="generator" 
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-medium py-3"
+          <div className="flex items-center gap-2 overflow-x-auto py-3 pb-4 scrollbar-none">
+            <TabsList className="hidden">
+              <TabsTrigger value="generator">Generator</TabsTrigger>
+              <TabsTrigger value="advice">Advice</TabsTrigger>
+              <TabsTrigger value="saved">Saved</TabsTrigger>
+            </TabsList>
+            
+            {/* Neo-brutalist style menu buttons */}
+            <Button 
+              variant="cheese"
+              size="sm" 
+              className="flex items-center whitespace-nowrap group"
+              onClick={() => document.querySelector('[data-value="generator"]')?.click()}
             >
-              Recipe Generator
-            </TabsTrigger>
-            <TabsTrigger 
-              value="advice" 
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-medium py-3"
+              <Filter className="h-4 w-4 mr-1 group-hover:animate-spin-neo" />
+              <span className="font-bold uppercase">Recipe Generator</span>
+            </Button>
+            
+            <Button 
+              variant="outline"
+              size="sm" 
+              className="flex items-center whitespace-nowrap group"
+              onClick={() => document.querySelector('[data-value="advice"]')?.click()}
             >
-              Food Advice
-            </TabsTrigger>
-            <TabsTrigger 
-              value="saved" 
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-medium py-3"
+              <Filter className="h-4 w-4 mr-1 group-hover:animate-spin-neo" />
+              <span className="font-bold uppercase">Food Advice</span>
+            </Button>
+            
+            <Button 
+              variant="outline"
+              size="sm" 
+              className="flex items-center whitespace-nowrap group"
+              onClick={() => document.querySelector('[data-value="saved"]')?.click()}
             >
-              Saved Recipes
-            </TabsTrigger>
-          </TabsList>
+              <Filter className="h-4 w-4 mr-1 group-hover:animate-spin-neo" />
+              <span className="font-bold uppercase">Saved Recipes</span>
+            </Button>
+          </div>
           
           <TabsContent value="generator" className="mt-6">
             <BabyFoodGenerator 
