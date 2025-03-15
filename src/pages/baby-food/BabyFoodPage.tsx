@@ -94,7 +94,7 @@ const BabyFoodPage = () => {
     <MainLayout title="Baby Food">
       <div className="page-container">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl md:text-3xl font-black uppercase">
+          <h1 className="text-2xl md:text-3xl font-bold uppercase">
             BABY FOOD
             {babyNames.length > 0 && ` FOR ${babyNames.join(' & ')}`}
           </h1>
@@ -110,22 +110,22 @@ const BabyFoodPage = () => {
         </div>
 
         <Tabs defaultValue="generator" className="space-y-6">
-          <TabsList className="w-full grid grid-cols-3 p-1 bg-muted/20 rounded-xl border-4 border-black mb-6">
+          <TabsList className="w-full grid grid-cols-3 p-1 bg-muted/20 rounded-xl border-2 border-black mb-6">
             <TabsTrigger 
               value="generator" 
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-neo-light data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-bold py-3"
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-medium py-3"
             >
               Recipe Generator
             </TabsTrigger>
             <TabsTrigger 
               value="advice" 
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-neo-light data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-bold py-3"
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-medium py-3"
             >
               Food Advice
             </TabsTrigger>
             <TabsTrigger 
               value="saved" 
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-neo-light data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-bold py-3"
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-medium py-3"
             >
               Saved Recipes
             </TabsTrigger>
