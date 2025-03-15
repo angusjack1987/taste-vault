@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -32,18 +32,25 @@ const PlanWeekDialog: React.FC<PlanWeekDialogProps> = ({
   isGenerating
 }) => {
   // Initialize state for selected days
-  const initialSelection: MealSelection = {};
-  for (let i = 0; i < 7; i++) {
-    const day = addDays(weekStart, i);
-    const dayKey = format(day, 'yyyy-MM-dd');
-    initialSelection[dayKey] = {
-      breakfast: false,
-      lunch: false,
-      dinner: false
-    };
-  }
-
-  const [selectedDays, setSelectedDays] = useState<MealSelection>(initialSelection);
+  const [selectedDays, setSelectedDays] = useState<MealSelection>({});
+  
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      // Initialize with all days of the week
+      const initialSelection: MealSelection = {};
+      for (let i = 0; i < 7; i++) {
+        const day = addDays(weekStart, i);
+        const dayKey = format(day, 'yyyy-MM-dd');
+        initialSelection[dayKey] = {
+          breakfast: false,
+          lunch: false,
+          dinner: false
+        };
+      }
+      setSelectedDays(initialSelection);
+    }
+  }, [open, weekStart]);
   
   // Helper to check if any meal is selected
   const hasSelections = Object.values(selectedDays).some(
@@ -97,14 +104,14 @@ const PlanWeekDialog: React.FC<PlanWeekDialogProps> = ({
 
   // Check if all meals for a day are selected
   const isAllDaySelected = (day: string) => {
-    return selectedDays[day].breakfast && 
-           selectedDays[day].lunch && 
-           selectedDays[day].dinner;
+    return selectedDays[day]?.breakfast && 
+           selectedDays[day]?.lunch && 
+           selectedDays[day]?.dinner;
   };
 
   // Check if a specific meal type is selected for all days
   const isMealSelectedForAllDays = (meal: MealType) => {
-    return Object.keys(selectedDays).every(day => selectedDays[day][meal]);
+    return Object.keys(selectedDays).every(day => selectedDays[day]?.[meal]);
   };
 
   // Check if all meals for all days are selected
@@ -116,13 +123,6 @@ const PlanWeekDialog: React.FC<PlanWeekDialogProps> = ({
   const handleGeneratePlan = () => {
     onGeneratePlan(selectedDays);
   };
-
-  // Reset form when dialog opens/closes
-  React.useEffect(() => {
-    if (open) {
-      setSelectedDays(initialSelection);
-    }
-  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -212,21 +212,21 @@ const PlanWeekDialog: React.FC<PlanWeekDialogProps> = ({
                     <div className="grid grid-cols-3 col-span-3 gap-1 text-center text-sm">
                       <div className="flex justify-center">
                         <Checkbox 
-                          checked={selectedDays[dayKey].breakfast}
+                          checked={selectedDays[dayKey]?.breakfast}
                           onCheckedChange={() => toggleMealSelection(dayKey, 'breakfast')}
                           id={`${dayKey}-breakfast`}
                         />
                       </div>
                       <div className="flex justify-center">
                         <Checkbox 
-                          checked={selectedDays[dayKey].lunch}
+                          checked={selectedDays[dayKey]?.lunch}
                           onCheckedChange={() => toggleMealSelection(dayKey, 'lunch')}
                           id={`${dayKey}-lunch`}
                         />
                       </div>
                       <div className="flex justify-center">
                         <Checkbox 
-                          checked={selectedDays[dayKey].dinner}
+                          checked={selectedDays[dayKey]?.dinner}
                           onCheckedChange={() => toggleMealSelection(dayKey, 'dinner')}
                           id={`${dayKey}-dinner`}
                         />

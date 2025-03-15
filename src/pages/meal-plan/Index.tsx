@@ -246,8 +246,7 @@ const MealPlan = () => {
         image: null,
         difficulty: null,
         tags: [],
-        images: [],
-        rating: null
+        images: []
       });
       
       if (currentDay && currentMealType) {
@@ -299,15 +298,19 @@ const MealPlan = () => {
         return;
       }
       
-      // Get recent meals for context
+      // Get recent meals for better context (from the last 3 weeks)
       const recentMeals = recentMealPlans?.map(meal => ({
         date: meal.date,
         mealType: meal.meal_type,
-        recipe: meal.recipe?.title
+        recipe: meal.recipe?.title || 'Untitled meal'
       })) || [];
       
-      // Get existing recipes for context
-      const userRecipes = recipes?.slice(0, 20).map(recipe => recipe.title) || [];
+      // Get existing recipes for variety recommendations
+      const userRecipes = recipes?.map(recipe => ({
+        id: recipe.id,
+        title: recipe.title,
+        type: getRecipeType(recipe.title, recipe.tags || [])
+      })) || [];
       
       const batchSize = 3;
       let successCount = 0;
@@ -317,20 +320,47 @@ const MealPlan = () => {
         
         for (const meal of batch) {
           try {
-            // Create a more detailed prompt with context about existing recipes and recent meals
+            // Create a detailed prompt with context about existing recipes and recent meals
             const mealContext = `
-              For the meal on ${format(new Date(meal.date), 'EEEE, MMMM d')}.
-              Consider that the user already has these recipes in their collection: ${userRecipes.join(', ')}.
-              Recently, they've had: ${recentMeals.slice(0, 5).map(m => `${m.recipe || 'a meal'} for ${m.mealType} on ${format(new Date(m.date), 'EEE, MMM d')}`).join('; ')}.
-              Please suggest a meal that provides variety based on their recent eating patterns.
+              Meal planning for ${format(new Date(meal.date), 'EEEE, MMMM d')} ${meal.mealType}.
+              User's recipe collection includes: ${userRecipes.slice(0, 15).map(r => r.title).join(', ')}.
+              Recent meals (last 3 weeks): ${recentMeals.slice(0, 10).map(m => 
+                `${m.recipe} for ${m.mealType} on ${format(new Date(m.date), 'EEE, MMM d')}`
+              ).join('; ')}.
+              Please suggest a meal that provides variety compared to recent meals.
             `;
             
+            // First try to reuse an existing recipe that fits well
+            const suitableExistingRecipe = findSuitableExistingRecipe(
+              userRecipes, 
+              recentMeals, 
+              meal.mealType
+            );
+            
+            if (suitableExistingRecipe && Math.random() > 0.5) {
+              // 50% chance to use an existing recipe if suitable
+              const existingRecipe = recipes?.find(r => r.id === suitableExistingRecipe.id);
+              
+              if (existingRecipe) {
+                await createMealPlan({
+                  date: new Date(meal.date),
+                  meal_type: meal.mealType,
+                  recipe_id: existingRecipe.id,
+                });
+                
+                successCount++;
+                continue;
+              }
+            }
+            
+            // Otherwise, generate a new recipe
             const result = await suggestMealForPlan({
               mealType: meal.mealType,
               additionalPreferences: mealContext
             });
             
-            if (result && typeof result === 'object' && result.options && Array.isArray(result.options) && result.options.length > 0) {
+            if (result && typeof result === 'object' && result.options && 
+                Array.isArray(result.options) && result.options.length > 0) {
               const suggestion = result.options[0];
               
               // Create the recipe without the rating field
@@ -372,6 +402,72 @@ const MealPlan = () => {
       toast.error("Failed to generate meal plan. Please try again.");
     } finally {
       setGeneratingPlan(false);
+    }
+  };
+  
+  // Helper function to determine recipe type based on name and tags
+  const getRecipeType = (title: string, tags: string[]): string => {
+    const lowerTitle = title.toLowerCase();
+    const lowerTags = tags.map(tag => tag.toLowerCase());
+    
+    if (lowerTags.includes('breakfast') || 
+        lowerTitle.includes('breakfast') || 
+        lowerTitle.includes('pancake') || 
+        lowerTitle.includes('cereal') ||
+        lowerTitle.includes('oatmeal')) {
+      return 'breakfast';
+    }
+    
+    if (lowerTags.includes('lunch') || 
+        lowerTitle.includes('lunch') || 
+        lowerTitle.includes('sandwich') || 
+        lowerTitle.includes('salad')) {
+      return 'lunch';
+    }
+    
+    if (lowerTags.includes('dinner') || 
+        lowerTitle.includes('dinner') || 
+        lowerTitle.includes('pasta') || 
+        lowerTitle.includes('roast')) {
+      return 'dinner';
+    }
+    
+    return 'any';
+  };
+  
+  // Helper function to find a suitable existing recipe
+  const findSuitableExistingRecipe = (
+    userRecipes: Array<{id: string, title: string, type: string}>,
+    recentMeals: Array<{date: string, mealType: string, recipe: string}>,
+    mealType: string
+  ) => {
+    if (!userRecipes.length) return null;
+    
+    // Filter recipes that might be suitable for this meal type
+    const typeMatches = userRecipes.filter(recipe => 
+      recipe.type === 'any' || recipe.type === mealType
+    );
+    
+    if (!typeMatches.length) return null;
+    
+    // Identify recipes we've used recently to avoid repetition
+    const recentRecipeTitles = recentMeals
+      .filter(meal => meal.mealType === mealType)
+      .map(meal => meal.recipe.toLowerCase());
+    
+    // Find recipes we haven't used recently
+    const notRecentlyUsed = typeMatches.filter(recipe => 
+      !recentRecipeTitles.some(title => 
+        title.toLowerCase().includes(recipe.title.toLowerCase()) || 
+        recipe.title.toLowerCase().includes(title.toLowerCase())
+      )
+    );
+    
+    // Return a random recipe from those not recently used, or any type match if all have been used
+    if (notRecentlyUsed.length > 0) {
+      return notRecentlyUsed[Math.floor(Math.random() * notRecentlyUsed.length)];
+    } else {
+      return typeMatches[Math.floor(Math.random() * typeMatches.length)];
     }
   };
   
