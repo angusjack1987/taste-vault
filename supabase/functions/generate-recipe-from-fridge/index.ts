@@ -73,19 +73,22 @@ serve(async (req: Request) => {
     // Log the prompt to history if enabled
     if (aiSettings?.promptHistoryEnabled !== false && userId) {
       try {
-        // Store a truncated version of the response
+        // Store the full response and prompt for later retrieval
         const responsePreview = JSON.stringify(result).substring(0, 150) + '...';
+        const fullPrompt = "Generate recipe from fridge ingredients: " + data.ingredients.join(", ");
+        const fullResponse = JSON.stringify(result);
           
         await supabaseClient.from('ai_prompt_history').insert({
           user_id: userId,
           endpoint: "generate-recipe-from-fridge",
-          prompt: "Generate recipe from fridge ingredients: " + data.ingredients.join(", "),
+          prompt: fullPrompt,
           response_preview: responsePreview,
+          full_response: fullResponse,
           model: aiSettings?.model,
           temperature: aiSettings?.temperature
         });
         
-        console.log("Prompt history logged");
+        console.log("Prompt history logged with full response");
       } catch (error) {
         console.error("Error logging prompt history:", error);
       }
@@ -117,9 +120,10 @@ function generateRecipePrompt(
 ): string {
   const detailLevel = aiSettings?.userPreferences?.responseStyle || "balanced";
   
-  let prompt = `Create ${detailLevel === "concise" ? "1 recipe" : "2 recipes"} using some or all of these ingredients:\n`;
+  let prompt = `Create ${detailLevel === "concise" ? "1 recipe" : "2 recipes"} that primarily uses these ingredients:\n`;
   prompt += ingredients.join(", ");
   prompt += "\n\n";
+  prompt += "You can include additional ingredients not listed if necessary to create complete, delicious recipes.\n";
 
   // Add user's food preferences if available
   if (userFoodPreferences) {

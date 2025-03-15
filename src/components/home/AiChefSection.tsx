@@ -19,6 +19,10 @@ const AiChefSection = ({ onOpenSuggestDialog }: AiChefSectionProps) => {
           <div className="w-12 h-12 bg-red-300 border-4 border-black rounded-full animate-neo-pulse"></div>
         </div>
         
+        <div className="absolute top-20 right-20">
+          <div className="w-10 h-10 bg-blue-300 border-4 border-black rounded-full animate-neo-float"></div>
+        </div>
+        
         <Sparkles className="h-12 w-12 text-black mb-3 animate-neo-pulse" strokeWidth={3} />
         <h2 className="text-2xl font-black uppercase mb-3 neo-text-chunky">AI Recipe Assistant</h2>
         <p className="text-black font-bold mb-5 max-w-md">

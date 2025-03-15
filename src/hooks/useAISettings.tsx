@@ -13,6 +13,7 @@ export interface PromptHistoryItem {
   endpoint: string;
   prompt: string;
   response_preview?: string | null;
+  full_response?: string | null;
   model?: string | null;
   temperature?: number | null;
 }
@@ -128,6 +129,28 @@ export const useAISettings = () => {
     }
   };
   
+  // Get full prompt details
+  const getPromptDetails = async (promptId: string): Promise<PromptHistoryItem | null> => {
+    if (!user) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('ai_prompt_history')
+        .select('*')
+        .eq('id', promptId)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) throw error;
+      
+      return data as PromptHistoryItem;
+    } catch (err) {
+      console.error("Error fetching prompt details:", err);
+      toast.error("Failed to load prompt details");
+      return null;
+    }
+  };
+  
   // Clear prompt history
   const clearPromptHistory = async (): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
@@ -174,6 +197,14 @@ export const useAISettings = () => {
     });
   };
   
+  const usePromptDetailsQuery = (promptId: string | null) => {
+    return useQuery({
+      queryKey: ['prompt-details', promptId],
+      queryFn: () => getPromptDetails(promptId as string),
+      enabled: !!user && !!promptId,
+    });
+  };
+  
   const useClearPromptHistory = () => {
     return useMutation({
       mutationFn: clearPromptHistory,
@@ -187,6 +218,7 @@ export const useAISettings = () => {
     useAISettingsQuery,
     useUpdateAISettings,
     usePromptHistoryQuery,
+    usePromptDetailsQuery,
     useClearPromptHistory,
   };
 };

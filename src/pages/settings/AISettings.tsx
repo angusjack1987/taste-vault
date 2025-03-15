@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import { ChevronDown, InfoIcon, Trash, History, Sparkles, Server, Brain } from "lucide-react";
+import { ChevronDown, InfoIcon, Trash, History, Sparkles, Server, Brain, Eye } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { 
   Card, 
@@ -32,6 +33,8 @@ import useAISettings, { PromptHistoryItem } from "@/hooks/useAISettings";
 import { AISettings as AISettingsType } from "@/hooks/useAiRecipes";
 import { format } from "date-fns";
 import AiMemoryDialog from "@/components/meal-plan/dialogs/AiMemoryDialog";
+import PromptDetailsDialog from "@/components/settings/PromptDetailsDialog";
+import DevToolsSection from "@/components/settings/DevToolsSection";
 
 const modelOptions = [
   { value: "gpt-4o", label: "GPT-4o (Most Capable)" },
@@ -54,6 +57,10 @@ const AISettings = () => {
   const { mutate: clearHistory, isPending: isClearing } = useClearPromptHistory();
   
   const [aiMemoryOpen, setAiMemoryOpen] = useState(false);
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+  const [promptDetailsOpen, setPromptDetailsOpen] = useState(false);
+  const [showDeveloperTools, setShowDeveloperTools] = useState(false);
+  const [devToolsAccessCount, setDevToolsAccessCount] = useState(0);
   
   const [localSettings, setLocalSettings] = useState<AISettingsType>({
     model: aiSettings?.model || "gpt-3.5-turbo",
@@ -95,6 +102,11 @@ const AISettings = () => {
     });
   };
   
+  const handleShowPromptDetails = (promptId: string) => {
+    setSelectedPromptId(promptId);
+    setPromptDetailsOpen(true);
+  };
+  
   const formatTimeAgo = (timestamp: string) => {
     try {
       const date = new Date(timestamp);
@@ -107,6 +119,14 @@ const AISettings = () => {
   const getModelLabel = (modelValue: string) => {
     const model = modelOptions.find(m => m.value === modelValue);
     return model ? model.label : modelValue;
+  };
+  
+  const handleTitleClick = () => {
+    setDevToolsAccessCount(prev => prev + 1);
+    if (devToolsAccessCount >= 4) {
+      setShowDeveloperTools(true);
+      setDevToolsAccessCount(0);
+    }
   };
   
   return (
@@ -127,7 +147,7 @@ const AISettings = () => {
           <TabsContent value="settings" className="mt-4 space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>AI Model Preferences</CardTitle>
+                <CardTitle onClick={handleTitleClick}>AI Model Preferences</CardTitle>
                 <CardDescription>
                   Configure how the AI responds to your queries
                 </CardDescription>
@@ -335,6 +355,18 @@ const AISettings = () => {
                               <p className="whitespace-pre-wrap text-sm">{item.response_preview}</p>
                             </div>
                           )}
+                          
+                          <div className="flex justify-end">
+                            <Button
+                              variant="ghost" 
+                              size="sm"
+                              className="text-xs h-7 gap-1"
+                              onClick={() => handleShowPromptDetails(item.id)}
+                            >
+                              <Eye className="h-3 w-3" />
+                              View Details
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -350,6 +382,14 @@ const AISettings = () => {
         open={aiMemoryOpen}
         onOpenChange={setAiMemoryOpen}
       />
+      
+      <PromptDetailsDialog 
+        open={promptDetailsOpen}
+        onOpenChange={setPromptDetailsOpen}
+        promptId={selectedPromptId}
+      />
+      
+      {showDeveloperTools && <DevToolsSection />}
     </MainLayout>
   );
 };
