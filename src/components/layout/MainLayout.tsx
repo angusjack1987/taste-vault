@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useState, useMemo } from "react";
 import BottomNav from "./BottomNav";
 import PageHeader from "./PageHeader";
@@ -23,8 +22,6 @@ const MainLayout = ({
 }: MainLayoutProps) => {
   const [mounted, setMounted] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [bgTransitioning, setBgTransitioning] = useState(false);
-  const [prevGradient, setPrevGradient] = useState('');
   const location = useLocation();
   
   // Generate a consistent gradient for the page to prevent flashing
@@ -46,21 +43,11 @@ const MainLayout = ({
       setIsTransitioning(true);
       setMounted(false);
       
-      // Start background transition first
-      setBgTransitioning(true);
-      setPrevGradient(prevGradient || backgroundGradient);
+      // Short delay to trigger exit animation
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Wait for background fade to complete
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Then set mounted to true to trigger entrance animation for content
+      // Then set mounted to true to trigger entrance animation
       setMounted(true);
-      
-      // After content animation starts, complete background transition
-      setTimeout(() => {
-        setBgTransitioning(false);
-        setPrevGradient(backgroundGradient);
-      }, 100);
       
       // After animation completes, reset transitioning state
       setTimeout(() => {
@@ -69,22 +56,10 @@ const MainLayout = ({
     };
     
     handlePageTransition();
-  }, [location.pathname, backgroundGradient]);
+  }, [location.pathname]);
 
   return (
-    <div className={`flex flex-col min-h-screen overflow-hidden relative`}>
-      {/* Background gradient with transition */}
-      <div 
-        className={`absolute inset-0 bg-gradient-to-br ${prevGradient} transition-opacity duration-300 z-0 ${
-          bgTransitioning ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
-      <div 
-        className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient} transition-opacity duration-300 z-0 ${
-          bgTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}
-      />
-      
+    <div className={`flex flex-col min-h-screen bg-gradient-to-br ${backgroundGradient} overflow-hidden`}>
       <PageHeader
         title={title}
         showBackButton={showBackButton}
@@ -93,7 +68,7 @@ const MainLayout = ({
         backgroundGradient={backgroundGradient}
       />
       
-      <main className="flex-1 pb-24 pt-4 px-3 md:px-5 relative overflow-x-hidden overflow-y-auto z-10">
+      <main className="flex-1 pb-24 pt-4 px-3 md:px-5 relative overflow-x-hidden overflow-y-auto">
         {/* Neo-brutalism colorful background elements with rounded corners */}
         <div className="absolute top-20 right-20 w-40 h-40 bg-[#FFD700] border-4 border-black rounded-2xl z-0 rotate-12 shadow-neo-heavy animate-neo-float"></div>
         <div className="absolute bottom-40 left-10 w-28 h-28 bg-[#FF6B6B] border-4 border-black rounded-2xl z-0 -rotate-12 shadow-neo-heavy animate-neo-pulse"></div>
@@ -120,3 +95,4 @@ const MainLayout = ({
 };
 
 export default MainLayout;
+

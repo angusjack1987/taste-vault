@@ -297,24 +297,15 @@ const RecipeDetail = () => {
       showBackButton={true}
       action={
         <div className="flex gap-2">
-          <Button 
-            variant="cheese" 
-            size="icon" 
-            asChild
-            className="rounded-full border-2 border-black shadow-neo-heavy hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-          >
+          <Button variant="ghost" size="icon" asChild>
             <a href={`/recipes/${id}/edit`}>
               <Edit className="h-5 w-5" />
             </a>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button 
-                variant="tomato" 
-                size="icon" 
-                className="rounded-full border-2 border-black shadow-neo-heavy hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-              >
-                <Trash2 className="h-5 w-5" />
+              <Button variant="ghost" size="icon">
+                <Trash2 className="h-5 w-5 text-destructive" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -352,10 +343,10 @@ const RecipeDetail = () => {
             <img 
               src={recipe.image} 
               alt={recipe.title} 
-              className="w-full h-48 md:h-64 object-cover rounded-lg border-2 border-black"
+              className="w-full h-48 md:h-64 object-cover"
             />
           ) : (
-            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center rounded-lg border-2 border-black">
+            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
               <p className="text-muted-foreground">No image available</p>
             </div>
           )}
@@ -389,27 +380,18 @@ const RecipeDetail = () => {
             
             <div className="flex gap-2">
               <Button
-                variant="cheese"
+                variant="ghost"
                 size="icon"
-                className="rounded-full border-2 border-black shadow-neo-heavy hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
                 onClick={() => setIsFavorited(!isFavorited)}
               >
                 <Heart 
                   className={`h-5 w-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} 
                 />
               </Button>
-              <Button 
-                variant="lettuce" 
-                size="icon"
-                className="rounded-full border-2 border-black shadow-neo-heavy hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-              >
+              <Button variant="ghost" size="icon">
                 <Bookmark className="h-5 w-5" />
               </Button>
-              <Button 
-                variant="blueberry" 
-                size="icon"
-                className="rounded-full border-2 border-black shadow-neo-heavy hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-              >
+              <Button variant="ghost" size="icon">
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
