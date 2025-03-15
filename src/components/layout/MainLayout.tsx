@@ -24,27 +24,15 @@ const MainLayout = ({
   
   // Add neo-brutalist transition effect when component mounts
   useEffect(() => {
-    // First set up the transition overlay
-    const overlay = document.querySelector('.page-transition-overlay');
-    if (overlay) {
-      overlay.classList.remove('opacity-0');
-      overlay.classList.add('opacity-100');
-      
-      // Then slide in the content with a slight delay
-      setTimeout(() => {
-        overlay.classList.remove('opacity-100');
-        overlay.classList.add('opacity-0');
-        
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-          mainContent.classList.remove('translate-x-full');
-          mainContent.classList.add('translate-x-0');
-        }
-      }, 200);
-    }
-    
     // Set mounted state for staggered animations
     setMounted(true);
+    
+    // Slide in the content
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+      mainContent.classList.remove('translate-x-full');
+      mainContent.classList.add('translate-x-0');
+    }
     
     return () => setMounted(false);
   }, []);
@@ -59,27 +47,22 @@ const MainLayout = ({
       />
       
       <main className="flex-1 pb-24 px-4 md:px-6 relative overflow-x-hidden overflow-y-auto">
-        {/* Neo-brutalism colorful background elements */}
-        <div className="absolute top-20 right-20 w-48 h-48 bg-[#FFD700] border-4 border-black z-0 rotate-12 shadow-neo-heavy"></div>
-        <div className="absolute bottom-40 left-10 w-32 h-32 bg-[#FF6B6B] border-4 border-black z-0 -rotate-12 shadow-neo-heavy"></div>
-        <div className="absolute top-40 left-10 w-24 h-24 bg-[#4CAF50] border-4 border-black z-0 rotate-45 shadow-neo-heavy"></div>
+        {/* Neo-brutalism colorful background elements with rounded corners */}
+        <div className="absolute top-20 right-20 w-48 h-48 bg-[#FFD700] border-4 border-black rounded-2xl z-0 rotate-12 shadow-neo-heavy"></div>
+        <div className="absolute bottom-40 left-10 w-32 h-32 bg-[#FF6B6B] border-4 border-black rounded-2xl z-0 -rotate-12 shadow-neo-heavy"></div>
+        <div className="absolute top-40 left-10 w-24 h-24 bg-[#4CAF50] border-4 border-black rounded-2xl z-0 rotate-45 shadow-neo-heavy"></div>
         
         {/* Main content with neo-brutalist slide-in animation */}
         <div 
           className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-500 ease-in-out z-10 translate-x-full`}
         >
-          <div className="p-4 md:p-6 neo-container bg-white mb-6 shadow-neo-heavy border-4 border-black">
+          <div className="p-4 md:p-6 neo-container bg-white mb-6 shadow-neo-heavy border-4 border-black rounded-2xl">
             {children}
           </div>
         </div>
       </main>
       
       {!hideNavigation && <BottomNav />}
-      
-      {/* Page transition overlay with chunky animation */}
-      <div 
-        className="fixed inset-0 bg-black pointer-events-none z-50 transition-opacity duration-300 opacity-0 page-transition-overlay"
-      />
     </div>
   );
 };

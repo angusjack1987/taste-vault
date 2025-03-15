@@ -25,7 +25,7 @@ const TodaysMealsSection = ({ meals }: TodaysMealsSectionProps) => {
     <section className="mb-8">
       <div className="flex items-center justify-between mb-5 p-4 section-green">
         <h2 className="text-xl font-black uppercase">Today's Meals</h2>
-        <Link to="/meal-plan" className="text-sm font-bold uppercase flex items-center bg-white px-3 py-2 neo-border shadow-neo-light hover:shadow-neo-medium hover:-translate-x-1 hover:-translate-y-1 transition-all">
+        <Link to="/meal-plan" className="text-sm font-bold uppercase flex items-center bg-white px-3 py-2 neo-border shadow-neo-light hover:shadow-neo-medium hover:-translate-x-1 hover:-translate-y-1 transition-all rounded-lg">
           View all <ArrowRight className="h-4 w-4 ml-1" />
         </Link>
       </div>
@@ -33,20 +33,20 @@ const TodaysMealsSection = ({ meals }: TodaysMealsSectionProps) => {
       <div className="section-pink rounded-xl">
         {meals.map((meal, index) => (
           <div key={meal.id} className={`${index !== 0 ? 'mt-5 pt-5 border-t-4 border-black' : ''}`}>
-            <h3 className="font-extrabold text-sm uppercase mb-3 bg-black text-white inline-block px-3 py-1">
+            <h3 className="font-extrabold text-sm uppercase mb-3 bg-black text-white inline-block px-3 py-1 rounded-lg">
               {meal.meal_type}
             </h3>
             {meal.recipe ? (
               <Link to={`/recipes/${meal.recipe.id}`} className="block">
-                <div className="flex items-center gap-4 bg-white p-3 border-4 border-black shadow-neo-light hover:shadow-neo-medium hover:-translate-x-1 hover:-translate-y-1 transition-all">
+                <div className="flex items-center gap-4 bg-white p-3 border-4 border-black shadow-neo-light hover:shadow-neo-medium hover:-translate-x-1 hover:-translate-y-1 transition-all rounded-xl">
                   {meal.recipe.image ? (
                     <img 
                       src={meal.recipe.image} 
                       alt={meal.recipe.title}
-                      className="w-16 h-16 object-cover border-4 border-black" 
+                      className="w-16 h-16 object-cover border-4 border-black rounded-lg" 
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-yellow-300 flex items-center justify-center border-4 border-black">
+                    <div className="w-16 h-16 bg-yellow-300 flex items-center justify-center border-4 border-black rounded-lg">
                       <ChefHat className="h-8 w-8" strokeWidth={3} />
                     </div>
                   )}
@@ -58,7 +58,7 @@ const TodaysMealsSection = ({ meals }: TodaysMealsSectionProps) => {
             ) : (
               <Link to="/meal-plan" className="block">
                 <div className="rounded-xl p-4 border-4 border-dashed border-black flex items-center justify-center bg-white">
-                  <Button variant="ghost" size="lg" className="rounded-none font-black uppercase border-4 border-black hover:bg-yellow-300">
+                  <Button variant="ghost" size="lg" className="rounded-lg font-black uppercase border-4 border-black hover:bg-yellow-300">
                     <Plus className="h-5 w-5 mr-2" />
                     Add {meal.meal_type}
                   </Button>
