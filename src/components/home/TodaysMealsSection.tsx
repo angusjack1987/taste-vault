@@ -59,7 +59,7 @@ const TodaysMealsSection = ({ meals }: TodaysMealsSectionProps) => {
               <Link to="/meal-plan" className="block">
                 <div className="rounded-xl p-4 border-4 border-dashed border-black flex items-center justify-center bg-white">
                   <Button variant="ghost" size="lg" className="rounded-none font-black uppercase border-4 border-black hover:bg-yellow-300">
-                    <Plus className="h-5 w-5 mr-2" strokeWidth={3} />
+                    <Plus className="h-5 w-5 mr-2" />
                     Add {meal.meal_type}
                   </Button>
                 </div>
@@ -72,7 +72,12 @@ const TodaysMealsSection = ({ meals }: TodaysMealsSectionProps) => {
   );
 };
 
-const Plus = ({ className }: { className?: string }) => (
+interface PlusProps {
+  className?: string;
+  strokeWidth?: number;
+}
+
+const Plus = ({ className, strokeWidth = 3 }: PlusProps) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
     className={className}
@@ -81,7 +86,7 @@ const Plus = ({ className }: { className?: string }) => (
     viewBox="0 0 24 24" 
     fill="none" 
     stroke="currentColor" 
-    strokeWidth="3" 
+    strokeWidth={strokeWidth} 
     strokeLinecap="round" 
     strokeLinejoin="round"
   >
