@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -51,18 +52,23 @@ const BabyFoodPage = () => {
           // Safely check if preferences exists and is an object
           const prefs = typeof prefsData.preferences === 'object' ? prefsData.preferences : {};
 
-          // Safely access food property
-          if (prefs && typeof prefs === 'object') {
-            const foodPrefs = prefs.hasOwnProperty('food') && 
-                             typeof prefs.food === 'object' ? 
+          // Safely access food property with proper type checking
+          if (prefs && typeof prefs === 'object' && !Array.isArray(prefs)) {
+            // Check if 'food' exists and is an object before accessing it
+            const foodPrefs = 'food' in prefs && 
+                             typeof prefs.food === 'object' && 
+                             prefs.food !== null && 
+                             !Array.isArray(prefs.food) ? 
                              prefs.food : {};
             
             if (foodPrefs && typeof foodPrefs === 'object') {
               // Use optional chaining and nullish coalescing to safely access properties
-              setBabyFoodPreferences(foodPrefs.babyFoodPreferences?.toString() || '');
+              if ('babyFoodPreferences' in foodPrefs) {
+                setBabyFoodPreferences(String(foodPrefs.babyFoodPreferences || ''));
+              }
               
-              if (foodPrefs.hasOwnProperty('babyAge')) {
-                setBabyAge(foodPrefs.babyAge?.toString() || '');
+              if ('babyAge' in foodPrefs) {
+                setBabyAge(String(foodPrefs.babyAge || ''));
               }
             }
           }
