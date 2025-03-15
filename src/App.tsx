@@ -23,6 +23,7 @@ import Register from "./pages/auth/Register";
 import FoodPreferences from "./pages/settings/FoodPreferences";
 import AISettings from "@/pages/settings/AISettings";
 import BabyFoodPage from "./pages/baby-food/BabyFoodPage";
+import DesignSystem from "./pages/settings/DesignSystem";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,11 @@ const App = () => (
             <Route path="/settings/ai-settings" element={
               <AuthGuard>
                 <AISettings />
+              </AuthGuard>
+            } />
+            <Route path="/settings/design-system" element={
+              <AuthGuard>
+                <DesignSystem />
               </AuthGuard>
             } />
             <Route path="/profile" element={

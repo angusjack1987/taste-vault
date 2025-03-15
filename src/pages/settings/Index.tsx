@@ -10,7 +10,8 @@ import {
   Sparkles,
   Lock,
   HelpCircle,
-  Info
+  Info,
+  Palette
 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,6 +54,12 @@ const Settings = () => {
           label: "Notifications",
           path: "/settings/notifications",
           bgColor: "bg-red-100",
+        },
+        {
+          icon: <Palette className="h-5 w-5 text-green-500" />,
+          label: "Design System",
+          path: "/settings/design-system",
+          bgColor: "bg-green-100",
         },
       ]
     },
