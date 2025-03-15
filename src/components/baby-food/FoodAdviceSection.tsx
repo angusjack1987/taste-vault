@@ -6,15 +6,10 @@ import { Card } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Carrot, Apple, Info, ChevronDown } from 'lucide-react';
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from '@/components/ui/accordion';
+import { Baby, Carrot, Apple, Info, ChevronDown, Clock, Utensils } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from '@/components/ui/badge';
 
 interface FoodAdviceSectionProps {
   babyAge: string;
@@ -54,6 +49,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
       }
       
       setAdvice(cleanedAdvice);
+      setIsOpen(true); // Ensure the advice is open when newly generated
       toast.success(`Generated advice for serving ${food}!`);
     } catch (error) {
       console.error('Error getting food advice:', error);
@@ -94,7 +90,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
                 variant="outline"
                 size="sm"
                 onClick={() => setFood(item.name)}
-                className="flex items-center"
+                className="flex items-center bg-white hover:bg-[#f4f4f0] transition-colors"
               >
                 {item.icon}
                 <span className="ml-1">{item.name}</span>
@@ -132,22 +128,30 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
       )}
 
       {advice && !loading && (
-        <Card className="overflow-hidden border-2 border-black">
+        <Card className="overflow-hidden rounded-xl border-4 border-black">
           <Collapsible
-            defaultOpen={true}
-            className="rounded-lg transition-all duration-300 ease-in-out hover:bg-[#f4f4f0]"
             open={isOpen}
             onOpenChange={setIsOpen}
+            className="transition-all duration-300 ease-in-out"
           >
-            <CollapsibleTrigger className="flex w-full items-center justify-between px-6 py-4 text-left font-semibold">
-              <div className="text-lg">
-                How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}
+            <CollapsibleTrigger className="flex w-full items-center justify-between px-6 py-5 text-left font-semibold hover:bg-[#f4f4f0] transition-colors border-b-2 border-black/10">
+              <div className="flex items-center gap-2">
+                <Utensils className="h-5 w-5 text-primary" />
+                <span className="text-lg font-bold">
+                  How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}
+                </span>
               </div>
-              <div className="relative flex h-7 items-center">
-                <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="hidden md:flex items-center gap-1 font-medium">
+                  <Clock className="h-3 w-3" />
+                  <span>{babyAge} months</span>
+                </Badge>
+                <ChevronDown 
+                  className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+                />
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="px-6 pb-6 pt-0 data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+            <CollapsibleContent className="px-6 pb-6 pt-4 data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up bg-white">
               <div className="prose max-w-none">
                 <div dangerouslySetInnerHTML={{ __html: advice }} />
               </div>

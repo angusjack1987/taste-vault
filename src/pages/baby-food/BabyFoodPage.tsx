@@ -11,6 +11,7 @@ import { Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const BabyFoodPage = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const BabyFoodPage = () => {
   const [loading, setLoading] = useState(true);
   const [babyAge, setBabyAge] = useState<string>('');
   const [babyFoodPreferences, setBabyFoodPreferences] = useState<string>('');
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchBabyProfiles = async () => {
@@ -93,14 +95,14 @@ const BabyFoodPage = () => {
       <div className="page-container">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl md:text-3xl font-black uppercase">
-            Baby Food
-            {babyNames.length > 0 && ` for ${babyNames.join(' & ')}`}
+            BABY FOOD
+            {babyNames.length > 0 && ` FOR ${babyNames.join(' & ')}`}
           </h1>
           <Button 
             onClick={() => navigate('/settings/food-preferences')} 
             variant="outline" 
             size="sm"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-white"
           >
             <Settings size={16} />
             <span className="hidden md:inline">Settings</span>
@@ -108,10 +110,25 @@ const BabyFoodPage = () => {
         </div>
 
         <Tabs defaultValue="generator" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="generator">Recipe Generator</TabsTrigger>
-            <TabsTrigger value="advice">Food Advice</TabsTrigger>
-            <TabsTrigger value="saved">Saved Recipes</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-3 p-1 bg-muted/20 rounded-xl border-4 border-black mb-6">
+            <TabsTrigger 
+              value="generator" 
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-neo-light data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-bold py-3"
+            >
+              Recipe Generator
+            </TabsTrigger>
+            <TabsTrigger 
+              value="advice" 
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-neo-light data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-bold py-3"
+            >
+              Food Advice
+            </TabsTrigger>
+            <TabsTrigger 
+              value="saved" 
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-neo-light data-[state=active]:border-2 data-[state=active]:border-black text-sm md:text-base font-bold py-3"
+            >
+              Saved Recipes
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="generator" className="mt-6">
