@@ -301,3 +301,49 @@ body {
 .shadow-neo-light {
   box-shadow: 3px 3px 0px 0px rgba(0,0,0,1);
 }
+
+/* Neo-brutalism switch styling */
+.neo-switch {
+  border: 2px solid black;
+  background-color: #9ca3af;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+  transition: all 0.2s ease;
+}
+
+.neo-switch[data-state="checked"] {
+  background-color: #FFC107;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+}
+
+.neo-switch-thumb {
+  border: 2px solid black;
+  background-color: white;
+  transition: transform 0.2s ease;
+}
+
+.neo-switch:focus-visible {
+  outline: 2px solid black;
+  outline-offset: 2px;
+}
+
+/* Toggle animations */
+@keyframes toggle-slide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(20px);
+  }
+}
+
+.toggle-slide {
+  animation: toggle-slide 0.2s ease-in-out forwards;
+}
+
+/* Toggle labels styling */
+.toggle-label {
+  font-weight: bold;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
