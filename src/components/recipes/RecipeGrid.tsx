@@ -56,7 +56,7 @@ const RecipeGrid = ({
           {selectionMode ? (
             <div 
               onClick={() => recipe.onSelect && recipe.onSelect()}
-              className="cursor-pointer"
+              className="cursor-pointer transform transition-all duration-300 animate-in fade-in"
             >
               <RecipeCard
                 id={recipe.id}
@@ -67,13 +67,15 @@ const RecipeGrid = ({
               />
             </div>
           ) : (
-            <RecipeCard
-              id={recipe.id}
-              title={recipe.title}
-              image={recipe.image}
-              time={recipe.time}
-              rating={recipe.rating}
-            />
+            <div className="transform transition-all duration-300 animate-in fade-in">
+              <RecipeCard
+                id={recipe.id}
+                title={recipe.title}
+                image={recipe.image}
+                time={recipe.time}
+                rating={recipe.rating}
+              />
+            </div>
           )}
         </div>
       ))}
