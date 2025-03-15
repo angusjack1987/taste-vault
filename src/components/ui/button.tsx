@@ -22,6 +22,12 @@ const buttonVariants = cva(
         add: "bg-[#FFA6F6] hover:bg-[#fa8cef] active:bg-[#f774ea]",
         edit: "bg-[#A6FAFF] hover:bg-[#79F7FF] active:bg-[#53f2fc]",
         settings: "bg-[#B8FF9F] hover:bg-[#9dfc7c] active:bg-[#7df752]",
+        // New food-themed variants
+        tomato: "bg-[#FF6B6B] hover:bg-[#FF5252] active:bg-[#FF3838]",
+        lettuce: "bg-[#BADC58] hover:bg-[#A6C44A] active:bg-[#96B83C]",
+        cheese: "bg-[#FFDA6B] hover:bg-[#FFD152] active:bg-[#FFC838]",
+        bread: "bg-[#E1C699] hover:bg-[#D4B784] active:bg-[#C7A770]",
+        blueberry: "bg-[#A29BFE] hover:bg-[#8C84FE] active:bg-[#766DFE]",
       },
       shape: {
         square: "",

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Sparkles } from "lucide-react";
@@ -204,7 +205,7 @@ const BabyFoodRecipeGenerator = () => {
 
           <div className="mt-4">
             <Button 
-              variant="blueberry" // Was "berry" before, now using "blueberry" which is valid
+              variant="blueberry"
               onClick={handleSaveSuggestedRecipe}
               disabled={isGenerating || !suggestedRecipe}
               className="w-full"

@@ -11,7 +11,7 @@ interface AiSuggestionButtonProps {
   size?: "default" | "sm" | "lg" | "icon" | "xs" | "xl";
   isLoading?: boolean;
   children?: React.ReactNode;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "clean" | "menu" | "tomato" | "lettuce" | "cheese" | "bread" | "blueberry";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "clean" | "menu" | "add" | "edit" | "settings" | "tomato" | "lettuce" | "cheese" | "bread" | "blueberry";
 }
 
 const AiSuggestionButton = ({

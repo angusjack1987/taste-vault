@@ -37,7 +37,7 @@ const Dashboard = () => {
             <ChefHat className="h-16 w-16 mx-auto mb-4 text-orange-500 animate-bounce" />
             <p className="text-lg mb-4 font-bold">{emptyStateMessage}</p>
             <Link to="/recipes/new" className="mt-4 inline-block">
-              <Button variant="tomato" className="rounded-xl px-6 py-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all">
+              <Button variant="add" className="rounded-xl px-6 py-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all">
                 <Plus className="h-5 w-5 mr-2" />
                 Create First Recipe
               </Button>
