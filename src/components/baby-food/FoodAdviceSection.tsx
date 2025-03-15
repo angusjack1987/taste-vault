@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Baby, Carrot, Apple, Info } from 'lucide-react';
-import StyledButton, { AddIcon } from '@/components/ui/styled-button';
 
 interface FoodAdviceSectionProps {
   babyAge: string;
@@ -78,9 +78,8 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
                 key={item.name}
                 variant="outline"
                 size="sm"
-                shape="rounded"
                 onClick={() => setFood(item.name)}
-                className="flex items-center border-2 border-black"
+                className="flex items-center"
               >
                 {item.icon}
                 <span className="ml-1">{item.name}</span>
@@ -94,24 +93,14 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
             placeholder="Enter a food item (e.g., avocado, eggs, chicken)"
             value={food}
             onChange={(e) => setFood(e.target.value)}
-            className="flex-1 border-2 border-black"
+            className="flex-1"
           />
-          <Button
+          <AiSuggestionButton
             onClick={handleGetAdvice}
-            variant="add"
-            shape="rounded"
-            disabled={loading}
-            className="h-10 px-4"
-          >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded-full border-4 border-current border-t-transparent animate-spin" />
-                <span>Loading...</span>
-              </div>
-            ) : (
-              <span>Get Advice</span>
-            )}
-          </Button>
+            label="Get Advice"
+            isLoading={loading}
+            size="default"
+          />
         </div>
         
         <div className="text-xs text-muted-foreground flex items-center">
@@ -121,7 +110,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
       </div>
 
       {advice && (
-        <Card className="overflow-hidden border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <Card className="overflow-hidden border-2 border-black">
           <CardHeader className="bg-secondary/20 pb-3">
             <CardTitle className="text-lg">
               How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}

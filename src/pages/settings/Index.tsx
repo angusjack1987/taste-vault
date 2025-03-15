@@ -17,7 +17,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import StyledButton from "@/components/ui/styled-button";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -122,8 +121,7 @@ const Settings = () => {
         <Button
           onClick={() => signOut()}
           variant="destructive"
-          shape="rounded"
-          className="w-full py-3 text-center border-2 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
+          className="w-full py-3 text-center rounded-xl border-2 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
         >
           Sign Out
         </Button>

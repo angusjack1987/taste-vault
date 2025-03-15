@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Star, Trash2, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import ToggleSwitch from "@/components/ui/toggle-switch";
+import { Switch } from "@/components/ui/switch";
 import { FridgeItem } from "@/hooks/fridge/types";
 import {
   DropdownMenu,
@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import StyledButton, { EditIcon } from "@/components/ui/styled-button";
 
 interface FridgeItemCardProps {
   item: FridgeItem;
@@ -65,12 +64,11 @@ const FridgeItemCard = ({
         
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 mr-2">
-            <ToggleSwitch 
+            <Switch 
               checked={!!item.always_available}
-              onChange={handleToggleAlwaysAvailable}
-              label=""
+              onCheckedChange={handleToggleAlwaysAvailable}
+              id={`always-available-${item.id}`}
               disabled={isToggling}
-              className="mb-0"
             />
             <span className="text-xs text-muted-foreground hidden sm:inline">Always</span>
           </div>
@@ -78,13 +76,13 @@ const FridgeItemCard = ({
           {onUpdateCategory && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <StyledButton
-                  variant="settings"
-                  shape="circle"
-                  className="h-8 w-8"
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full h-8 w-8 border-2 border-black"
                 >
                   <ChevronDown className="h-4 w-4" />
-                </StyledButton>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="border-4 border-black rounded-xl shadow-neo bg-white">
                 {categories.map((category) => (
@@ -100,14 +98,14 @@ const FridgeItemCard = ({
             </DropdownMenu>
           )}
           
-          <StyledButton 
-            variant="edit"
-            shape="circle"
+          <Button 
+            variant="ghost" 
+            size="icon" 
             onClick={onDelete}
-            className="h-8 w-8"
+            className="rounded-full h-8 w-8"
           >
-            <Trash2 className="h-4 w-4" />
-          </StyledButton>
+            <Trash2 className="h-4 w-4 text-muted-foreground" />
+          </Button>
         </div>
       </CardContent>
     </Card>
