@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
-import { Sparkles, Lightbulb } from "lucide-react";
+import { Sparkles, Lightbulb, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
 import useRecipes from "@/hooks/useRecipes";
@@ -15,6 +15,7 @@ import AddMealDialog from "@/components/meal-plan/dialogs/AddMealDialog";
 import AiSuggestionsDialog from "@/components/meal-plan/dialogs/AiSuggestionsDialog";
 import SuggestMealDialog from "@/components/meal-plan/dialogs/SuggestMealDialog";
 import QuickAddMealDialog from "@/components/meal-plan/dialogs/QuickAddMealDialog";
+import PlanWeekDialog from "@/components/meal-plan/dialogs/PlanWeekDialog";
 
 const MealPlan = () => {
   const isMobile = useIsMobile();
@@ -34,6 +35,9 @@ const MealPlan = () => {
   const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
   
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  
+  const [planWeekOpen, setPlanWeekOpen] = useState(false);
+  const [generatingPlan, setGeneratingPlan] = useState(false);
   
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
@@ -272,6 +276,81 @@ const MealPlan = () => {
     setSuggestMealOpen(true);
   };
   
+  const handleGenerateWeeklyPlan = async (selectedDays: any) => {
+    setGeneratingPlan(true);
+    
+    try {
+      const mealsToGenerate: { date: string; mealType: MealType }[] = [];
+      
+      Object.entries(selectedDays).forEach(([dayKey, meals]: [string, any]) => {
+        if (meals.breakfast) mealsToGenerate.push({ date: dayKey, mealType: 'breakfast' });
+        if (meals.lunch) mealsToGenerate.push({ date: dayKey, mealType: 'lunch' });
+        if (meals.dinner) mealsToGenerate.push({ date: dayKey, mealType: 'dinner' });
+      });
+      
+      if (mealsToGenerate.length === 0) {
+        toast.error("Please select at least one meal to plan");
+        return;
+      }
+      
+      const batchSize = 5;
+      let successCount = 0;
+      
+      for (let i = 0; i < mealsToGenerate.length; i += batchSize) {
+        const batch = mealsToGenerate.slice(i, i + batchSize);
+        
+        for (const meal of batch) {
+          try {
+            const result = await suggestMealForPlan({
+              mealType: meal.mealType,
+              additionalPreferences: `For the meal on ${format(new Date(meal.date), 'EEEE, MMMM d')}`
+            });
+            
+            if (result && typeof result === 'object' && result.options && Array.isArray(result.options) && result.options.length > 0) {
+              const suggestion = result.options[0];
+              
+              const newRecipe = await createRecipe({
+                title: suggestion.title,
+                description: suggestion.description || '',
+                ingredients: suggestion.ingredients || [],
+                instructions: suggestion.instructions || [],
+                time: suggestion.time || null,
+                servings: suggestion.servings || null,
+                image: null,
+                difficulty: null,
+                tags: [],
+                images: [],
+                rating: null
+              });
+              
+              await createMealPlan({
+                date: new Date(meal.date),
+                meal_type: meal.mealType,
+                recipe_id: newRecipe.id,
+              });
+              
+              successCount++;
+            }
+          } catch (error) {
+            console.error(`Error generating meal for ${meal.date} ${meal.mealType}:`, error);
+          }
+        }
+      }
+      
+      if (successCount > 0) {
+        toast.success(`Successfully planned ${successCount} meals for your week!`);
+        setPlanWeekOpen(false);
+      } else {
+        toast.error("Failed to generate meal plan. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error generating weekly plan:", error);
+      toast.error("Failed to generate meal plan. Please try again.");
+    } finally {
+      setGeneratingPlan(false);
+    }
+  };
+  
   const isLoading = recipesLoading || mealPlansLoading;
   
   return (
@@ -299,6 +378,17 @@ const MealPlan = () => {
       }
     >
       <div className="page-container">
+        <div className="mb-6">
+          <Button 
+            variant="lettuce" 
+            onClick={() => setPlanWeekOpen(true)}
+            className="w-full md:w-auto font-medium"
+          >
+            <CalendarDays className="h-5 w-5 mr-2" />
+            Plan My Week For Me
+          </Button>
+        </div>
+        
         <WeekView 
           weekDays={weekDays}
           onAddMeal={handleAddMeal}
@@ -351,6 +441,14 @@ const MealPlan = () => {
         onSuggestMeal={handleSuggestMeal}
         onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
         onResetSuggestedMeal={() => setSuggestedMeal(null)}
+      />
+      
+      <PlanWeekDialog
+        open={planWeekOpen}
+        onOpenChange={setPlanWeekOpen}
+        weekStart={weekStart}
+        onGeneratePlan={handleGenerateWeeklyPlan}
+        isGenerating={generatingPlan}
       />
     </MainLayout>
   );
