@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Additional animation classes */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 2s linear infinite;
+}
+
 @layer base {
   :root {
     --background: 45 100% 98%;

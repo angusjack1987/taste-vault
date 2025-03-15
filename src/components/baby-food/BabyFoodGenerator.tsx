@@ -1,18 +1,12 @@
-
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import useAuth from '@/hooks/useAuth';
-import useAiRecipes from '@/hooks/useAiRecipes';
-import { useFridge } from '@/hooks/useFridge';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
-import { Sprout, Baby, Clock, Heart, Save, ChefHat, Utensils } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import LoadingAnimation from '@/components/ui/loading-animation';
 
 interface BabyFoodGeneratorProps {
   babyAge: string;
@@ -20,292 +14,110 @@ interface BabyFoodGeneratorProps {
   babyFoodPreferences: string;
 }
 
-interface BabyFoodRecipe {
-  title: string;
-  description: string;
-  ageRange: string;
-  highlights: string[];
-  ingredients: string[];
-  instructions: string[];
-  time: number;
-  storageTips: string;
-  nutritionalBenefits: string[];
-}
-
-const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyNames, babyFoodPreferences }) => {
-  const { user } = useAuth();
-  const { loading: aiLoading, generateBabyFood } = useAiRecipes();
-  const { useFridgeItems } = useFridge();
-  const { data: fridgeItems, isLoading: isFridgeLoading } = useFridgeItems();
+const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ 
+  babyAge, 
+  babyNames,
+  babyFoodPreferences 
+}) => {
+  const [ingredients, setIngredients] = useState('');
+  const [preferences, setPreferences] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [recipeHtml, setRecipeHtml] = useState<string | null>(null);
   
-  const [shouldUseFridge, setShouldUseFridge] = useState(true);
-  const [customPrompt, setCustomPrompt] = useState('');
-  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-  const [availableIngredients, setAvailableIngredients] = useState<string[]>([]);
-  const [generatedRecipes, setGeneratedRecipes] = useState<BabyFoodRecipe[]>([]);
-  const [savedRecipes, setSavedRecipes] = useState<Record<string, boolean>>({});
-  const [generatingRecipe, setGeneratingRecipe] = useState(false);
-
-  useEffect(() => {
-    if (fridgeItems && fridgeItems.length > 0) {
-      const ingredients = fridgeItems.map(item => item.name);
-      setAvailableIngredients(ingredients);
-    }
-  }, [fridgeItems]);
-
-  const handleIngredientToggle = (ingredient: string) => {
-    if (selectedIngredients.includes(ingredient)) {
-      setSelectedIngredients(selectedIngredients.filter(i => i !== ingredient));
-    } else {
-      setSelectedIngredients([...selectedIngredients, ingredient]);
-    }
-  };
-
-  const handleIngredientAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    const input = document.getElementById('custom-ingredient') as HTMLInputElement;
-    const ingredient = input.value.trim();
-    
-    if (ingredient && !availableIngredients.includes(ingredient)) {
-      setAvailableIngredients([...availableIngredients, ingredient]);
-      setSelectedIngredients([...selectedIngredients, ingredient]);
-      input.value = '';
-    }
-  };
-
   const handleGenerateRecipe = async () => {
-    if (selectedIngredients.length === 0) {
-      toast.error('Please select at least one ingredient');
+    if (!ingredients.trim()) {
+      toast.error('Please enter at least one ingredient');
       return;
     }
-
-    setGeneratingRecipe(true);
+    
+    setLoading(true);
+    setRecipeHtml(null);
+    
     try {
-      const ingredients = [...selectedIngredients];
-      const babyFoodPrefs = {
-        babyAge: babyAge,
-        babyFoodPreferences: babyFoodPreferences,
-      };
-
-      const recipes = await generateBabyFood({
-        ingredients,
-        babyFoodPreferences: babyFoodPrefs
+      const { data, error } = await supabase.functions.invoke('generate-baby-food', {
+        body: {
+          ingredients: ingredients.trim(),
+          babyAge: babyAge,
+          preferences: preferences.trim() || babyFoodPreferences,
+          babyName: babyNames.length > 0 ? babyNames[0] : undefined
+        }
       });
-
-      if (recipes && recipes.length > 0) {
-        setGeneratedRecipes(recipes);
-        toast.success('Generated baby food recipes!');
-      } else {
-        toast.error('Failed to generate recipes. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error generating recipes:', error);
-      toast.error('Error generating recipes. Please try again.');
-    } finally {
-      setGeneratingRecipe(false);
-    }
-  };
-
-  const saveRecipe = async (recipe: BabyFoodRecipe) => {
-    if (!user) {
-      toast.error('You must be logged in to save recipes');
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.from('baby_food_recipes').insert({
-        user_id: user.id,
-        title: recipe.title,
-        description: recipe.description,
-        age_range: recipe.ageRange,
-        ingredients: recipe.ingredients,
-        instructions: recipe.instructions,
-        preparation_time: recipe.time,
-        storage_tips: recipe.storageTips,
-        nutritional_benefits: recipe.nutritionalBenefits
-      }).select('id').single();
-
+      
       if (error) throw error;
-
-      toast.success('Recipe saved successfully!');
-      setSavedRecipes({ ...savedRecipes, [recipe.title]: true });
+      
+      // Clean the HTML if needed
+      let cleanedHtml = data.recipe;
+      cleanedHtml = cleanedHtml.replace(/```html/g, '');
+      cleanedHtml = cleanedHtml.replace(/```/g, '');
+      
+      setRecipeHtml(cleanedHtml);
+      toast.success('Recipe generated successfully!');
     } catch (error) {
-      console.error('Error saving recipe:', error);
-      toast.error('Failed to save recipe');
+      console.error('Error generating recipe:', error);
+      toast.error('Failed to generate recipe. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
-
+  
   return (
     <div className="space-y-6">
       <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        <div className="mb-6">
-          <h2 className="text-xl font-black uppercase">AI Baby Food Recipe Generator</h2>
-          <p className="text-muted-foreground">Create delicious, nutritious, and age-appropriate baby food recipes</p>
+        <div className="mb-4">
+          <h2 className="text-xl font-black uppercase">Baby Food Generator</h2>
+          <p className="text-muted-foreground">Craft a personalized baby food recipe</p>
         </div>
 
-        <div className="mb-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Switch
-              id="use-fridge"
-              checked={shouldUseFridge}
-              onCheckedChange={setShouldUseFridge}
-            />
-            <Label htmlFor="use-fridge">Use ingredients from my fridge</Label>
-          </div>
-
-          {shouldUseFridge && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2 mb-4">
-                {isFridgeLoading ? (
-                  <div className="w-full text-center py-3">Loading ingredients...</div>
-                ) : availableIngredients.length > 0 ? (
-                  availableIngredients.map((ingredient) => (
-                    <Badge
-                      key={ingredient}
-                      variant={selectedIngredients.includes(ingredient) ? "default" : "outline"}
-                      className="cursor-pointer text-sm py-1.5"
-                      onClick={() => handleIngredientToggle(ingredient)}
-                    >
-                      {ingredient}
-                    </Badge>
-                  ))
-                ) : (
-                  <div className="w-full text-center py-3">No ingredients found in your fridge</div>
-                )}
-              </div>
-
-              <form onSubmit={handleIngredientAdd} className="flex gap-2">
-                <Input
-                  id="custom-ingredient"
-                  placeholder="Add a custom ingredient"
-                  className="flex-1"
-                />
-                <Button type="submit" size="sm">Add</Button>
-              </form>
-            </div>
-          )}
-        </div>
-
-        <div className="mb-6">
-          <h3 className="text-sm font-bold mb-2">Recipe preferences (optional)</h3>
+        <div className="mb-4">
           <Input
-            placeholder="Add any specific preferences or requirements for the recipe..."
-            value={customPrompt}
-            onChange={(e) => setCustomPrompt(e.target.value)}
-            className="w-full"
+            placeholder="Enter ingredients (e.g., avocado, banana)"
+            value={ingredients}
+            onChange={(e) => setIngredients(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground mt-1">E.g., "Finger foods for baby-led weaning", "Purees for 6-month old", etc.</p>
         </div>
 
-        <AiSuggestionButton
-          onClick={handleGenerateRecipe}
-          label="Generate Baby Food Recipes"
-          isLoading={aiLoading}
-          className="w-full"
-        />
+        <div className="mb-6">
+          <Textarea
+            placeholder="Add any specific preferences (e.g., smooth texture, no citrus)"
+            value={preferences}
+            onChange={(e) => setPreferences(e.target.value)}
+            className="resize-none"
+          />
+        </div>
+        
+        <div className="mt-6 flex space-x-2">
+          <AiSuggestionButton
+            onClick={handleGenerateRecipe}
+            isLoading={loading}
+            label="Generate Recipe"
+          />
+        </div>
       </div>
-
-      {generatingRecipe && (
-        <div className="flex flex-col items-center justify-center p-8 bg-white border-4 border-black rounded-2xl animate-pulse">
-          <div className="flex items-center justify-center mb-4">
-            <div className="relative">
-              <Utensils className="w-12 h-12 animate-spin text-primary" />
-              <Baby className="w-8 h-8 absolute bottom-0 right-0 animate-bounce text-accent" />
-            </div>
-          </div>
-          <h3 className="text-xl font-bold mb-2">Creating Baby Recipes...</h3>
-          <p className="text-center text-muted-foreground mb-4">
-            Our AI chef is crafting perfect recipes for your little one
-          </p>
-          <div className="flex space-x-2">
-            <span className="animate-bounce delay-0">🥕</span>
-            <span className="animate-bounce delay-100">🍎</span>
-            <span className="animate-bounce delay-200">🥦</span>
-            <span className="animate-bounce delay-300">🍗</span>
-            <span className="animate-bounce delay-400">🍠</span>
-          </div>
-        </div>
+      
+      {loading && (
+        <Card className="overflow-hidden border-2 border-black">
+          <CardHeader className="bg-secondary/20 pb-3">
+            <CardTitle className="text-lg">Creating Baby Food Recipe</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <LoadingAnimation text="Crafting a delicious baby recipe..." />
+          </CardContent>
+        </Card>
       )}
-
-      {generatedRecipes.length > 0 && !generatingRecipe && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-black uppercase">Generated Recipes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {generatedRecipes.map((recipe, index) => (
-              <Card key={index} className="overflow-hidden">
-                <CardHeader className="bg-primary/10">
-                  <CardTitle className="flex justify-between items-start">
-                    <span>{recipe.title}</span>
-                    <Badge variant="outline" className="ml-2 whitespace-nowrap">
-                      {recipe.ageRange}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <p className="text-sm">{recipe.description}</p>
-                  
-                  <div className="flex items-center text-sm space-x-4">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{recipe.time} mins</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Baby className="h-4 w-4 text-muted-foreground" />
-                      <span>{recipe.ageRange}</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-bold mb-2">Ingredients:</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {recipe.ingredients.map((ingredient, idx) => (
-                        <li key={idx} className="text-sm">{ingredient}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-bold mb-2">Instructions:</h4>
-                    <ol className="list-decimal pl-5 space-y-1">
-                      {recipe.instructions.map((step, idx) => (
-                        <li key={idx} className="text-sm">{step}</li>
-                      ))}
-                    </ol>
-                  </div>
-                  
-                  {recipe.nutritionalBenefits && recipe.nutritionalBenefits.length > 0 && (
-                    <div>
-                      <h4 className="font-bold mb-2">Nutritional Benefits:</h4>
-                      <ul className="list-disc pl-5 space-y-1">
-                        {recipe.nutritionalBenefits.map((benefit, idx) => (
-                          <li key={idx} className="text-sm">{benefit}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {recipe.storageTips && (
-                    <div>
-                      <h4 className="font-bold mb-2">Storage Tips:</h4>
-                      <p className="text-sm">{recipe.storageTips}</p>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter className="bg-muted/10 border-t border-border px-6 py-4">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => saveRecipe(recipe)}
-                    disabled={savedRecipes[recipe.title]}
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    {savedRecipes[recipe.title] ? 'Saved' : 'Save Recipe'}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </div>
+      
+      {recipeHtml && !loading && (
+        <Card className="overflow-hidden border-2 border-black">
+          <CardHeader className="bg-secondary/20 pb-3">
+            <CardTitle className="text-lg">
+              Baby Recipe {babyNames.length > 0 && `for ${babyNames.join(' & ')}`}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="prose max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: recipeHtml }} />
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
