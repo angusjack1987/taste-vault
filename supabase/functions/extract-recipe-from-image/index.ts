@@ -57,12 +57,16 @@ serve(async (req) => {
             "time": 30,
             "servings": 4,
             "difficulty": "Medium",
-            "tags": ["tag1", "tag2", ...]
+            "tags": ["tag1", "tag2", ...],
+            "noTextDetected": false
           }
           
-          If you cannot clearly see or determine a specific field, make a reasonable guess based on what you can see. Never leave fields empty.
-          If the image isn't a recipe, create a simple recipe that might relate to any visible food items.
-          IMPORTANT: Only return valid JSON, no explanations or other text.`
+          If you cannot clearly see or determine specific details, make reasonable guesses based on what you can see.
+          
+          IMPORTANT: If the image contains no visible text at all or clearly isn't a recipe (like a landscape, abstract image, etc.), 
+          set "noTextDetected" to true and leave other fields empty. Do not invent a recipe if there's no visible text.
+          
+          Only return valid JSON, no explanations or other text.`
         },
         {
           role: "user",
@@ -75,7 +79,7 @@ serve(async (req) => {
             },
             {
               type: "text",
-              text: "Extract the complete recipe from this image. Return only a JSON object with all fields filled."
+              text: "Extract the complete recipe from this image. Return only a JSON object with all fields filled. If no recipe text is visible, set noTextDetected to true."
             }
           ]
         }
@@ -90,6 +94,18 @@ serve(async (req) => {
     try {
       recipeData = JSON.parse(content);
       
+      // Check if no text was detected
+      if (recipeData.noTextDetected === true) {
+        console.log("No recipe text detected in the image");
+        return new Response(JSON.stringify({ 
+          noTextDetected: true,
+          error: "No recipe text detected in this image" 
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
       // Validate and ensure all fields exist
       recipeData = {
         title: recipeData.title || "Untitled Recipe",
@@ -99,7 +115,8 @@ serve(async (req) => {
         time: typeof recipeData.time === 'number' ? recipeData.time : 30,
         servings: typeof recipeData.servings === 'number' ? recipeData.servings : 4,
         difficulty: ['Easy', 'Medium', 'Hard'].includes(recipeData.difficulty) ? recipeData.difficulty : 'Medium',
-        tags: Array.isArray(recipeData.tags) ? recipeData.tags : []
+        tags: Array.isArray(recipeData.tags) ? recipeData.tags : [],
+        noTextDetected: false
       };
       
       console.log("Successfully parsed recipe data from image:", recipeData);

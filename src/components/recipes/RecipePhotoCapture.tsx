@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Camera, Image, Loader2, X, Check, Star, Clock, Users, BookmarkPlus, Pencil } from "lucide-react";
+import { Camera, Image, Loader2, X, Check, Star, Clock, Users, BookmarkPlus, Pencil, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
   const [isCapturing, setIsCapturing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedRecipe, setExtractedRecipe] = useState<Partial<RecipeFormData> | null>(null);
+  const [noTextDetected, setNoTextDetected] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -40,6 +42,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
     reader.onload = (event) => {
       setImagePreview(event.target?.result as string);
       setExtractedRecipe(null);
+      setNoTextDetected(false);
     };
     reader.readAsDataURL(file);
   };
@@ -86,6 +89,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
       const dataUrl = canvas.toDataURL('image/jpeg');
       setImagePreview(dataUrl);
       setExtractedRecipe(null);
+      setNoTextDetected(false);
     }
     
     stopCamera();
@@ -95,6 +99,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
     if (!imagePreview) return;
     
     setIsProcessing(true);
+    setNoTextDetected(false);
     
     try {
       // Convert data URL to base64
@@ -116,6 +121,13 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
       
       // Debug what we received
       console.log("Extracted recipe data:", data);
+      
+      // Check if no text was detected
+      if (data.noTextDetected) {
+        setNoTextDetected(true);
+        toast.error("No recipe text detected in this image");
+        return;
+      }
       
       // Format the data for the form and include the image
       const recipeData: Partial<RecipeFormData> = {
@@ -158,6 +170,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
   const handleReset = () => {
     setImagePreview(null);
     setExtractedRecipe(null);
+    setNoTextDetected(false);
     stopCamera();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -191,7 +204,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
                 <Camera className="h-6 w-6" />
               </Button>
             </div>
-          ) : imagePreview && !extractedRecipe ? (
+          ) : imagePreview && !extractedRecipe && !noTextDetected ? (
             <div className="relative">
               <img 
                 src={imagePreview} 
@@ -224,6 +237,40 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
                       Extract Recipe
                     </>
                   )}
+                </Button>
+              </div>
+            </div>
+          ) : noTextDetected ? (
+            <div className="space-y-6">
+              <div className="relative">
+                <img 
+                  src={imagePreview!} 
+                  alt="Recipe preview" 
+                  className="w-full h-[50vh] max-h-80 object-contain rounded-md opacity-50"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute top-2 right-2 rounded-full bg-background/80"
+                  onClick={() => setImagePreview(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <Alert variant="destructive" className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  No recipe text could be detected in this image. Please try a different image with clear recipe text.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex justify-center">
+                <Button 
+                  onClick={() => setImagePreview(null)} 
+                  variant="outline"
+                >
+                  Try Another Image
                 </Button>
               </div>
             </div>
