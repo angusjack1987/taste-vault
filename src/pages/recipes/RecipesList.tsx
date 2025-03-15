@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,32 +48,27 @@ const RecipesList = () => {
     console.log("Recipe extracted:", recipeData);
     
     if (recipeData.title) {
-      // If the user clicked "Save Recipe" directly from the modal
-      // Check if id exists before using it
-      if (recipeData.id !== undefined) {
-        // Handle existing recipe update if needed
-        // This branch isn't currently used, but we'll keep it for type safety
-        console.log("Updating existing recipe:", recipeData.id);
-      } else {
-        // Create a new recipe
-        addRecipeMutation.mutate(recipeData as RecipeFormData, {
-          onSuccess: () => {
-            toast({
-              title: "Success",
-              description: "Recipe saved successfully!",
-              variant: "default"
-            });
-          },
-          onError: (err) => {
-            console.error("Error saving recipe:", err);
-            toast({
-              title: "Error",
-              description: "Failed to save recipe. Please try again.",
-              variant: "destructive"
-            });
-          }
-        });
-      }
+      // If we have a title, this is a complete recipe that we can save
+      // Since RecipeFormData explicitly excludes 'id', we don't need to check for it
+      
+      // Create a new recipe
+      addRecipeMutation.mutate(recipeData as RecipeFormData, {
+        onSuccess: () => {
+          toast({
+            title: "Success",
+            description: "Recipe saved successfully!",
+            variant: "default"
+          });
+        },
+        onError: (err) => {
+          console.error("Error saving recipe:", err);
+          toast({
+            title: "Error",
+            description: "Failed to save recipe. Please try again.",
+            variant: "destructive"
+          });
+        }
+      });
     } else {
       // Navigate to the recipe form with the extracted data
       navigate("/recipes/new", { state: { recipeData } });
