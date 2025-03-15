@@ -7,7 +7,6 @@ import {
   Utensils, 
   Settings as SettingsIcon, 
   Palette,
-  Share, 
   LogOut
 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';

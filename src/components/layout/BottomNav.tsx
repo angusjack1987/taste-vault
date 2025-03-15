@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, BookOpen, Calendar, ShoppingCart, Settings, UserCog, Palette } from 'lucide-react';
+import { Home, BookOpen, Calendar, ShoppingCart, Settings, Palette } from 'lucide-react';
 
 interface NavItemProps {
   to: string;
