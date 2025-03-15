@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/hooks/useAuth';
@@ -13,8 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { NeoBrutalistAccordion } from '@/components/ui/neo-accordion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CleanNeoBrutalistAccordion } from '@/components/ui/clean-accordion';
 
 interface BabyFoodGeneratorProps {
   babyAge: string;
@@ -155,7 +154,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]">
+      <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]">
         <div className="mb-6">
           <h2 className="text-xl font-black uppercase">AI Baby Food Recipe Generator</h2>
           <p className="text-muted-foreground">Create delicious, nutritious, and age-appropriate baby food recipes</p>
@@ -229,8 +228,8 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
       </div>
 
       {isGenerating && (
-        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-white border-4 border-black rounded-lg shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
+        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-white border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
           <p className="text-lg font-medium">Creating baby-friendly recipes...</p>
           <div className="flex space-x-2">
             <div className="w-3 h-3 rounded-full bg-primary animate-bounce"></div>
@@ -247,15 +246,15 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
             {generatedRecipes.map((recipe, index) => (
               <Card 
                 key={index}
-                className="border-4 border-black rounded-xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1"
+                className="border-2 border-black rounded-xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition-all duration-300"
               >
-                <NeoBrutalistAccordion
+                <CleanNeoBrutalistAccordion
                   value={`recipe-${index}`}
                   title={
                     <div className="flex flex-col md:flex-row md:items-center justify-between w-full gap-2">
                       <div className="flex items-center gap-2">
                         <Utensils className="h-5 w-5 text-primary" />
-                        <span className="font-bold">{recipe.title}</span>
+                        <span className="font-medium">{recipe.title}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge 
@@ -271,7 +270,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
                       </div>
                     </div>
                   }
-                  className={getRandomPastelColor()}
+                  className="bg-white"
                 >
                   <div className="space-y-4 pt-2">
                     <p className="text-sm">{recipe.description}</p>
@@ -322,7 +321,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
                       {savedRecipes[recipe.title] ? 'Saved' : 'Save Recipe'}
                     </Button>
                   </div>
-                </NeoBrutalistAccordion>
+                </CleanNeoBrutalistAccordion>
               </Card>
             ))}
           </div>

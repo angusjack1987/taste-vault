@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +6,9 @@ import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Baby, Carrot, Apple, Info, ChevronDown, Clock, Utensils } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
+import { CleanNeoBrutalistAccordion } from '@/components/ui/clean-accordion';
 
 interface FoodAdviceSectionProps {
   babyAge: string;
@@ -20,7 +19,6 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
   const [food, setFood] = useState('');
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState<string | null>(null);
-  const [isOpen, setIsOpen] = useState(true);
   const isMobile = useIsMobile();
 
   const handleGetAdvice = async () => {
@@ -58,7 +56,6 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
     }
   };
 
-  // Pastel colors for the food item buttons
   const pastelColors = [
     "bg-[#F2FCE2] hover:bg-[#E2ECd2]", // Soft Green
     "bg-[#FEF7CD] hover:bg-[#EEE7Bd]", // Soft Yellow
@@ -86,7 +83,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]">
+      <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]">
         <div className="mb-6">
           <h2 className="text-xl font-black uppercase flex items-center">
             <Baby className="mr-2 h-5 w-5" />
@@ -140,7 +137,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
           <div className="absolute top-20 right-20 w-12 h-12 bg-[#D3E4FD] border-2 border-black rounded-full animate-pulse opacity-20"></div>
           <div className="absolute bottom-5 left-20 w-10 h-10 bg-[#F2FCE2] border-2 border-black rounded-full animate-neo-float opacity-30"></div>
           
-          <div className="relative z-10 bg-white p-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)] animate-pulse">
+          <div className="relative z-10 bg-white p-6 border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] animate-pulse">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
             <div className="text-lg font-bold">Generating baby food advice...</div>
           </div>
@@ -148,35 +145,31 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
       )}
 
       {advice && !loading && (
-        <Card className="overflow-hidden rounded-xl border-4 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1">
-          <Collapsible
-            open={isOpen}
-            onOpenChange={setIsOpen}
-            className="w-full"
+        <Card className="overflow-hidden rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition-all duration-300">
+          <CleanNeoBrutalistAccordion
+            value="food-advice"
+            className="w-full bg-white"
+            title={
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <Utensils className="h-5 w-5 text-primary" />
+                  <span className="text-lg font-medium">
+                    How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="hidden md:flex items-center gap-1 font-medium border-2 border-black bg-[#FEF7CD]">
+                    <Clock className="h-3 w-3" />
+                    <span>{babyAge} months</span>
+                  </Badge>
+                </div>
+              </div>
+            }
           >
-            <CollapsibleTrigger className="flex w-full items-center justify-between px-6 py-5 text-left font-semibold hover:bg-[#F2FCE2] transition-colors border-b-2 border-black">
-              <div className="flex items-center gap-2">
-                <Utensils className="h-5 w-5 text-primary" />
-                <span className="text-lg font-bold">
-                  How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="hidden md:flex items-center gap-1 font-medium border-2 border-black bg-[#FEF7CD]">
-                  <Clock className="h-3 w-3" />
-                  <span>{babyAge} months</span>
-                </Badge>
-                <ChevronDown 
-                  className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
-                />
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-6 pb-6 pt-4 bg-white">
-              <div className="prose max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: advice }} />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+            <div className="prose max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: advice }} />
+            </div>
+          </CleanNeoBrutalistAccordion>
         </Card>
       )}
     </div>
