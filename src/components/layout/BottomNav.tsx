@@ -68,8 +68,8 @@ const BottomNav = () => {
   }, [user]);
 
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
-      <div className="grid grid-cols-5 items-center bg-white border-2 border-black text-black rounded-2xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] max-w-md px-0 mx-[8px] py-[2px] my-[11px]">
+    <div className="fixed left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md mx-auto px-4">
+      <div className="grid grid-cols-5 items-center bg-white border-2 border-black text-black rounded-2xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] px-0 py-[2px] my-[11px]">
         {/* First navigation item */}
         <div className="flex justify-center">
           <Link to={navItems[0].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[0].to ? "text-primary font-black" : "text-black font-bold")}>

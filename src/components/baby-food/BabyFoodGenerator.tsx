@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
-import { Sprout, Baby, Clock, Heart, Save, ChefHat } from 'lucide-react';
+import { Sprout, Baby, Clock, Heart, Save, ChefHat, Utensils } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -44,6 +44,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
   const [availableIngredients, setAvailableIngredients] = useState<string[]>([]);
   const [generatedRecipes, setGeneratedRecipes] = useState<BabyFoodRecipe[]>([]);
   const [savedRecipes, setSavedRecipes] = useState<Record<string, boolean>>({});
+  const [generatingRecipe, setGeneratingRecipe] = useState(false);
 
   useEffect(() => {
     if (fridgeItems && fridgeItems.length > 0) {
@@ -78,6 +79,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
       return;
     }
 
+    setGeneratingRecipe(true);
     try {
       const ingredients = [...selectedIngredients];
       const babyFoodPrefs = {
@@ -99,6 +101,8 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
     } catch (error) {
       console.error('Error generating recipes:', error);
       toast.error('Error generating recipes. Please try again.');
+    } finally {
+      setGeneratingRecipe(false);
     }
   };
 
@@ -201,7 +205,29 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
         />
       </div>
 
-      {generatedRecipes.length > 0 && (
+      {generatingRecipe && (
+        <div className="flex flex-col items-center justify-center p-8 bg-white border-4 border-black rounded-2xl animate-pulse">
+          <div className="flex items-center justify-center mb-4">
+            <div className="relative">
+              <Utensils className="w-12 h-12 animate-spin text-primary" />
+              <Baby className="w-8 h-8 absolute bottom-0 right-0 animate-bounce text-accent" />
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-2">Creating Baby Recipes...</h3>
+          <p className="text-center text-muted-foreground mb-4">
+            Our AI chef is crafting perfect recipes for your little one
+          </p>
+          <div className="flex space-x-2">
+            <span className="animate-bounce delay-0">🥕</span>
+            <span className="animate-bounce delay-100">🍎</span>
+            <span className="animate-bounce delay-200">🥦</span>
+            <span className="animate-bounce delay-300">🍗</span>
+            <span className="animate-bounce delay-400">🍠</span>
+          </div>
+        </div>
+      )}
+
+      {generatedRecipes.length > 0 && !generatingRecipe && (
         <div className="space-y-6">
           <h2 className="text-xl font-black uppercase">Generated Recipes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

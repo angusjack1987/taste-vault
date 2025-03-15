@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -38,7 +37,12 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
 
       if (error) throw error;
       
-      setAdvice(data.advice);
+      // Remove any ```html and ``` tags from the response
+      let cleanedAdvice = data.advice;
+      cleanedAdvice = cleanedAdvice.replace(/```html/g, '');
+      cleanedAdvice = cleanedAdvice.replace(/```/g, '');
+      
+      setAdvice(cleanedAdvice);
       toast.success(`Generated advice for serving ${food}!`);
     } catch (error) {
       console.error('Error getting food advice:', error);
