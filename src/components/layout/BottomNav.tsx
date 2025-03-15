@@ -57,7 +57,7 @@ const BottomNav = () => {
     fetchBabyFoodPreference();
   }, [user]);
   return <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
-      <div className="grid grid-cols-5 items-center bg-white border-2 border-black text-black rounded-2xl py-2 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] mx-auto max-w-md">
+      <div className="grid grid-cols-5 items-center bg-white border-2 border-black text-black rounded-2xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] max-w-md px-0 mx-[8px] my-0 py-[5px]">
         {/* First navigation item */}
         <div className="flex justify-center">
           <Link to={navItems[0].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[0].to ? "text-primary font-black" : "text-black font-bold")}>
@@ -124,7 +124,7 @@ const BottomNav = () => {
         {/* Third navigation item */}
         <div className="flex justify-center">
           <Link to={navItems[2].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[2].to || navItems[2].to !== "/" && pathname.startsWith(navItems[2].to) ? "text-primary font-black" : "text-black font-bold")}>
-            <div className="flex justify-center w-full">
+            <div className="flex justify-center w-full px-0 mx-0 my-0">
               {React.createElement(navItems[2].Icon, {
               className: cn("w-5 h-5 mb-0.5 transition-all", pathname === navItems[2].to || navItems[2].to !== "/" && pathname.startsWith(navItems[2].to) ? "text-primary" : "text-black"),
               strokeWidth: 2.5
