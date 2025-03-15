@@ -39,6 +39,52 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
   }));
 };
 
+export const fetchRandomRecipeByMealType = async (mealType: string, user: User | null): Promise<Recipe | null> => {
+  if (!user) return null;
+  
+  let query = supabase
+    .from("recipes")
+    .select("*")
+    .eq("user_id", user.id);
+  
+  if (mealType === 'breakfast') {
+    query = query.or('title.ilike.%breakfast%,tags.cs.{breakfast}');
+  } else if (mealType === 'lunch') {
+    query = query.or('title.ilike.%lunch%,tags.cs.{lunch}');
+  } else if (mealType === 'dinner') {
+    query = query.or('title.ilike.%dinner%,tags.cs.{dinner}');
+  }
+  
+  // Add a limit and random order
+  query = query.limit(1).order('created_at', { ascending: false });
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error("Error fetching random recipe:", error);
+    return null;
+  }
+  
+  if (!data || data.length === 0) return null;
+  
+  return {
+    ...data[0],
+    ingredients: Array.isArray(data[0].ingredients) 
+      ? data[0].ingredients.map(i => String(i))
+      : [],
+    instructions: Array.isArray(data[0].instructions) 
+      ? data[0].instructions.map(i => String(i))
+      : [],
+    tags: Array.isArray(data[0].tags) 
+      ? data[0].tags.map(t => String(t))
+      : [],
+    images: Array.isArray(data[0].images) 
+      ? data[0].images.map(img => String(img)) 
+      : [],
+    rating: data[0].rating ?? null,
+  };
+};
+
 export const fetchRecipesWithFilters = async (filters: any = {}, user: User | null): Promise<Recipe[]> => {
   if (!user) return [];
 
@@ -123,6 +169,14 @@ export const useAllRecipes = (user: User | null) => {
     queryKey: ["recipes"],
     queryFn: () => fetchRecipes(user),
     enabled: !!user,
+  });
+};
+
+export const useRandomRecipeByMealType = (mealType: string, user: User | null) => {
+  return useQuery({
+    queryKey: ["recipe", "random", mealType],
+    queryFn: () => fetchRandomRecipeByMealType(mealType, user),
+    enabled: !!user && !!mealType,
   });
 };
 
