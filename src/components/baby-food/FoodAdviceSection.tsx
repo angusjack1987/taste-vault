@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
   const [food, setFood] = useState('');
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const handleGetAdvice = async () => {
