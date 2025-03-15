@@ -19,10 +19,12 @@ const RecipesList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const { useRecipesWithFilters } = useRecipes();
+  const { useRecipesWithFilters, useAddRecipe } = useRecipes();
   const { data, isLoading, error } = useRecipesWithFilters({
     title: searchQuery
   });
+  
+  const addRecipeMutation = useAddRecipe();
   
   // Explicitly type the recipes variable to ensure it's always an array
   const recipes: Recipe[] = data as Recipe[] || [];
@@ -44,8 +46,25 @@ const RecipesList = () => {
 
   const handleRecipeExtracted = (recipeData: Partial<RecipeFormData>) => {
     console.log("Recipe extracted:", recipeData);
-    // Navigate to the recipe form with the extracted data
-    navigate("/recipes/new", { state: { recipeData } });
+    
+    if (recipeData.title) {
+      // If the user clicked "Save Recipe" directly from the modal
+      if (!recipeData.id) {
+        // Create a new recipe
+        addRecipeMutation.mutate(recipeData as RecipeFormData, {
+          onSuccess: () => {
+            toast.success("Recipe saved successfully!");
+          },
+          onError: (error) => {
+            console.error("Error saving recipe:", error);
+            toast.error("Failed to save recipe. Please try again.");
+          }
+        });
+      }
+    } else {
+      // Navigate to the recipe form with the extracted data
+      navigate("/recipes/new", { state: { recipeData } });
+    }
   };
   
   return (

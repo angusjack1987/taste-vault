@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Camera, Image, Loader2, X, Check } from "lucide-react";
+import { Camera, Image, Loader2, X, Check, Star, Clock, Users, BookmarkPlus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +10,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { RecipeFormData } from "@/hooks/useRecipes";
 
@@ -24,6 +26,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [extractedRecipe, setExtractedRecipe] = useState<Partial<RecipeFormData> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -36,6 +39,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
     const reader = new FileReader();
     reader.onload = (event) => {
       setImagePreview(event.target?.result as string);
+      setExtractedRecipe(null);
     };
     reader.readAsDataURL(file);
   };
@@ -81,6 +85,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg');
       setImagePreview(dataUrl);
+      setExtractedRecipe(null);
     }
     
     stopCamera();
@@ -126,11 +131,8 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
         tags: Array.isArray(data.tags) ? data.tags.filter(t => t) : []
       };
       
+      setExtractedRecipe(recipeData);
       toast.success("Recipe extracted successfully");
-      
-      // Close the dialog and pass the data to the parent component
-      onRecipeExtracted(recipeData);
-      handleReset();
     } catch (error) {
       console.error("Error processing recipe image:", error);
       toast.error(`Failed to extract recipe: ${error.message}`);
@@ -139,8 +141,23 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
     }
   };
   
+  const handleSaveRecipe = () => {
+    if (extractedRecipe) {
+      onRecipeExtracted(extractedRecipe);
+      handleReset();
+    }
+  };
+  
+  const handleEditRecipe = () => {
+    if (extractedRecipe) {
+      onRecipeExtracted(extractedRecipe);
+      handleReset();
+    }
+  };
+  
   const handleReset = () => {
     setImagePreview(null);
+    setExtractedRecipe(null);
     stopCamera();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -158,7 +175,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <ScrollArea className="max-h-[70vh] pr-4">
           {isCapturing ? (
             <div className="relative">
               <video
@@ -169,12 +186,12 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
               />
               <Button 
                 onClick={capturePhoto}
-                className="absolute bottom-2 left-1/2 transform -translate-x-1/2 rounded-full w-14 h-14 p-0"
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 rounded-full w-16 h-16 p-0"
               >
                 <Camera className="h-6 w-6" />
               </Button>
             </div>
-          ) : imagePreview ? (
+          ) : imagePreview && !extractedRecipe ? (
             <div className="relative">
               <img 
                 src={imagePreview} 
@@ -189,10 +206,90 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
               >
                 <X className="h-4 w-4" />
               </Button>
+              
+              <div className="mt-4 flex justify-center">
+                <Button 
+                  onClick={processImage} 
+                  disabled={isProcessing}
+                  className="flex items-center"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Extracting Recipe...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Extract Recipe
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : extractedRecipe ? (
+            <div className="space-y-6">
+              <div className={cn(
+                "border-4 border-black rounded-xl p-4 shadow-neo"
+              )}>
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-lg font-bold">{extractedRecipe.title}</h3>
+                </div>
+                
+                <p className="text-muted-foreground mb-4">{extractedRecipe.description}</p>
+                
+                {extractedRecipe.tags && extractedRecipe.tags.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {extractedRecipe.tags.map((tag, hidx) => (
+                        <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
+                          <Star className="h-3 w-3 mr-1 text-amber-500" />
+                          {tag}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="text-sm space-y-4">
+                  <div>
+                    <h4 className="font-bold mb-1">Ingredients:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {extractedRecipe.ingredients?.map((ingredient, idx) => (
+                        <li key={idx}>{ingredient}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-bold mb-1">Instructions:</h4>
+                    <ol className="list-decimal pl-5 space-y-2">
+                      {extractedRecipe.instructions?.map((instruction, idx) => (
+                        <li key={idx}>{instruction}</li>
+                      ))}
+                    </ol>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {extractedRecipe.time && (
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {extractedRecipe.time} min
+                      </div>
+                    )}
+                    {extractedRecipe.servings && (
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-1" />
+                        {extractedRecipe.servings} servings
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row justify-center gap-4 p-6">
-              <Button onClick={startCamera} variant="outline" size="lg" className="w-full sm:w-auto">
+              <Button onClick={startCamera} variant="outline" size="lg" className="w-full py-6">
                 <Camera className="h-5 w-5 mr-2" />
                 Take Photo
               </Button>
@@ -207,7 +304,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
                 onClick={() => fileInputRef.current?.click()} 
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto"
+                className="w-full py-6"
               >
                 <Image className="h-5 w-5 mr-2" />
                 Upload Photo
@@ -216,30 +313,32 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
           )}
           
           <canvas ref={canvasRef} style={{ display: 'none' }} />
-        </div>
+        </ScrollArea>
         
         <DialogFooter className="flex justify-between mt-4 pt-2 border-t">
           <Button variant="ghost" onClick={handleReset} disabled={isProcessing}>
             Cancel
           </Button>
-          {imagePreview && (
-            <Button 
-              onClick={processImage} 
-              disabled={isProcessing}
-              className="flex items-center"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Extracting Recipe...
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Extract Recipe
-                </>
-              )}
-            </Button>
+          
+          {extractedRecipe && (
+            <div className="flex space-x-2">
+              <Button 
+                onClick={handleEditRecipe} 
+                variant="outline"
+                className="flex items-center"
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit in Form
+              </Button>
+              <Button 
+                onClick={handleSaveRecipe}
+                variant="default"
+                className="flex items-center"
+              >
+                <BookmarkPlus className="h-4 w-4 mr-2" />
+                Save Recipe
+              </Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
