@@ -20,9 +20,12 @@ const RecipesList = () => {
   const { toast } = useToast();
   
   const { useRecipesWithFilters } = useRecipes();
-  const { data: recipes = [] as Recipe[], isLoading, error } = useRecipesWithFilters({
+  const { data, isLoading, error } = useRecipesWithFilters({
     title: searchQuery
   });
+  
+  // Explicitly type the recipes variable to ensure it's always an array
+  const recipes: Recipe[] = data as Recipe[] || [];
   
   useEffect(() => {
     if (error) {
@@ -81,7 +84,7 @@ const RecipesList = () => {
               recipes.map((recipe) => (
                 <RecipeCard 
                   key={recipe.id} 
-                  id={recipe.id}
+                  id={recipe.id} 
                   title={recipe.title}
                   image={recipe.image || ""}
                   time={recipe.time}
