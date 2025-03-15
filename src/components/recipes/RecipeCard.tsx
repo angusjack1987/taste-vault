@@ -22,8 +22,8 @@ const RecipeCard = ({
 }: RecipeCardProps) => {
   return (
     <Link to={`/recipes/${id}`} className={cn("block group", className)}>
-      <div className="rounded-none overflow-hidden border-2 border-black bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1">
-        <div className="aspect-[4/3] w-full relative overflow-hidden border-b-2 border-black">
+      <div className="rounded-xl overflow-hidden border-4 border-black bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1">
+        <div className="aspect-[4/3] w-full relative overflow-hidden border-b-4 border-black">
           {image ? (
             <img
               src={image}
@@ -36,7 +36,7 @@ const RecipeCard = ({
             </div>
           )}
           {rating && (
-            <div className="absolute top-2 right-2 bg-yellow-400 text-black rounded-none p-1 px-2 flex items-center text-xs font-extrabold uppercase border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            <div className="absolute top-2 right-2 bg-yellow-400 text-black rounded-lg p-1 px-2 flex items-center text-xs font-extrabold uppercase border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
               <Star className="w-3 h-3 mr-0.5 fill-current" />
               <span>{rating.toFixed(1)}</span>
             </div>

@@ -54,7 +54,7 @@ const MainLayout = ({
         
         {/* Main content with neo-brutalist slide-in animation */}
         <div 
-          className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-500 ease-in-out z-10 translate-x-full`}
+          className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-500 ease-in-out z-10 transform ${mounted ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="p-4 md:p-6 neo-container bg-white mb-6 shadow-neo-heavy border-4 border-black rounded-2xl">
             {children}

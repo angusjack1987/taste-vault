@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,7 +32,7 @@
     --input: 45 100% 90%;
     --ring: 45 100% 50%;
 
-    --radius: 0;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -107,14 +106,14 @@
   select,
   .card,
   .dialog {
-    @apply border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
+    @apply border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
   }
 }
 
 @layer components {
   /* Neo-brutalist recipe card */
   .recipe-card {
-    @apply rounded-none overflow-hidden border-2 border-black transition-all duration-300 bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1;
+    @apply rounded-xl overflow-hidden border-4 border-black transition-all duration-300 bg-white shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1;
   }
   
   .page-container {
@@ -135,22 +134,21 @@
   
   /* Neo-brutalism styled components */
   .neo-card {
-    @apply bg-white rounded-none p-5 border-2 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1;
+    @apply bg-white rounded-xl p-5 border-4 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1;
   }
   
   .neo-button {
-    @apply bg-primary text-white rounded-none px-6 py-2 font-extrabold uppercase border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all duration-200 active:translate-x-0 active:translate-y-0 active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)];
+    @apply bg-primary text-white rounded-xl px-6 py-2 font-extrabold uppercase border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all duration-200 active:translate-x-0 active:translate-y-0 active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)];
   }
   
   .neo-input {
-    @apply bg-white rounded-none p-3 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] focus:-translate-x-1 focus:-translate-y-1 transition-all duration-200;
+    @apply bg-white rounded-xl p-3 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] focus:-translate-x-1 focus:-translate-y-1 transition-all duration-200;
   }
   
   .stat-card {
-    @apply flex flex-col items-center justify-center rounded-none p-4 text-center transition-all duration-300 border-2 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1;
+    @apply flex flex-col items-center justify-center rounded-xl p-4 text-center transition-all duration-300 border-4 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1;
   }
 
-  /* Food-themed color variants */
   .stat-card-tomato {
     @apply bg-red-500 text-white border-black;
   }
@@ -179,7 +177,6 @@
     @apply text-3xl font-heading font-extrabold uppercase mb-6 relative inline-block after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-accent;
   }
   
-  /* Typography styles */
   .text-display {
     @apply font-heading text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight;
   }
@@ -192,9 +189,8 @@
     @apply font-heading text-xl font-bold uppercase;
   }
   
-  /* Icon containers */
   .icon-container {
-    @apply inline-flex items-center justify-center rounded-none p-2 bg-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)];
+    @apply inline-flex items-center justify-center rounded-xl p-2 bg-white border-4 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)];
   }
   
   .icon-container-tomato {
@@ -226,7 +222,6 @@
   }
 }
 
-/* Neo-brutalism Animation utilities */
 @layer utilities {
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-105;
@@ -241,10 +236,9 @@
   }
   
   .outlined {
-    @apply border-2 border-black;
+    @apply border-4 border-black rounded-xl;
   }
   
-  /* Shake animation */
   @keyframes shake {
     0%, 100% {
       transform: translateX(0);
@@ -261,7 +255,6 @@
     animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   }
   
-  /* Neo-brutalism specific animations */
   @keyframes neo-pulse {
     0%, 100% {
       transform: scale(1);
@@ -277,7 +270,6 @@
     animation: neo-pulse 2s ease-in-out infinite;
   }
   
-  /* Floating animation */
   @keyframes neo-float {
     0%, 100% {
       transform: translateY(0);
