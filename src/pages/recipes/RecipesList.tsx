@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MainLayout from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
-import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
+import useRecipes, { RecipeFormData, Recipe } from "@/hooks/useRecipes";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import ImportRecipeDialog from "@/components/recipes/ImportRecipeDialog";
 import RecipePhotoCapture from "@/components/recipes/RecipePhotoCapture";
@@ -20,7 +20,7 @@ const RecipesList = () => {
   const { toast } = useToast();
   
   const { useRecipesWithFilters } = useRecipes();
-  const { data: recipes = [], isLoading, error } = useRecipesWithFilters({
+  const { data: recipes = [] as Recipe[], isLoading, error } = useRecipesWithFilters({
     title: searchQuery
   });
   
