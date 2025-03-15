@@ -11,6 +11,7 @@ interface MainLayoutProps {
   showUserMenu?: boolean;
   action?: React.ReactNode;
   hideNavigation?: boolean;
+  disableSwipe?: boolean;
 }
 
 const MainLayout = ({
@@ -20,6 +21,7 @@ const MainLayout = ({
   showUserMenu = true,
   action,
   hideNavigation = false,
+  disableSwipe = false,
 }: MainLayoutProps) => {
   const [mounted, setMounted] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -35,7 +37,7 @@ const MainLayout = ({
   
   // Handle page navigation through swipe
   useEffect(() => {
-    if (touchStart && touchEnd) {
+    if (touchStart && touchEnd && !disableSwipe) {
       const distance = touchStart - touchEnd;
       const isHorizontalSwipe = Math.abs(distance) > minSwipeDistance;
       
@@ -76,11 +78,15 @@ const MainLayout = ({
 
   // Touch event handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    if (!disableSwipe) {
+      setTouchStart(e.targetTouches[0].clientX);
+    }
   };
   
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    if (!disableSwipe) {
+      setTouchEnd(e.targetTouches[0].clientX);
+    }
   };
 
   return (
@@ -112,11 +118,11 @@ const MainLayout = ({
               <div className="text-center text-xs text-muted-foreground mb-2">
                 Swipe between pages is disabled for this view
               </div>
-            ) : (
+            ) : !disableSwipe ? (
               <div className="text-center text-xs text-muted-foreground mb-2">
                 Swipe left or right to navigate between pages
               </div>
-            )}
+            ) : null}
             {children}
           </div>
         </div>

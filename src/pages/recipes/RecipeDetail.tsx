@@ -300,6 +300,7 @@ const RecipeDetail = () => {
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     setStartX(e.touches[0].clientX);
     setIsDragging(true);
+    e.stopPropagation(); // Prevent parent container from handling this touch
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -315,9 +316,11 @@ const RecipeDetail = () => {
     } else {
       setSwipeDirection(null);
     }
+    
+    e.stopPropagation(); // Prevent parent container from handling this touch
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!isDragging) return;
     
     const threshold = 100;
@@ -334,12 +337,15 @@ const RecipeDetail = () => {
       setCurrentX(0);
       setSwipeDirection(null);
     }
+    
+    e.stopPropagation(); // Prevent parent container from handling this touch
   };
 
   // Mouse event handlers for desktop
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     setStartX(e.clientX);
     setIsDragging(true);
+    e.stopPropagation(); // Prevent parent container from handling this mouse event
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -354,9 +360,11 @@ const RecipeDetail = () => {
     } else {
       setSwipeDirection(null);
     }
+    
+    e.stopPropagation(); // Prevent parent container from handling this mouse event
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
     
     const threshold = 100;
@@ -373,13 +381,16 @@ const RecipeDetail = () => {
       setCurrentX(0);
       setSwipeDirection(null);
     }
+    
+    e.stopPropagation(); // Prevent parent container from handling this mouse event
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
       setIsDragging(false);
       setCurrentX(0);
       setSwipeDirection(null);
+      e.stopPropagation(); // Prevent parent container from handling this mouse event
     }
   };
 
@@ -443,6 +454,7 @@ const RecipeDetail = () => {
     <MainLayout 
       title={recipe.title} 
       showBackButton={true}
+      disableSwipe={true}
       action={
         <div className="flex gap-2">
           <Button variant="ghost" size="icon" asChild>
@@ -503,7 +515,7 @@ const RecipeDetail = () => {
           </div>
         )}
       
-        {/* Recipe Card */}
+        {/* Recipe Card - THIS IS THE CARD THAT SHOULD SWIPE */}
         <div 
           ref={cardRef}
           className="group bg-white rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] border-2 border-black touch-manipulation"
@@ -516,6 +528,10 @@ const RecipeDetail = () => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
         >
+          <div className="md:hidden text-xs text-center text-muted-foreground py-2">
+            Swipe to navigate between recipes
+          </div>
+        
           <div className="relative">
             {recipe.image ? (
               <img 
@@ -563,10 +579,6 @@ const RecipeDetail = () => {
               )}
             </div>
 
-            <div className="md:hidden text-xs text-center text-muted-foreground mb-2">
-              Swipe to navigate between recipes
-            </div>
-            
             <div className="flex items-center justify-between mb-6">
               <div className="flex gap-4">
                 {recipe.time && (
