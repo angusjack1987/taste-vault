@@ -37,6 +37,53 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
   }));
 };
 
+export const fetchRecipesWithFilters = async (filters: any = {}, user: User | null): Promise<Recipe[]> => {
+  if (!user) return [];
+
+  let query = supabase
+    .from("recipes")
+    .select("*")
+    .eq("user_id", user.id);
+
+  // Apply filters
+  if (filters.title) {
+    query = query.ilike('title', `%${filters.title}%`);
+  }
+  
+  // Add more filters as needed
+  if (filters.tags && filters.tags.length > 0) {
+    // This assumes tags is stored as an array in the database
+    query = query.contains('tags', filters.tags);
+  }
+
+  // Apply sorting
+  query = query.order("created_at", { ascending: false });
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching recipes with filters:", error);
+    toast.error("Failed to load recipes");
+    throw error;
+  }
+
+  return (data || []).map((item) => ({
+    ...item,
+    ingredients: Array.isArray(item.ingredients) 
+      ? item.ingredients.map(i => String(i))
+      : [],
+    instructions: Array.isArray(item.instructions) 
+      ? item.instructions.map(i => String(i))
+      : [],
+    tags: Array.isArray(item.tags) 
+      ? item.tags.map(t => String(t))
+      : [],
+    images: Array.isArray(item.images) 
+      ? item.images.map(img => String(img)) 
+      : [],
+  }));
+};
+
 export const fetchRecipeById = async (id: string, user: User | null): Promise<Recipe | null> => {
   if (!user) return null;
 
@@ -76,6 +123,16 @@ export const useAllRecipes = (user: User | null) => {
     queryKey: ["recipes"],
     queryFn: () => fetchRecipes(user),
     enabled: !!user,
+  });
+};
+
+export const useRecipesWithFilters = (filters: any = {}, options: any = {}) => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["recipes", "filtered", filters],
+    queryFn: () => fetchRecipesWithFilters(filters, user),
+    enabled: !!user,
+    ...options
   });
 };
 

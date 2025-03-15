@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,14 @@ const RecipesList = () => {
               <p>Loading recipes...</p>
             ) : recipes && recipes.length > 0 ? (
               recipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
+                <RecipeCard 
+                  key={recipe.id} 
+                  id={recipe.id}
+                  title={recipe.title}
+                  image={recipe.image || ""}
+                  time={recipe.time}
+                  // Add any other required props for RecipeCard here
+                />
               ))
             ) : (
               <p>No recipes found.</p>

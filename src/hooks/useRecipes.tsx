@@ -7,9 +7,9 @@ export const useRecipes = () => {
   const { user } = useAuth();
   
   // Queries
-  const useRecipes = (options = {}) => recipes.useRecipes(options);
+  const useAllRecipes = () => recipes.useAllRecipes(user);
   const useRecipesWithFilters = (filters = {}, options = {}) => recipes.useRecipesWithFilters(filters, options);
-  const useRecipe = (id?: string) => recipes.useRecipe(id);
+  const useRecipe = (id?: string) => recipes.useRecipe(id, user);
   
   // Mutations
   const useCreateRecipe = () => recipes.useCreateRecipe(user);
@@ -19,14 +19,16 @@ export const useRecipes = () => {
   const useBulkDeleteRecipes = () => recipes.useBulkDeleteRecipes(user);
   
   return {
-    useRecipes,
+    useRecipes: recipes.useAllRecipes,  // For backward compatibility
     useRecipesWithFilters,
     useRecipe,
     useCreateRecipe,
     useUpdateRecipe,
     useBulkUpdateRecipes,
     useDeleteRecipe,
-    useBulkDeleteRecipes
+    useBulkDeleteRecipes,
+    // Add the useAllRecipes function to fix the error in other components
+    useAllRecipes
   };
 };
 

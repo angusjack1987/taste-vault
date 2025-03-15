@@ -1,7 +1,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import useAuth from "../useAuth";
-import { useAllRecipes, useRecipe } from "./queries";
+import { useAllRecipes, useRecipe, useRecipesWithFilters } from "./queries";
 import {
   useCreateRecipe,
   useUpdateRecipe,
@@ -12,6 +12,19 @@ import {
 
 export type { Recipe, RecipeFormData } from "./types";
 
+// Export these hooks directly for direct import by other modules
+export {
+  useAllRecipes,
+  useRecipe,
+  useRecipesWithFilters,
+  useCreateRecipe,
+  useUpdateRecipe,
+  useBulkUpdateRecipes,
+  useDeleteRecipe,
+  useBulkDeleteRecipes
+};
+
+// This is the main hook that all components should use
 const useRecipes = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
