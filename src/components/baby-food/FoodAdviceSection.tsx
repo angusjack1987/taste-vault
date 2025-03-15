@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Carrot, Apple, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Baby, Carrot, Apple, Info, ChevronDown } from 'lucide-react';
 import { 
   Accordion, 
   AccordionContent, 
@@ -25,6 +25,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
   const [food, setFood] = useState('');
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(true);
   const isMobile = useIsMobile();
 
   const handleGetAdvice = async () => {
@@ -48,7 +49,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
       
       // Clean the HTML tags if they exist
       let cleanedAdvice = data.advice;
-      if (cleanedAdvice.startsWith('```html')) {
+      if (typeof cleanedAdvice === 'string') {
         cleanedAdvice = cleanedAdvice.replace(/```html|```/g, '').trim();
       }
       
@@ -135,16 +136,16 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
           <Collapsible
             defaultOpen={true}
             className="rounded-lg transition-all duration-300 ease-in-out hover:bg-[#f4f4f0]"
+            open={isOpen}
+            onOpenChange={setIsOpen}
           >
             <CollapsibleTrigger className="flex w-full items-center justify-between px-6 py-4 text-left font-semibold">
               <div className="text-lg">
                 How to serve {food} {babyNames.length > 0 && `to ${babyNames.join(' & ')}`}
               </div>
-              {open => (
-                <div className="relative flex h-7 items-center">
-                  <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
-                </div>
-              )}
+              <div className="relative flex h-7 items-center">
+                <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+              </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="px-6 pb-6 pt-0 data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
               <div className="prose max-w-none">
