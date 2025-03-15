@@ -369,9 +369,14 @@ const RecipeDetail = () => {
         opts={{
           dragFree: true
         }}
-        onDragEnd={(api) => {
-          // The api parameter is the EmblaCarouselType object, not a DragEvent
-          const progress = api.scrollProgress();
+        onDragEnd={(_, __, context) => {
+          if (!context) return;
+          
+          // Get the current scroll progress from the context
+          const scrollSnaps = context.scrollSnapList();
+          const selectedSnapIndex = context.selectedScrollSnap();
+          const progress = selectedSnapIndex / (scrollSnaps.length - 1);
+          
           if (progress > 0.75) {
             handleSwipeNavigation('left');
           } else if (progress < 0.25) {
