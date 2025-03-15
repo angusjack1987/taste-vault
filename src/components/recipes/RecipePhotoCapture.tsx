@@ -104,7 +104,12 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
         throw new Error(error.message);
       }
       
-      // Process the extracted recipe data
+      // Ensure the data is not null or undefined
+      if (!data) {
+        throw new Error("Received empty data from image processing");
+      }
+      
+      // Debug what we received
       console.log("Extracted recipe data:", data);
       
       // Format the data for the form and include the image
@@ -112,16 +117,18 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
         title: data.title || "Untitled Recipe",
         image: imagePreview,
         images: [imagePreview],
-        time: data.time || 30,
-        servings: data.servings || 2,
+        time: data.time ? parseInt(String(data.time)) : 30,
+        servings: data.servings ? parseInt(String(data.servings)) : 2,
         difficulty: data.difficulty || "Medium",
         description: data.description || "",
-        ingredients: data.ingredients || [],
-        instructions: data.instructions || [],
-        tags: data.tags || []
+        ingredients: Array.isArray(data.ingredients) ? data.ingredients.filter(i => i) : [],
+        instructions: Array.isArray(data.instructions) ? data.instructions.filter(i => i) : [],
+        tags: Array.isArray(data.tags) ? data.tags.filter(t => t) : []
       };
       
       toast.success("Recipe extracted successfully");
+      
+      // Close the dialog and pass the data to the parent component
       onRecipeExtracted(recipeData);
       handleReset();
     } catch (error) {
@@ -143,7 +150,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
   
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleReset()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-w-[95vw] p-4 rounded-lg">
         <DialogHeader>
           <DialogTitle>Add Recipe by Photo</DialogTitle>
           <DialogDescription>
@@ -158,11 +165,11 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
                 ref={videoRef}
                 autoPlay
                 playsInline
-                className="w-full h-64 object-cover rounded-md bg-black"
+                className="w-full h-[50vh] max-h-80 object-cover rounded-md bg-black"
               />
               <Button 
                 onClick={capturePhoto}
-                className="absolute bottom-2 left-1/2 transform -translate-x-1/2 rounded-full w-12 h-12 p-0"
+                className="absolute bottom-2 left-1/2 transform -translate-x-1/2 rounded-full w-14 h-14 p-0"
               >
                 <Camera className="h-6 w-6" />
               </Button>
@@ -172,7 +179,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
               <img 
                 src={imagePreview} 
                 alt="Recipe preview" 
-                className="w-full h-64 object-contain rounded-md"
+                className="w-full h-[50vh] max-h-80 object-contain rounded-md"
               />
               <Button
                 variant="outline"
@@ -184,8 +191,8 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
               </Button>
             </div>
           ) : (
-            <div className="flex justify-center gap-4">
-              <Button onClick={startCamera} variant="outline" size="lg">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 p-6">
+              <Button onClick={startCamera} variant="outline" size="lg" className="w-full sm:w-auto">
                 <Camera className="h-5 w-5 mr-2" />
                 Take Photo
               </Button>
@@ -200,6 +207,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
                 onClick={() => fileInputRef.current?.click()} 
                 variant="outline"
                 size="lg"
+                className="w-full sm:w-auto"
               >
                 <Image className="h-5 w-5 mr-2" />
                 Upload Photo
@@ -210,7 +218,7 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
           <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
         
-        <DialogFooter className="flex justify-between">
+        <DialogFooter className="flex justify-between mt-4 pt-2 border-t">
           <Button variant="ghost" onClick={handleReset} disabled={isProcessing}>
             Cancel
           </Button>

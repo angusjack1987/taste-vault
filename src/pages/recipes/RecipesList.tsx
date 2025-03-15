@@ -43,6 +43,7 @@ const RecipesList = () => {
   };
 
   const handleRecipeExtracted = (recipeData: Partial<RecipeFormData>) => {
+    console.log("Recipe extracted:", recipeData);
     // Navigate to the recipe form with the extracted data
     navigate("/recipes/new", { state: { recipeData } });
   };

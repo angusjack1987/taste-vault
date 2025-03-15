@@ -58,7 +58,7 @@ serve(async (req) => {
             "tags": ["tag1", "tag2", ...]
           }
           
-          If you cannot find a specific value, use null or an empty array as appropriate.
+          If you cannot find a specific value, use null for numbers or empty arrays for lists.
           IMPORTANT: Only return valid JSON, no explanations or other text.`
         },
         {
@@ -81,9 +81,17 @@ serve(async (req) => {
     });
 
     const content = response.choices[0]?.message?.content || "{}";
-    const recipeData = JSON.parse(content);
+    console.log("Raw AI response:", content);
     
-    console.log("Successfully extracted recipe data from image");
+    let recipeData;
+    try {
+      recipeData = JSON.parse(content);
+      console.log("Successfully parsed recipe data from image:", recipeData);
+    } catch (parseError) {
+      console.error("Error parsing JSON response:", parseError);
+      console.error("Raw content:", content);
+      throw new Error("Failed to parse AI response");
+    }
     
     // Return the recipe data
     return new Response(JSON.stringify(recipeData), {
@@ -92,7 +100,7 @@ serve(async (req) => {
     });
     
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error("Error extracting recipe from image:", error.message);
     
     return new Response(
       JSON.stringify({ error: error.message }),
