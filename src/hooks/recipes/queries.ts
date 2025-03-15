@@ -34,7 +34,7 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
     images: Array.isArray(item.images) 
       ? item.images.map(img => String(img)) 
       : [],
-    rating: null,
+    rating: item.rating ?? null, // Ensure rating is explicitly set to null if not provided
   }));
 };
 
@@ -113,7 +113,7 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
-    rating: null,
+    rating: data.rating ?? null, // Ensure rating is explicitly set to null if not provided
   };
 };
 

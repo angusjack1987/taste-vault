@@ -299,14 +299,12 @@ const MealPlan = () => {
         return;
       }
       
-      // Get recent meals for better context (from the last 3 weeks)
       const recentMeals = recentMealPlans?.map(meal => ({
         date: meal.date,
         mealType: meal.meal_type,
         recipe: meal.recipe?.title || 'Untitled meal'
       })) || [];
       
-      // Get existing recipes for variety recommendations
       const userRecipes = recipes?.map(recipe => ({
         id: recipe.id,
         title: recipe.title,
@@ -321,7 +319,6 @@ const MealPlan = () => {
         
         for (const meal of batch) {
           try {
-            // Create a detailed prompt with context about existing recipes and recent meals
             const mealContext = `
               Meal planning for ${format(new Date(meal.date), 'EEEE, MMMM d')} ${meal.mealType}.
               User's recipe collection includes: ${userRecipes.slice(0, 15).map(r => r.title).join(', ')}.
@@ -331,7 +328,6 @@ const MealPlan = () => {
               Please suggest a meal that provides variety compared to recent meals.
             `;
             
-            // First try to reuse an existing recipe that fits well
             const suitableExistingRecipe = findSuitableExistingRecipe(
               userRecipes, 
               recentMeals, 
@@ -339,7 +335,6 @@ const MealPlan = () => {
             );
             
             if (suitableExistingRecipe && Math.random() > 0.5) {
-              // 50% chance to use an existing recipe if suitable
               const existingRecipe = recipes?.find(r => r.id === suitableExistingRecipe.id);
               
               if (existingRecipe) {
@@ -354,7 +349,6 @@ const MealPlan = () => {
               }
             }
             
-            // Otherwise, generate a new recipe
             const result = await suggestMealForPlan({
               mealType: meal.mealType,
               additionalPreferences: mealContext
@@ -364,7 +358,6 @@ const MealPlan = () => {
                 Array.isArray(result.options) && result.options.length > 0) {
               const suggestion = result.options[0];
               
-              // Create the recipe and include the rating property as null
               const newRecipe = await createRecipe({
                 title: suggestion.title,
                 description: suggestion.description || '',
@@ -407,7 +400,6 @@ const MealPlan = () => {
     }
   };
   
-  // Helper function to determine recipe type based on name and tags
   const getRecipeType = (title: string, tags: string[]): string => {
     const lowerTitle = title.toLowerCase();
     const lowerTags = tags.map(tag => tag.toLowerCase());
@@ -437,7 +429,6 @@ const MealPlan = () => {
     return 'any';
   };
   
-  // Helper function to find a suitable existing recipe
   const findSuitableExistingRecipe = (
     userRecipes: Array<{id: string, title: string, type: string}>,
     recentMeals: Array<{date: string, mealType: string, recipe: string}>,
@@ -445,19 +436,16 @@ const MealPlan = () => {
   ) => {
     if (!userRecipes.length) return null;
     
-    // Filter recipes that might be suitable for this meal type
     const typeMatches = userRecipes.filter(recipe => 
       recipe.type === 'any' || recipe.type === mealType
     );
     
     if (!typeMatches.length) return null;
     
-    // Identify recipes we've used recently to avoid repetition
     const recentRecipeTitles = recentMeals
       .filter(meal => meal.mealType === mealType)
       .map(meal => meal.recipe.toLowerCase());
     
-    // Find recipes we haven't used recently
     const notRecentlyUsed = typeMatches.filter(recipe => 
       !recentRecipeTitles.some(title => 
         title.toLowerCase().includes(recipe.title.toLowerCase()) || 
@@ -465,7 +453,6 @@ const MealPlan = () => {
       )
     );
     
-    // Return a random recipe from those not recently used, or any type match if all have been used
     if (notRecentlyUsed.length > 0) {
       return notRecentlyUsed[Math.floor(Math.random() * notRecentlyUsed.length)];
     } else {

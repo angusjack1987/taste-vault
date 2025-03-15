@@ -7,11 +7,12 @@ import { User } from "@supabase/supabase-js";
 export const createRecipe = async (recipeData: RecipeFormData, user: User | null): Promise<Recipe> => {
   if (!user) throw new Error("User not authenticated");
 
+  // Ensure rating is explicitly set to null if not provided
   const newRecipe = {
     ...recipeData,
     user_id: user.id,
     images: recipeData.images || [],
-    rating: recipeData.rating || null,
+    rating: recipeData.rating ?? null, // Use nullish coalescing to ensure null if undefined
   };
 
   const { data, error } = await supabase
@@ -42,7 +43,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
-    rating: null, // Default to null since the field doesn't exist in DB
+    rating: data.rating,
   };
 };
 
@@ -55,7 +56,7 @@ export const updateRecipe = async ({
   const updateData = {
     ...recipeData,
     images: recipeData.images || [],
-    rating: recipeData.rating || null,
+    rating: recipeData.rating ?? null, // Ensure rating is explicitly set to null if not provided
   };
 
   const { data, error } = await supabase
@@ -87,7 +88,7 @@ export const updateRecipe = async ({
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
-    rating: null, // Default to null since the field doesn't exist in DB
+    rating: data.rating,
   };
 };
 
