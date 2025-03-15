@@ -249,6 +249,7 @@ export type Database = {
           images: Json | null
           ingredients: Json
           instructions: Json
+          rating: number | null
           servings: number | null
           tags: Json
           time: number | null
@@ -265,6 +266,7 @@ export type Database = {
           images?: Json | null
           ingredients?: Json
           instructions?: Json
+          rating?: number | null
           servings?: number | null
           tags?: Json
           time?: number | null
@@ -281,6 +283,7 @@ export type Database = {
           images?: Json | null
           ingredients?: Json
           instructions?: Json
+          rating?: number | null
           servings?: number | null
           tags?: Json
           time?: number | null

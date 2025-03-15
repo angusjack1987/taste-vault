@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -78,7 +79,7 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
     images: Array.isArray(item.images) 
       ? item.images.map(img => String(img)) 
       : [],
-    rating: null,
+    rating: item.rating ?? null, // Ensure rating is explicitly set to null if not provided
   }));
 };
 
