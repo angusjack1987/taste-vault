@@ -364,9 +364,9 @@ const RecipeDetail = () => {
     >
       <Carousel 
         className="w-full relative"
-        onDragEnd={(offset) => {
-          if (Math.abs(offset) > 50) {
-            handleSwipeNavigation(offset > 0 ? 'right' : 'left');
+        onDragEnd={(delta) => {
+          if (Math.abs(delta) > 50) {
+            handleSwipeNavigation(delta > 0 ? 'right' : 'left');
           }
         }}
       >
