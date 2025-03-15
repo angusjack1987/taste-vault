@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Clock, 
@@ -77,6 +77,13 @@ const RecipeDetail = () => {
   const [nextRecipe, setNextRecipe] = useState<string | null>(null);
   const [prevRecipe, setPrevRecipe] = useState<string | null>(null);
   
+  // Card animation states
+  const [startX, setStartX] = useState(0);
+  const [currentX, setCurrentX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  
   const { useRecipe, useDeleteRecipe, useAllRecipes } = useRecipes();
   const { useAddManyShoppingListItems } = useShoppingList();
   const { suggestMealForPlan, enhanceRecipeInstructions, loading: aiLoading } = useAiRecipes();
@@ -102,6 +109,13 @@ const RecipeDetail = () => {
       }
     }
   }, [allRecipes, id]);
+
+  // Reset card position when recipe changes
+  useEffect(() => {
+    setCurrentX(0);
+    setIsDragging(false);
+    setSwipeDirection(null);
+  }, [id]);
 
   const getIngredientIcon = (ingredientName: string) => {
     const lowerName = ingredientName.toLowerCase();
@@ -282,12 +296,121 @@ const RecipeDetail = () => {
     }
   };
 
-  const handleSwipeNavigation = (direction: 'left' | 'right') => {
+  // Touch event handlers for card animation
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    setStartX(e.touches[0].clientX);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const x = e.touches[0].clientX;
+    const deltaX = x - startX;
+    setCurrentX(deltaX);
+    
+    if (deltaX > 50) {
+      setSwipeDirection('right');
+    } else if (deltaX < -50) {
+      setSwipeDirection('left');
+    } else {
+      setSwipeDirection(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    const threshold = 100;
+    setIsDragging(false);
+    
+    if (currentX > threshold && prevRecipe) {
+      // Swiped right
+      navigate(`/recipes/${prevRecipe}`);
+    } else if (currentX < -threshold && nextRecipe) {
+      // Swiped left
+      navigate(`/recipes/${nextRecipe}`);
+    } else {
+      // Reset position
+      setCurrentX(0);
+      setSwipeDirection(null);
+    }
+  };
+
+  // Mouse event handlers for desktop
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setStartX(e.clientX);
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - startX;
+    setCurrentX(deltaX);
+    
+    if (deltaX > 50) {
+      setSwipeDirection('right');
+    } else if (deltaX < -50) {
+      setSwipeDirection('left');
+    } else {
+      setSwipeDirection(null);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    const threshold = 100;
+    setIsDragging(false);
+    
+    if (currentX > threshold && prevRecipe) {
+      // Swiped right
+      navigate(`/recipes/${prevRecipe}`);
+    } else if (currentX < -threshold && nextRecipe) {
+      // Swiped left
+      navigate(`/recipes/${nextRecipe}`);
+    } else {
+      // Reset position
+      setCurrentX(0);
+      setSwipeDirection(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      setCurrentX(0);
+      setSwipeDirection(null);
+    }
+  };
+
+  // Navigation function
+  const handleNavigation = (direction: 'left' | 'right') => {
     if (direction === 'left' && nextRecipe) {
       navigate(`/recipes/${nextRecipe}`);
     } else if (direction === 'right' && prevRecipe) {
       navigate(`/recipes/${prevRecipe}`);
     }
+  };
+
+  // Calculate card style based on swipe
+  const getCardStyle = () => {
+    let transform = `translateX(${currentX}px)`;
+    const rotate = currentX / 20; // add some rotation for a more natural feel
+    transform += ` rotate(${rotate}deg)`;
+    
+    return {
+      transform,
+      transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+      opacity: isDragging ? (1 - Math.min(0.3, Math.abs(currentX) / 800)) : 1,
+    };
+  };
+
+  // Get indicator style based on swipe direction
+  const getIndicatorStyle = (direction: 'left' | 'right') => {
+    if (swipeDirection === direction) {
+      return 'opacity-100 scale-100';
+    }
+    return 'opacity-0 scale-75';
   };
 
   if (isLoading) {
@@ -362,251 +485,250 @@ const RecipeDetail = () => {
         </div>
       }
     >
-      <Carousel 
-        className="w-full relative"
-        opts={{
-          dragFree: true
-        }}
-      >
-        <CarouselContent>
-          <CarouselItem>
-            <div>
-              <div className="relative">
-                {recipe.image ? (
-                  <img 
-                    src={recipe.image} 
-                    alt={recipe.title} 
-                    className="w-full h-48 md:h-64 object-cover rounded-xl"
-                  />
-                ) : (
-                  <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center rounded-xl">
-                    <p className="text-muted-foreground">No image available</p>
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-b-xl">
-                  <h1 className="text-white text-xl font-semibold">{recipe.title}</h1>
-                </div>
-              </div>
-              
-              <div className="page-container">
-                <div className="hidden md:flex justify-between my-2">
-                  {prevRecipe ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigate(`/recipes/${prevRecipe}`)}
-                      className="border-2 border-black hover:bg-yellow-300 transition-colors"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-2" />
-                      Previous Recipe
-                    </Button>
-                  ) : (
-                    <div></div>
-                  )}
-                  
-                  {nextRecipe && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigate(`/recipes/${nextRecipe}`)}
-                      className="border-2 border-black hover:bg-green-300 transition-colors"
-                    >
-                      Next Recipe
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="md:hidden text-xs text-center text-muted-foreground mb-2">
-                  Swipe to navigate between recipes
-                </div>
-                
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex gap-4">
-                    {recipe.time && (
-                      <div className="flex items-center text-muted-foreground">
-                        <Clock className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{recipe.time} min</span>
-                      </div>
-                    )}
-                    {recipe.servings && (
-                      <div className="flex items-center text-muted-foreground">
-                        <Users className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{recipe.servings} servings</span>
-                      </div>
-                    )}
-                    {recipe.difficulty && (
-                      <div className="flex items-center text-muted-foreground">
-                        <ChefHat className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{recipe.difficulty}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsFavorited(!isFavorited)}
-                    >
-                      <Heart 
-                        className={`h-5 w-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} 
-                      />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Bookmark className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Share2 className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-                
-                {recipe.description && (
-                  <p className="text-muted-foreground mb-6">{recipe.description}</p>
-                )}
-
-                <div className="mb-6 flex flex-col sm:flex-row gap-3">
-                  <AiSuggestionButton 
-                    onClick={handleEnhanceInstructions} 
-                    label={isInstructionsEnhanced ? "Instructions Enhanced" : "Enhance Instructions"}
-                    variant="lettuce"
-                    isLoading={isEnhancingInstructions}
-                    className="w-full md:w-auto"
-                  >
-                    {isInstructionsEnhanced ? (
-                      <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Instructions Enhanced
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
-                        Enhance Instructions
-                      </>
-                    )}
-                  </AiSuggestionButton>
-                </div>
-                
-                <Tabs defaultValue="ingredients" className="mb-8">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
-                    <TabsTrigger value="instructions">Instructions</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="ingredients" className="mt-4">
-                    <ScrollArea maxHeight="350px">
-                      <ul className="space-y-3">
-                        {recipe.ingredients.map((ingredient, index) => {
-                          const cleanedIngredient = cleanIngredientString(ingredient);
-                          const prepInstructions = extractPreparationInstructions(cleanedIngredient);
-                          const { mainText, preparation } = parsePreparation(cleanedIngredient);
-                          const { name, amount } = parseIngredientAmount(mainText);
-                          
-                          return (
-                            <li key={index} className="flex items-center p-2 bg-sage-50 rounded-md border border-sage-200 hover:bg-sage-100 transition-colors">
-                              <div className="flex-shrink-0 mr-3">
-                                {getIngredientIcon(name)}
-                              </div>
-                              
-                              <div className="flex-1">
-                                <span className="text-sm">
-                                  {amount ? `${amount} ${name}` : name}
-                                  {(prepInstructions || preparation) && (
-                                    <span className="text-xs text-muted-foreground ml-1">
-                                      {prepInstructions || preparation}
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </ScrollArea>
-                  </TabsContent>
-                  <TabsContent value="instructions" className="mt-4">
-                    <ScrollArea maxHeight="350px">
-                      {isEnhancingInstructions ? (
-                        <div className="flex justify-center items-center py-8">
-                          <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-                          <span>Enhancing instructions...</span>
-                        </div>
-                      ) : (
-                        <InstructionsWithTooltips
-                          instructions={recipe.instructions}
-                          ingredients={recipe.ingredients}
-                          enhancedInstructions={enhancedInstructions}
-                          isEnhanced={isInstructionsEnhanced}
-                        />
-                      )}
-                    </ScrollArea>
-                  </TabsContent>
-                </Tabs>
-                
-                {recipe.tags && recipe.tags.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="font-medium mb-2">Tags</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {recipe.tags.map((tag) => (
-                        <span 
-                          key={tag} 
-                          className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="mt-8 flex gap-3 justify-center">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 max-w-40"
-                    onClick={handleAddToShoppingList}
-                    disabled={addingToShoppingList}
-                  >
-                    {addingToShoppingList ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <ShoppingBag className="h-4 w-4 mr-2" />
-                    )}
-                    Add to Shopping List
-                  </Button>
-                  <Button 
-                    className="flex-1 max-w-40"
-                    onClick={() => navigate("/meal-plan")}
-                  >
-                    Add to Meal Plan
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CarouselItem>
-        </CarouselContent>
-        
+      <div className="relative w-full h-full overflow-hidden">
+        {/* Swipe indicators */}
         {prevRecipe && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/70 backdrop-blur-sm hover:bg-white border-2 border-black md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-            onClick={() => navigate(`/recipes/${prevRecipe}`)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+          <div className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 transition-all duration-200 ${getIndicatorStyle('right')}`}>
+            <div className="bg-white rounded-full p-4 shadow-lg">
+              <ChevronLeft className="h-8 w-8 text-black" />
+            </div>
+          </div>
         )}
         
         {nextRecipe && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/70 backdrop-blur-sm hover:bg-white border-2 border-black md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-            onClick={() => navigate(`/recipes/${nextRecipe}`)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <div className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 transition-all duration-200 ${getIndicatorStyle('left')}`}>
+            <div className="bg-white rounded-full p-4 shadow-lg">
+              <ChevronRight className="h-8 w-8 text-black" />
+            </div>
+          </div>
         )}
-      </Carousel>
+      
+        {/* Recipe Card */}
+        <div 
+          ref={cardRef}
+          className="group bg-white rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] border-2 border-black touch-manipulation"
+          style={getCardStyle()}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="relative">
+            {recipe.image ? (
+              <img 
+                src={recipe.image} 
+                alt={recipe.title} 
+                className="w-full h-48 md:h-64 object-cover rounded-t-xl"
+                draggable="false"
+              />
+            ) : (
+              <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center rounded-t-xl">
+                <p className="text-muted-foreground">No image available</p>
+              </div>
+            )}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-b-xl">
+              <h1 className="text-white text-xl font-semibold">{recipe.title}</h1>
+            </div>
+          </div>
+          
+          <div className="page-container">
+            <div className="hidden md:flex justify-between my-2">
+              {prevRecipe ? (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate(`/recipes/${prevRecipe}`)}
+                  className="border-2 border-black hover:bg-yellow-300 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Previous Recipe
+                </Button>
+              ) : (
+                <div></div>
+              )}
+              
+              {nextRecipe && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate(`/recipes/${nextRecipe}`)}
+                  className="border-2 border-black hover:bg-green-300 transition-colors"
+                >
+                  Next Recipe
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+            </div>
+
+            <div className="md:hidden text-xs text-center text-muted-foreground mb-2">
+              Swipe to navigate between recipes
+            </div>
+            
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex gap-4">
+                {recipe.time && (
+                  <div className="flex items-center text-muted-foreground">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span className="text-sm">{recipe.time} min</span>
+                  </div>
+                )}
+                {recipe.servings && (
+                  <div className="flex items-center text-muted-foreground">
+                    <Users className="w-4 h-4 mr-1" />
+                    <span className="text-sm">{recipe.servings} servings</span>
+                  </div>
+                )}
+                {recipe.difficulty && (
+                  <div className="flex items-center text-muted-foreground">
+                    <ChefHat className="w-4 h-4 mr-1" />
+                    <span className="text-sm">{recipe.difficulty}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFavorited(!isFavorited)}
+                >
+                  <Heart 
+                    className={`h-5 w-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} 
+                  />
+                </Button>
+                <Button variant="ghost" size="icon">
+                  <Bookmark className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon">
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+            
+            {recipe.description && (
+              <p className="text-muted-foreground mb-6">{recipe.description}</p>
+            )}
+
+            <div className="mb-6 flex flex-col sm:flex-row gap-3">
+              <AiSuggestionButton 
+                onClick={handleEnhanceInstructions} 
+                label={isInstructionsEnhanced ? "Instructions Enhanced" : "Enhance Instructions"}
+                variant="lettuce"
+                isLoading={isEnhancingInstructions}
+                className="w-full md:w-auto"
+              >
+                {isInstructionsEnhanced ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Instructions Enhanced
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+                    Enhance Instructions
+                  </>
+                )}
+              </AiSuggestionButton>
+            </div>
+            
+            <Tabs defaultValue="ingredients" className="mb-8">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
+                <TabsTrigger value="instructions">Instructions</TabsTrigger>
+              </TabsList>
+              <TabsContent value="ingredients" className="mt-4">
+                <ScrollArea maxHeight="350px">
+                  <ul className="space-y-3">
+                    {recipe.ingredients.map((ingredient, index) => {
+                      const cleanedIngredient = cleanIngredientString(ingredient);
+                      const prepInstructions = extractPreparationInstructions(cleanedIngredient);
+                      const { mainText, preparation } = parsePreparation(cleanedIngredient);
+                      const { name, amount } = parseIngredientAmount(mainText);
+                      
+                      return (
+                        <li key={index} className="flex items-center p-2 bg-sage-50 rounded-md border border-sage-200 hover:bg-sage-100 transition-colors">
+                          <div className="flex-shrink-0 mr-3">
+                            {getIngredientIcon(name)}
+                          </div>
+                          
+                          <div className="flex-1">
+                            <span className="text-sm">
+                              {amount ? `${amount} ${name}` : name}
+                              {(prepInstructions || preparation) && (
+                                <span className="text-xs text-muted-foreground ml-1">
+                                  {prepInstructions || preparation}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </ScrollArea>
+              </TabsContent>
+              <TabsContent value="instructions" className="mt-4">
+                <ScrollArea maxHeight="350px">
+                  {isEnhancingInstructions ? (
+                    <div className="flex justify-center items-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                      <span>Enhancing instructions...</span>
+                    </div>
+                  ) : (
+                    <InstructionsWithTooltips
+                      instructions={recipe.instructions}
+                      ingredients={recipe.ingredients}
+                      enhancedInstructions={enhancedInstructions}
+                      isEnhanced={isInstructionsEnhanced}
+                    />
+                  )}
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+            
+            {recipe.tags && recipe.tags.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-medium mb-2">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {recipe.tags.map((tag) => (
+                    <span 
+                      key={tag} 
+                      className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="mt-8 flex gap-3 justify-center pb-6">
+              <Button 
+                variant="outline" 
+                className="flex-1 max-w-40"
+                onClick={handleAddToShoppingList}
+                disabled={addingToShoppingList}
+              >
+                {addingToShoppingList ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ShoppingBag className="h-4 w-4 mr-2" />
+                )}
+                Add to Shopping List
+              </Button>
+              <Button 
+                className="flex-1 max-w-40"
+                onClick={() => navigate("/meal-plan")}
+              >
+                Add to Meal Plan
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <SuggestMealDialog
         open={suggestDialogOpen}
