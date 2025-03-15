@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,14 +41,13 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
 
       if (error) throw error;
       
-      // Clean the HTML tags if they exist
       let cleanedAdvice = data.advice;
       if (typeof cleanedAdvice === 'string') {
         cleanedAdvice = cleanedAdvice.replace(/```html|```/g, '').trim();
       }
       
       setAdvice(cleanedAdvice);
-      setIsOpen(true); // Ensure the advice is open when newly generated
+      setIsOpen(true);
       toast.success(`Generated advice for serving ${food}!`);
     } catch (error) {
       console.error('Error getting food advice:', error);
@@ -59,7 +57,6 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
     }
   };
 
-  // Common foods for quick selection
   const commonFoods = [
     { name: 'Avocado', icon: <Carrot className="h-4 w-4" /> },
     { name: 'Banana', icon: <Apple className="h-4 w-4" /> },
@@ -73,7 +70,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+      <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]">
         <div className="mb-6">
           <h2 className="text-xl font-black uppercase flex items-center">
             <Baby className="mr-2 h-5 w-5" />
@@ -121,9 +118,16 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
       </div>
 
       {loading && (
-        <div className="flex justify-center items-center p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <span className="ml-3 text-lg font-medium">Generating advice...</span>
+        <div className="py-10 text-center relative">
+          <div className="absolute top-0 left-10 w-16 h-16 bg-pink-300 border-2 border-black rounded-full animate-neo-float opacity-40"></div>
+          <div className="absolute bottom-10 right-10 w-14 h-14 bg-yellow-300 border-2 border-black rounded-full animate-bounce opacity-30"></div>
+          <div className="absolute top-20 right-20 w-12 h-12 bg-blue-300 border-2 border-black rounded-full animate-pulse opacity-20"></div>
+          <div className="absolute bottom-5 left-20 w-10 h-10 bg-green-300 border-2 border-black rounded-full animate-neo-float opacity-30"></div>
+          
+          <div className="relative z-10 bg-white p-6 border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)] animate-pulse">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <div className="text-lg font-bold">Generating baby food advice...</div>
+          </div>
         </div>
       )}
 

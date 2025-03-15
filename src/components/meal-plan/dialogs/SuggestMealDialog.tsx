@@ -129,13 +129,15 @@ const SuggestMealDialog = ({
               {parsingMealSuggestion ? (
                 <div className="py-10 relative text-center">
                   {/* Neo-brutalist animation elements */}
-                  <div className="absolute top-0 left-10 w-16 h-16 bg-green-300 border-4 border-black rounded-2xl animate-neo-float opacity-40 z-0"></div>
-                  <div className="absolute bottom-10 right-10 w-14 h-14 bg-orange-300 border-4 border-black rounded-2xl animate-bounce opacity-30 z-0"></div>
+                  <div className="absolute top-0 left-10 w-16 h-16 bg-green-300 border-2 border-black rounded-full animate-neo-float opacity-40 z-0"></div>
+                  <div className="absolute bottom-10 right-10 w-14 h-14 bg-orange-300 border-2 border-black rounded-full animate-bounce opacity-30 z-0"></div>
+                  <div className="absolute top-20 right-20 w-12 h-12 bg-blue-300 border-2 border-black rounded-full animate-pulse opacity-20 z-0"></div>
+                  <div className="absolute bottom-5 left-20 w-10 h-10 bg-yellow-300 border-2 border-black rounded-full animate-neo-float opacity-30 z-0"></div>
                   
-                  <div className="relative z-10 bg-white p-6 border-4 border-black rounded-xl shadow-neo-heavy animate-pulse">
+                  <div className="relative z-10 bg-white p-6 border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)] animate-pulse">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-                    <div className="text-lg font-black uppercase">Preparing culinary inspiration</div>
-                    <div className="text-muted-foreground font-bold">Cooking up delicious ideas...</div>
+                    <div className="text-lg font-bold uppercase">Preparing culinary inspiration</div>
+                    <div className="text-muted-foreground">Cooking up delicious ideas...</div>
                   </div>
                 </div>
               ) : suggestedMeal.rawResponse ? (
