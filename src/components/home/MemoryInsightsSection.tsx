@@ -21,70 +21,69 @@ const MemoryInsightsSection = ({
   onGenerateInsights,
   lastUpdated
 }: MemoryInsightsSectionProps) => {
-  // Always render the component regardless of isMemoryEnabled
-  
   return (
-    <section className="mb-6">
-      <div className="flex items-center justify-between mb-3">
+    <section className="mb-8">
+      <div className="flex items-center justify-between mb-5 p-4 section-blue">
         <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold">Cooking Insights</h2>
+          <Brain className="h-6 w-6" strokeWidth={3} />
+          <h2 className="text-xl font-black uppercase">Cooking Insights</h2>
         </div>
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={onOpenMemoryDialog}
-          className="text-sm font-medium flex items-center"
+          className="bg-white px-3 py-2 rounded-none font-bold uppercase border-4 border-black shadow-neo-light hover:shadow-neo-medium hover:-translate-x-1 hover:-translate-y-1 transition-all"
         >
           View all <ArrowRight className="h-4 w-4 ml-1" />
         </Button>
       </div>
       
-      <div className="playful-card bg-primary/10 border-primary/20 relative overflow-hidden">
+      <div className="section-pink py-8 px-6 rounded-xl relative overflow-hidden">
+        <div className="absolute -right-10 -top-10 opacity-20">
+          <Brain className="h-40 w-40" strokeWidth={3} />
+        </div>
+        
         <div className="relative z-10">
           {memoryLoading ? (
-            <div className="flex items-center gap-2 py-3">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <p>Loading your cooking insights...</p>
+            <div className="flex items-center gap-3 py-3 bg-white p-4 border-4 border-black">
+              <Loader2 className="h-6 w-6 animate-spin" strokeWidth={3} />
+              <p className="font-bold">Loading your cooking insights...</p>
             </div>
           ) : memoryPreview ? (
             <>
-              <div className="text-base prose prose-sm max-w-none" 
+              <div className="text-base prose prose-sm max-w-none font-bold bg-white p-5 border-4 border-black shadow-neo-light" 
                    dangerouslySetInnerHTML={{ __html: memoryPreview }} />
               {lastUpdated && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  Last updated: {new Date(lastUpdated).toLocaleString()}
+                <div className="text-xs font-bold mt-3 bg-black text-white inline-block px-3 py-1">
+                  Updated: {new Date(lastUpdated).toLocaleString()}
                 </div>
               )}
               <Button 
                 variant="secondary" 
-                size="sm" 
-                className="mt-4"
+                size="lg"
+                className="mt-5 rounded-none font-bold uppercase border-4 border-black shadow-neo-light hover:shadow-neo-medium hover:-translate-x-1 hover:-translate-y-1 transition-all"
                 onClick={onOpenMemoryDialog}
               >
-                <Brain className="h-4 w-4 mr-2" />
+                <Brain className="h-5 w-5 mr-2" strokeWidth={3} />
                 See Full Insights
               </Button>
             </>
           ) : (
-            <div className="py-3">
-              <p>{isMemoryEnabled ? 
+            <div className="bg-white p-5 border-4 border-black shadow-neo-light">
+              <p className="font-bold">{isMemoryEnabled ? 
                 "No insights available yet. Keep using the app to get personalized cooking insights!" : 
                 "AI Memory is currently disabled in your settings. Enable it for personalized cooking insights."}</p>
               <Button 
                 variant="secondary" 
-                size="sm" 
-                className="mt-4"
+                size="lg"
+                className="mt-5 rounded-none font-bold uppercase border-4 border-black shadow-neo-light hover:shadow-neo-medium hover:-translate-x-1 hover:-translate-y-1 transition-all"
                 onClick={isMemoryEnabled ? onGenerateInsights : onOpenMemoryDialog}
               >
-                <Brain className="h-4 w-4 mr-2" />
+                <Brain className="h-5 w-5 mr-2" strokeWidth={3} />
                 {isMemoryEnabled ? "Generate Insights" : "Enable AI Memory"}
               </Button>
             </div>
           )}
-        </div>
-        <div className="absolute top-[-20px] right-[-20px] opacity-10">
-          <Brain className="h-32 w-32 text-primary" />
         </div>
       </div>
     </section>

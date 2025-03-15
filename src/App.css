@@ -1,3 +1,4 @@
+
 #root {
   margin: 0 auto;
   text-align: center;
@@ -11,38 +12,38 @@ body {
 
 /* Neo-brutalism utilities */
 .neo-border {
-  border: 2px solid black;
-  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  border: 4px solid black;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
 }
 
 .neo-hover {
   transition: all 0.2s ease;
 }
 .neo-hover:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+  transform: translate(-5px, -5px);
+  box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
 }
 
 /* Card animations */
 .card-hover {
   transition: all 0.3s ease;
-  border: 2px solid black;
-  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  border: 4px solid black;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
 }
 .card-hover:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+  transform: translate(-5px, -5px);
+  box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
 }
 
 /* Button animation */
 .btn-hover {
   transition: all 0.2s ease;
-  border: 2px solid black;
-  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+  border: 4px solid black;
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
 }
 .btn-hover:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0px 0px rgba(0,0,0,1);
 }
 .btn-hover:active {
   transform: translate(0, 0);
@@ -51,21 +52,21 @@ body {
 
 /* Neo-brutalism containers */
 .neo-container {
-  border: 2px solid black;
+  border: 4px solid black;
   background-color: white;
   padding: 20px;
-  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+  box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
 }
 
 .neo-card {
-  border: 2px solid black;
+  border: 4px solid black;
   background-color: white;
-  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
   transition: all 0.3s ease;
 }
 .neo-card:hover {
-  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
-  transform: translate(-3px, -3px);
+  box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
+  transform: translate(-5px, -5px);
 }
 
 /* Food-themed color classes */
@@ -91,29 +92,29 @@ body {
 
 /* Bold outlines */
 .bold-outline {
-  border: 2px solid black;
+  border: 4px solid black;
 }
 
-/* Colorful backgrounds */
+/* Colorful backgrounds - updated to match image */
 .bg-gradient-cheese {
-  background: linear-gradient(135deg, #FFF9C4 0%, #FFEB3B 100%);
+  background: linear-gradient(135deg, #FFDB58 0%, #FFD700 100%);
 }
 
 .bg-gradient-tomato {
-  background: linear-gradient(135deg, #FFCDD2 0%, #F44336 100%);
+  background: linear-gradient(135deg, #FF9AA2 0%, #FF6B6B 100%);
 }
 
 .bg-gradient-lettuce {
-  background: linear-gradient(135deg, #C8E6C9 0%, #4CAF50 100%);
+  background: linear-gradient(135deg, #AAFFA9 0%, #4CAF50 100%);
 }
 
 /* Fun container style */
 .fun-container {
   border-radius: 0;
-  border: 2px solid black;
+  border: 4px solid black;
   background-color: white;
   padding: 20px;
-  box-shadow: 8px 8px 0px 0px #000;
+  box-shadow: 12px 12px 0px 0px #000;
 }
 
 /* Animation utilities */
@@ -124,52 +125,53 @@ body {
   transform: scale(1.05);
 }
 
-/* Neo-brutalism checkerboard animations */
+/* Neo-brutalism checkerboard animations - more exaggerated */
 @keyframes checkerboard {
   0% {
     background-position: 0 0;
   }
   100% {
-    background-position: 20px 20px;
+    background-position: 40px 40px;
   }
 }
 
 .animate-checkerboard {
-  background-image: repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 8px);
-  background-size: 20px 20px;
-  animation: checkerboard 10s linear infinite;
+  background-image: repeating-linear-gradient(45deg, #000 0, #000 4px, transparent 0, transparent 12px);
+  background-size: 40px 40px;
+  animation: checkerboard 15s linear infinite;
 }
 
-/* Audio visualization animations */
+/* Audio visualization animations - more exaggerated */
 @keyframes sound-wave {
   0% {
-    transform: scaleY(0.5);
+    transform: scaleY(0.3);
   }
   50% {
-    transform: scaleY(1);
+    transform: scaleY(1.2);
   }
   100% {
-    transform: scaleY(0.5);
+    transform: scaleY(0.3);
   }
 }
 
 .animate-sound-wave {
-  animation: sound-wave 0.6s ease-in-out infinite;
+  animation: sound-wave 0.9s ease-in-out infinite;
   transform-origin: center;
 }
 
-/* Shopping list item animations */
+/* Shopping list item animations - more chunky */
 @keyframes move-item {
   0% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) rotate(0deg);
   }
   50% {
     opacity: 0.7;
+    transform: translateY(-15px) rotate(2deg);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) rotate(0deg);
   }
 }
 
@@ -178,55 +180,55 @@ body {
 }
 
 .shopping-list-item-transition {
-  animation: move-item 0.5s ease-out;
+  animation: move-item 0.8s ease-out;
 }
 
 /* Checked items section */
 .checked-items-section {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 2px dashed black;
+  border-top: 4px dashed black;
 }
 
 /* Neo-brutalism section styling */
 .section-neo {
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  border: 2px solid black;
+  border: 4px solid black;
   background-color: white;
-  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
 }
 
 /* Subtly dividers */
 .divider-neo {
-  height: 2px;
+  height: 4px;
   background-color: black;
   margin: 1.5rem 0;
 }
 
-/* Animation for icons */
+/* Animation for icons - more exaggerated */
 @keyframes spin-neo {
   from {
     transform: rotate(0deg);
   }
   to {
-    transform: rotate(180deg);
+    transform: rotate(360deg);
   }
 }
 
 .animate-spin-neo {
-  animation: spin-neo 0.5s ease-in-out;
+  animation: spin-neo 0.8s ease-in-out;
 }
 
 /* Button hover effect for view recipe */
 .view-recipe-btn {
-  border: 2px solid black;
-  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+  border: 4px solid black;
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
   transition: all 0.2s ease;
 }
 .view-recipe-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0px 0px rgba(0,0,0,1);
 }
 .view-recipe-btn:active {
   transform: translate(0, 0);
@@ -239,25 +241,25 @@ body {
     transform: rotate(0deg);
   }
   25% {
-    transform: rotate(-1deg);
+    transform: rotate(-3deg);
   }
   75% {
-    transform: rotate(1deg);
+    transform: rotate(3deg);
   }
 }
 
 .nav-neo-wiggle:hover {
-  animation: neo-wiggle 0.3s ease-in-out;
+  animation: neo-wiggle 0.5s ease-in-out;
 }
 
 .nav-neo-shadow {
-  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
   transition: all 0.2s ease;
 }
 
 .nav-neo-shadow:hover {
-  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
-  transform: translate(-2px, -2px);
+  box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
+  transform: translate(-3px, -3px);
 }
 
 .nav-item-neo {
@@ -271,16 +273,16 @@ body {
 }
 
 .dropdown-neo {
-  border: 2px solid black;
-  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  border: 4px solid black;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
   border-radius: 0;
 }
 
 /* Neo-brutalist text styles */
 .neo-text-outline {
-  -webkit-text-stroke: 1px black;
+  -webkit-text-stroke: 2px black;
   color: white;
-  text-shadow: 2px 2px 0px black;
+  text-shadow: 4px 4px 0px black;
 }
 
 .neo-text-chunky {
@@ -291,38 +293,38 @@ body {
 
 /* Heavy shadow effect */
 .shadow-neo-heavy {
-  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+  box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
 }
 
 .shadow-neo-medium {
-  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
 }
 
 .shadow-neo-light {
-  box-shadow: 3px 3px 0px 0px rgba(0,0,0,1);
+  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
 }
 
 /* Neo-brutalism switch styling */
 .neo-switch {
-  border: 2px solid black;
+  border: 4px solid black;
   background-color: #9ca3af;
-  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
   transition: all 0.2s ease;
 }
 
 .neo-switch[data-state="checked"] {
   background-color: #FFC107;
-  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
 }
 
 .neo-switch-thumb {
-  border: 2px solid black;
+  border: 4px solid black;
   background-color: white;
   transition: transform 0.2s ease;
 }
 
 .neo-switch:focus-visible {
-  outline: 2px solid black;
+  outline: 4px solid black;
   outline-offset: 2px;
 }
 
@@ -337,7 +339,7 @@ body {
 }
 
 .toggle-slide {
-  animation: toggle-slide 0.2s ease-in-out forwards;
+  animation: toggle-slide 0.3s ease-in-out forwards;
 }
 
 /* Toggle labels styling */
@@ -346,4 +348,93 @@ body {
   font-family: 'IBM Plex Mono', monospace;
   text-transform: uppercase;
   font-size: 0.75rem;
+}
+
+/* Page transitions */
+@keyframes slide-in {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.slide-in {
+  animation: slide-in 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes slide-out {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.slide-out {
+  animation: slide-out 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Playful card style similar to the reference image */
+.playful-card {
+  border: 4px solid black;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+.playful-card:hover {
+  transform: translate(-5px, -5px);
+  box-shadow: 12px 12px 0px 0px rgba(0,0,0,1);
+}
+
+/* Food character animations */
+@keyframes bounce-character {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+}
+
+.animate-character {
+  animation: bounce-character 2s ease-in-out infinite;
+}
+
+/* Vibrant section backgrounds like in the reference image */
+.section-pink {
+  background-color: #FF9AA2;
+  border: 4px solid black;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+}
+
+.section-green {
+  background-color: #AAFFA9;
+  border: 4px solid black;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+}
+
+.section-yellow {
+  background-color: #FFDB58;
+  border: 4px solid black;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+}
+
+.section-blue {
+  background-color: #A0C4FF;
+  border: 4px solid black;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
 }

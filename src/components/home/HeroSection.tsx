@@ -20,41 +20,41 @@ const HeroSection = ({
 }: HeroSectionProps) => {
   return (
     <section className="mt-6">
-      <h1 className="text-2xl font-bold mb-1">Good day, {firstName}!</h1>
-      <p className="text-3xl font-bold mb-6">What shall we cook today?</p>
+      <h1 className="text-3xl font-bold mb-1 neo-text-chunky">Good day, {firstName}!</h1>
+      <p className="text-3xl font-bold mb-6 neo-text-outline">What shall we cook today?</p>
       
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-5 mb-8">
         <Link to="/recipes" className="block">
-          <div className="stat-card stat-card-yellow rounded-2xl h-full">
-            <Utensils className="h-6 w-6 mb-2" />
-            <p className="stat-card-icon">{recipesCount}</p>
-            <p className="stat-card-label">Recipes</p>
+          <div className="section-pink h-full flex flex-col items-center justify-center py-6">
+            <Utensils className="h-8 w-8 mb-3" strokeWidth={3} />
+            <p className="text-4xl font-black">{recipesCount}</p>
+            <p className="font-extrabold uppercase text-sm mt-1">Recipes</p>
           </div>
         </Link>
         
         <Link to="/meal-plan" className="block">
-          <div className="stat-card stat-card-green rounded-2xl h-full">
-            <Calendar className="h-6 w-6 mb-2" />
-            <p className="stat-card-icon">{todaysMealsCount}</p>
-            <p className="stat-card-label">Today's Meals</p>
+          <div className="section-green h-full flex flex-col items-center justify-center py-6">
+            <Calendar className="h-8 w-8 mb-3" strokeWidth={3} />
+            <p className="text-4xl font-black">{todaysMealsCount}</p>
+            <p className="font-extrabold uppercase text-sm mt-1">Today's Meals</p>
           </div>
         </Link>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-5">
         <Link to="/recipes" className="block">
-          <div className="stat-card stat-card-blue rounded-2xl h-full">
-            <Clock className="h-6 w-6 mb-2" />
-            <p className="stat-card-icon">{avgCookTime}</p>
-            <p className="stat-card-label">Avg. Cook Time</p>
+          <div className="section-blue h-full flex flex-col items-center justify-center py-6">
+            <Clock className="h-8 w-8 mb-3" strokeWidth={3} />
+            <p className="text-4xl font-black">{avgCookTime}</p>
+            <p className="font-extrabold uppercase text-sm mt-1">Avg. Cook Time</p>
           </div>
         </Link>
         
         <button onClick={onOpenSuggestDialog} className="block w-full">
-          <div className="stat-card stat-card-black rounded-2xl h-full">
-            <Sparkles className="h-6 w-6 mb-2" />
-            <p className="stat-card-icon">AI</p>
-            <p className="stat-card-label">Recipe Ideas</p>
+          <div className="section-yellow h-full flex flex-col items-center justify-center py-6">
+            <Sparkles className="h-8 w-8 mb-3 animate-character" strokeWidth={3} />
+            <p className="text-4xl font-black">AI</p>
+            <p className="font-extrabold uppercase text-sm mt-1">Recipe Ideas</p>
           </div>
         </button>
       </div>
