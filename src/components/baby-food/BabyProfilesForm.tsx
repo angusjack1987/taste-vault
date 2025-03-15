@@ -1,203 +1,280 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import useAuth from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Calendar, Baby } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Plus, X, Baby } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import useAuth from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { format, differenceInMonths, parseISO } from 'date-fns';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface BabyProfile {
-  id?: string;
+  id: string;
   name: string;
-  birth_date: string;
+  age_in_months: number;
 }
 
-const BabyProfilesForm: React.FC = () => {
+const BabyProfilesForm = () => {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<BabyProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newProfile, setNewProfile] = useState<BabyProfile>({ name: '', birth_date: '' });
+  const [newProfile, setNewProfile] = useState({ name: '', age_in_months: '' });
+  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchProfiles();
-    }
+    const fetchProfiles = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('baby_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name');
+          
+        if (error) throw error;
+        
+        setProfiles(data as BabyProfile[]);
+      } catch (error) {
+        console.error('Error fetching baby profiles:', error);
+        toast.error('Failed to load baby profiles');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfiles();
   }, [user]);
 
-  const fetchProfiles = async () => {
+  const handleAddProfile = async () => {
+    if (!user) {
+      toast.error('You must be logged in to add a profile');
+      return;
+    }
+    
+    if (!newProfile.name.trim() || !newProfile.age_in_months.trim()) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    const age = parseInt(newProfile.age_in_months);
+    if (isNaN(age) || age < 0 || age > 36) {
+      toast.error('Please enter a valid age between 0 and 36 months');
+      return;
+    }
+    
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('baby_profiles')
-        .select('id, name, age_in_months')
-        .eq('user_id', user?.id)
-        .order('name');
-
-      if (error) throw error;
-
-      // Convert age_in_months to birth_date format
-      const profilesWithBirthDate = data.map(profile => {
-        // Calculate approximate birth date based on age in months
-        const currentDate = new Date();
-        const birthDate = new Date();
-        birthDate.setMonth(currentDate.getMonth() - profile.age_in_months);
+        .insert({
+          user_id: user.id,
+          name: newProfile.name.trim(),
+          age_in_months: age
+        })
+        .select()
+        .single();
         
-        return {
-          id: profile.id,
-          name: profile.name,
-          birth_date: format(birthDate, 'yyyy-MM-dd')
-        };
-      });
-
-      setProfiles(profilesWithBirthDate);
+      if (error) throw error;
+      
+      setProfiles([...profiles, data as BabyProfile]);
+      setNewProfile({ name: '', age_in_months: '' });
+      setShowAddForm(false);
+      toast.success('Baby profile added!');
     } catch (error) {
-      console.error('Error fetching baby profiles:', error);
-      toast.error('Failed to load baby profiles');
+      console.error('Error adding baby profile:', error);
+      toast.error('Failed to add baby profile');
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateAgeInMonths = (birthDate: string): number => {
-    return differenceInMonths(new Date(), parseISO(birthDate));
-  };
-
-  const handleAddProfile = async () => {
-    if (!newProfile.name.trim() || !newProfile.birth_date) {
-      toast.error('Please enter a name and birth date for your baby');
-      return;
-    }
-
-    const ageInMonths = calculateAgeInMonths(newProfile.birth_date);
+  const handleDeleteProfile = async (id: string) => {
+    if (!user) return;
     
-    if (ageInMonths < 0) {
-      toast.error('Birth date cannot be in the future');
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('baby_profiles')
-        .insert([
-          { 
-            user_id: user?.id, 
-            name: newProfile.name.trim(),
-            age_in_months: ageInMonths 
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Add the birth_date property to the new profile
-      const birthDate = newProfile.birth_date;
-      
-      setProfiles([...profiles, { 
-        id: data.id, 
-        name: data.name,
-        birth_date: birthDate
-      }]);
-      
-      setNewProfile({ name: '', birth_date: '' });
-      toast.success('Baby profile added!');
-    } catch (error) {
-      console.error('Error adding baby profile:', error);
-      toast.error('Failed to add baby profile');
-    }
-  };
-
-  const handleDeleteProfile = async (id?: string) => {
-    if (!id) return;
-
+    setLoading(true);
     try {
       const { error } = await supabase
         .from('baby_profiles')
         .delete()
-        .eq('id', id);
-
+        .eq('id', id)
+        .eq('user_id', user.id);
+        
       if (error) throw error;
-
+      
       setProfiles(profiles.filter(profile => profile.id !== id));
-      toast.success('Baby profile removed');
+      toast.success('Baby profile deleted');
     } catch (error) {
       console.error('Error deleting baby profile:', error);
       toast.error('Failed to delete baby profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateAge = async (id: string, newAge: string) => {
+    if (!user) return;
+    
+    const age = parseInt(newAge);
+    if (isNaN(age) || age < 0 || age > 36) {
+      toast.error('Please enter a valid age between 0 and 36 months');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('baby_profiles')
+        .update({ age_in_months: age })
+        .eq('id', id)
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      setProfiles(profiles.map(profile => 
+        profile.id === id ? { ...profile, age_in_months: age } : profile
+      ));
+      
+      toast.success('Baby age updated');
+    } catch (error) {
+      console.error('Error updating baby age:', error);
+      toast.error('Failed to update baby age');
     }
   };
 
   return (
-    <Card className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Baby className="mr-2 h-5 w-5" />
-          Baby Profiles
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            {profiles.map((profile) => (
-              <div 
-                key={profile.id}
-                className="flex justify-between items-center p-3 bg-background border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-              >
-                <div>
-                  <h3 className="font-bold">{profile.name}</h3>
-                  <div className="text-sm text-muted-foreground flex items-center">
-                    <Calendar className="inline-block mr-1 h-3 w-3" /> 
-                    Birth date: {format(parseISO(profile.birth_date), 'MMM d, yyyy')} 
-                    <span className="ml-2">({calculateAgeInMonths(profile.birth_date)} months old)</span>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => handleDeleteProfile(profile.id)}
-                  className="border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-4 border-t-2 border-muted">
-            <h3 className="font-bold mb-3">Add New Baby</h3>
-            <div className="space-y-4">
-              <div>
-                <Input
-                  placeholder="Baby's name"
-                  value={newProfile.name}
-                  onChange={(e) => setNewProfile({...newProfile, name: e.target.value})}
-                  className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-                />
-              </div>
-              <div>
-                <label htmlFor="birthDate" className="block text-sm font-medium mb-1">Birth Date</label>
-                <Input
-                  id="birthDate"
-                  type="date"
-                  value={newProfile.birth_date}
-                  onChange={(e) => setNewProfile({...newProfile, birth_date: e.target.value})}
-                  className="border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-                  max={format(new Date(), 'yyyy-MM-dd')}
-                />
-              </div>
-              <Button
-                onClick={handleAddProfile}
-                className="w-full border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all" 
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Baby
-              </Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Baby className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Baby Profiles</h3>
+        </div>
+        
+        {!showAddForm && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowAddForm(true)}
+            disabled={loading}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add Baby
+          </Button>
+        )}
+      </div>
+      
+      {showAddForm && (
+        <div className="bg-muted/20 p-4 rounded-lg border space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="baby-name">Baby's Name</Label>
+              <Input
+                id="baby-name"
+                value={newProfile.name}
+                onChange={(e) => setNewProfile({ ...newProfile, name: e.target.value })}
+                placeholder="Enter baby's name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="baby-age">Age (months)</Label>
+              <Input
+                id="baby-age"
+                type="number"
+                min="0"
+                max="36"
+                value={newProfile.age_in_months}
+                onChange={(e) => setNewProfile({ ...newProfile, age_in_months: e.target.value })}
+                placeholder="e.g., 12"
+              />
             </div>
           </div>
+          
+          <div className="flex justify-end space-x-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setShowAddForm(false);
+                setNewProfile({ name: '', age_in_months: '' });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              size="sm"
+              onClick={handleAddProfile}
+              disabled={loading}
+            >
+              Add Profile
+            </Button>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+      
+      {loading ? (
+        <div className="text-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+        </div>
+      ) : profiles.length > 0 ? (
+        <div className="space-y-3">
+          {profiles.map((profile) => (
+            <div 
+              key={profile.id} 
+              className="flex items-center justify-between p-3 bg-white rounded-lg border"
+            >
+              <div className="font-medium">{profile.name}</div>
+              
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor={`age-${profile.id}`} className="text-sm text-muted-foreground whitespace-nowrap">
+                    Age:
+                  </Label>
+                  <Input
+                    id={`age-${profile.id}`}
+                    type="number"
+                    min="0"
+                    max="36"
+                    value={profile.age_in_months}
+                    onChange={(e) => handleUpdateAge(profile.id, e.target.value)}
+                    className="w-16 h-8 text-sm"
+                  />
+                  <span className="text-sm text-muted-foreground">months</span>
+                </div>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <X className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Baby Profile</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete {profile.name}'s profile? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteProfile(profile.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center p-4 border border-dashed rounded-lg">
+          <p className="text-muted-foreground">No baby profiles added yet</p>
+        </div>
+      )}
+    </div>
   );
 };
 
