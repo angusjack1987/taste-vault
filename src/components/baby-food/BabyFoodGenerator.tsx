@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/hooks/useAuth';
@@ -12,12 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from '@/components/ui/accordion';
+import { NeoBrutalistAccordion } from '@/components/ui/neo-accordion';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BabyFoodGeneratorProps {
@@ -142,9 +138,24 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
     }
   };
 
+  const pastelColors = [
+    "bg-[#F2FCE2] hover:bg-[#E2ECd2]", // Soft Green
+    "bg-[#FEF7CD] hover:bg-[#EEE7Bd]", // Soft Yellow
+    "bg-[#FEC6A1] hover:bg-[#EEB691]", // Soft Orange
+    "bg-[#E5DEFF] hover:bg-[#D5CEEF]", // Soft Purple
+    "bg-[#FFDEE2] hover:bg-[#EFCED2]", // Soft Pink
+    "bg-[#FDE1D3] hover:bg-[#EDD1C3]", // Soft Peach
+    "bg-[#D3E4FD] hover:bg-[#C3D4ED]", // Soft Blue
+  ];
+
+  const getRandomPastelColor = () => {
+    const randomIndex = Math.floor(Math.random() * pastelColors.length);
+    return pastelColors[randomIndex];
+  };
+
   return (
     <div className="space-y-6">
-      <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]">
+      <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]">
         <div className="mb-6">
           <h2 className="text-xl font-black uppercase">AI Baby Food Recipe Generator</h2>
           <p className="text-muted-foreground">Create delicious, nutritious, and age-appropriate baby food recipes</p>
@@ -156,8 +167,9 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
               id="use-fridge"
               checked={shouldUseFridge}
               onCheckedChange={setShouldUseFridge}
+              className="neo-switch"
             />
-            <Label htmlFor="use-fridge">Use ingredients from my fridge</Label>
+            <Label htmlFor="use-fridge" className="font-medium">Use ingredients from my fridge</Label>
           </div>
 
           {shouldUseFridge && (
@@ -166,11 +178,15 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
                 {isFridgeLoading ? (
                   <div className="w-full text-center py-3">Loading ingredients...</div>
                 ) : availableIngredients.length > 0 ? (
-                  availableIngredients.map((ingredient) => (
+                  availableIngredients.map((ingredient, index) => (
                     <Badge
                       key={ingredient}
                       variant={selectedIngredients.includes(ingredient) ? "default" : "outline"}
-                      className="cursor-pointer text-sm py-1.5"
+                      className={`cursor-pointer text-sm py-1.5 border-2 border-black font-medium ${
+                        selectedIngredients.includes(ingredient) 
+                          ? "bg-black text-white" 
+                          : `${getRandomPastelColor()} text-black`
+                      }`}
                       onClick={() => handleIngredientToggle(ingredient)}
                     >
                       {ingredient}
@@ -185,9 +201,9 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
                 <Input
                   id="custom-ingredient"
                   placeholder="Add a custom ingredient"
-                  className="flex-1"
+                  className="flex-1 border-2 border-black"
                 />
-                <Button type="submit" size="sm">Add</Button>
+                <Button type="submit" size="sm" className="border-2 border-black bg-[#FEF7CD] text-black hover:bg-[#EEE7Bd]">Add</Button>
               </form>
             </div>
           )}
@@ -199,7 +215,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
             placeholder="Add any specific preferences or requirements for the recipe..."
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
-            className="w-full"
+            className="w-full border-2 border-black"
           />
           <p className="text-xs text-muted-foreground mt-1">E.g., "Finger foods for baby-led weaning", "Purees for 6-month old", etc.</p>
         </div>
@@ -213,7 +229,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
       </div>
 
       {isGenerating && (
-        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-white border-2 border-black rounded-lg shadow-md">
+        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-white border-4 border-black rounded-lg shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
           <p className="text-lg font-medium">Creating baby-friendly recipes...</p>
           <div className="flex space-x-2">
@@ -231,80 +247,82 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
             {generatedRecipes.map((recipe, index) => (
               <Card 
                 key={index}
-                className="border-2 border-black rounded-xl overflow-hidden"
+                className="border-4 border-black rounded-xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1"
               >
-                <Accordion type="single" collapsible>
-                  <AccordionItem value={`recipe-${index}`} className="border-0">
-                    <AccordionTrigger className="px-6 py-4 hover:bg-[#f4f4f0] transition-colors">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between w-full gap-2">
-                        <div className="flex items-center gap-2">
-                          <Utensils className="h-5 w-5 text-primary" />
-                          <span className="font-bold">{recipe.title}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="whitespace-nowrap bg-white">
-                            {recipe.ageRange}
-                          </Badge>
-                          <div className="flex items-center text-sm">
-                            <Clock className="h-4 w-4 text-muted-foreground mr-1" />
-                            <span>{recipe.time} mins</span>
-                          </div>
-                        </div>
+                <NeoBrutalistAccordion
+                  value={`recipe-${index}`}
+                  title={
+                    <div className="flex flex-col md:flex-row md:items-center justify-between w-full gap-2">
+                      <div className="flex items-center gap-2">
+                        <Utensils className="h-5 w-5 text-primary" />
+                        <span className="font-bold">{recipe.title}</span>
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-6 border-t border-black/10">
-                      <div className="space-y-4 pt-2">
-                        <p className="text-sm">{recipe.description}</p>
-                        
-                        <div>
-                          <h4 className="font-bold mb-2">Ingredients:</h4>
-                          <ul className="list-disc pl-5 space-y-1">
-                            {recipe.ingredients.map((ingredient, idx) => (
-                              <li key={idx} className="text-sm">{ingredient}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-bold mb-2">Instructions:</h4>
-                          <ol className="list-decimal pl-5 space-y-1">
-                            {recipe.instructions.map((step, idx) => (
-                              <li key={idx} className="text-sm">{step}</li>
-                            ))}
-                          </ol>
-                        </div>
-                        
-                        {recipe.nutritionalBenefits && recipe.nutritionalBenefits.length > 0 && (
-                          <div>
-                            <h4 className="font-bold mb-2">Nutritional Benefits:</h4>
-                            <ul className="list-disc pl-5 space-y-1">
-                              {recipe.nutritionalBenefits.map((benefit, idx) => (
-                                <li key={idx} className="text-sm">{benefit}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        
-                        {recipe.storageTips && (
-                          <div>
-                            <h4 className="font-bold mb-2">Storage Tips:</h4>
-                            <p className="text-sm">{recipe.storageTips}</p>
-                          </div>
-                        )}
-
-                        <Button
-                          variant="outline"
-                          className="w-full mt-4"
-                          onClick={() => saveRecipe(recipe)}
-                          disabled={savedRecipes[recipe.title]}
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          variant="outline" 
+                          className={`whitespace-nowrap ${getRandomPastelColor()} border-2 border-black`}
                         >
-                          <Save className="mr-2 h-4 w-4" />
-                          {savedRecipes[recipe.title] ? 'Saved' : 'Save Recipe'}
-                        </Button>
+                          {recipe.ageRange}
+                        </Badge>
+                        <div className="flex items-center text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground mr-1" />
+                          <span>{recipe.time} mins</span>
+                        </div>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                    </div>
+                  }
+                  className={getRandomPastelColor()}
+                >
+                  <div className="space-y-4 pt-2">
+                    <p className="text-sm">{recipe.description}</p>
+                    
+                    <div>
+                      <h4 className="font-bold mb-2">Ingredients:</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {recipe.ingredients.map((ingredient, idx) => (
+                          <li key={idx} className="text-sm">{ingredient}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-bold mb-2">Instructions:</h4>
+                      <ol className="list-decimal pl-5 space-y-1">
+                        {recipe.instructions.map((step, idx) => (
+                          <li key={idx} className="text-sm">{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                    
+                    {recipe.nutritionalBenefits && recipe.nutritionalBenefits.length > 0 && (
+                      <div>
+                        <h4 className="font-bold mb-2">Nutritional Benefits:</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          {recipe.nutritionalBenefits.map((benefit, idx) => (
+                            <li key={idx} className="text-sm">{benefit}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {recipe.storageTips && (
+                      <div>
+                        <h4 className="font-bold mb-2">Storage Tips:</h4>
+                        <p className="text-sm">{recipe.storageTips}</p>
+                      </div>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      className="w-full mt-4 border-2 border-black bg-white hover:bg-gray-50"
+                      onClick={() => saveRecipe(recipe)}
+                      disabled={savedRecipes[recipe.title]}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      {savedRecipes[recipe.title] ? 'Saved' : 'Save Recipe'}
+                    </Button>
+                  </div>
+                </NeoBrutalistAccordion>
               </Card>
             ))}
           </div>
