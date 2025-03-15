@@ -12,7 +12,7 @@ import {
   UtensilsCrossed,
   Baby
 } from "lucide-react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 
@@ -24,7 +24,7 @@ interface NavItem {
 
 const BottomNav: React.FC = () => {
   const location = useLocation();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const [showBabyFeature, setShowBabyFeature] = useState<boolean>(false);
 

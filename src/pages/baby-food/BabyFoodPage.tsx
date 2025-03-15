@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -54,13 +53,16 @@ const BabyFoodPage = () => {
 
           // Safely access food property
           if (prefs && typeof prefs === 'object') {
-            const foodPrefs = prefs.food as Record<string, any> || {};
+            const foodPrefs = prefs.hasOwnProperty('food') && 
+                             typeof prefs.food === 'object' ? 
+                             prefs.food : {};
             
             if (foodPrefs && typeof foodPrefs === 'object') {
-              setBabyFoodPreferences(String(foodPrefs.babyFoodPreferences || ''));
+              // Use optional chaining and nullish coalescing to safely access properties
+              setBabyFoodPreferences(foodPrefs.babyFoodPreferences?.toString() || '');
               
-              if ('babyAge' in foodPrefs) {
-                setBabyAge(String(foodPrefs.babyAge || ''));
+              if (foodPrefs.hasOwnProperty('babyAge')) {
+                setBabyAge(foodPrefs.babyAge?.toString() || '');
               }
             }
           }

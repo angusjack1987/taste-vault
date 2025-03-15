@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import PageHeader from "./PageHeader";
 import BottomNav from "./BottomNav";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -12,6 +12,7 @@ interface MainLayoutProps {
   showBackButton?: boolean;
   className?: string;
   hideNav?: boolean;
+  action?: React.ReactNode; // Added action prop
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
@@ -20,8 +21,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   showBackButton = false,
   className,
   hideNav = false,
+  action,
 }) => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   return (
     <motion.div
@@ -31,7 +33,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       exit={{ opacity: 0 }}
     >
       {title && (
-        <PageHeader title={title} showBackButton={showBackButton} />
+        <PageHeader title={title} showBackButton={showBackButton} action={action} />
       )}
       
       <main className={cn("flex-1 pb-20 md:pb-0", className)}>
