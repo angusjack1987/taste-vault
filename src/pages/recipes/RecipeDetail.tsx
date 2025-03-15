@@ -21,7 +21,7 @@ import {
   Egg,
   Wheat,
   ChefHat as ChefHatIcon,
-  Magic
+  Wand2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -484,7 +484,7 @@ const RecipeDetail = () => {
               isLoading={parsingMealSuggestion}
               className="w-full md:w-auto"
             >
-              <Magic className="h-4 w-4 mr-2" />
+              <Wand2 className="h-4 w-4 mr-2" />
               Create Variations
             </AiSuggestionButton>
           </div>
