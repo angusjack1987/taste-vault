@@ -20,6 +20,7 @@ const BabyFoodPage = () => {
   const [loading, setLoading] = useState(true);
   const [babyAge, setBabyAge] = useState<string>('');
   const [babyFoodPreferences, setBabyFoodPreferences] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('generator');
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -78,6 +79,15 @@ const BabyFoodPage = () => {
     fetchBabyProfiles();
   }, [user]);
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Find and manually trigger the correct TabsTrigger
+    const tabTrigger = document.querySelector(`[data-value="${value}"]`) as HTMLButtonElement | null;
+    if (tabTrigger) {
+      tabTrigger.click();
+    }
+  };
+
   if (loading) {
     return (
       <MainLayout title="Baby Food">
@@ -109,7 +119,7 @@ const BabyFoodPage = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="generator" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center gap-2 overflow-x-auto py-3 pb-4 scrollbar-none">
             <TabsList className="hidden">
               <TabsTrigger value="generator">Generator</TabsTrigger>
@@ -119,30 +129,30 @@ const BabyFoodPage = () => {
             
             {/* Neo-brutalist style menu buttons */}
             <Button 
-              variant="cheese"
+              variant={activeTab === 'generator' ? 'cheese' : 'outline'}
               size="sm" 
               className="flex items-center whitespace-nowrap group"
-              onClick={() => document.querySelector('[data-value="generator"]')?.click()}
+              onClick={() => handleTabChange('generator')}
             >
               <Filter className="h-4 w-4 mr-1 group-hover:animate-spin-neo" />
               <span className="font-bold uppercase">Recipe Generator</span>
             </Button>
             
             <Button 
-              variant="outline"
+              variant={activeTab === 'advice' ? 'cheese' : 'outline'}
               size="sm" 
               className="flex items-center whitespace-nowrap group"
-              onClick={() => document.querySelector('[data-value="advice"]')?.click()}
+              onClick={() => handleTabChange('advice')}
             >
               <Filter className="h-4 w-4 mr-1 group-hover:animate-spin-neo" />
               <span className="font-bold uppercase">Food Advice</span>
             </Button>
             
             <Button 
-              variant="outline"
+              variant={activeTab === 'saved' ? 'cheese' : 'outline'}
               size="sm" 
               className="flex items-center whitespace-nowrap group"
-              onClick={() => document.querySelector('[data-value="saved"]')?.click()}
+              onClick={() => handleTabChange('saved')}
             >
               <Filter className="h-4 w-4 mr-1 group-hover:animate-spin-neo" />
               <span className="font-bold uppercase">Saved Recipes</span>
