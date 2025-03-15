@@ -103,9 +103,10 @@ const DevToolsSection = () => {
       
       if (error) throw error;
       
-      setPrompts(data || []);
+      setPrompts(data as BackendPrompt[] || []);
     } catch (error) {
       console.error("Error fetching prompts:", error);
+      setPrompts([]);
     } finally {
       setIsLoading(false);
     }

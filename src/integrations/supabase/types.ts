@@ -33,6 +33,7 @@ export type Database = {
       ai_prompt_history: {
         Row: {
           endpoint: string
+          full_response: string | null
           id: string
           model: string | null
           prompt: string
@@ -43,6 +44,7 @@ export type Database = {
         }
         Insert: {
           endpoint: string
+          full_response?: string | null
           id?: string
           model?: string | null
           prompt: string
@@ -53,6 +55,7 @@ export type Database = {
         }
         Update: {
           endpoint?: string
+          full_response?: string | null
           id?: string
           model?: string | null
           prompt?: string
