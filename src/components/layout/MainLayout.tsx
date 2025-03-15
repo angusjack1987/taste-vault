@@ -48,18 +48,18 @@ const MainLayout = ({
         action={action}
       />
       
-      <main className="flex-1 pb-24 px-4 md:px-6 relative overflow-x-hidden overflow-y-auto">
+      <main className="flex-1 pb-24 pt-4 px-3 md:px-5 relative overflow-x-hidden overflow-y-auto">
         {/* Neo-brutalism colorful background elements with rounded corners */}
-        <div className="absolute top-20 right-20 w-48 h-48 bg-[#FFD700] border-4 border-black rounded-2xl z-0 rotate-12 shadow-neo-heavy animate-neo-float"></div>
-        <div className="absolute bottom-40 left-10 w-32 h-32 bg-[#FF6B6B] border-4 border-black rounded-2xl z-0 -rotate-12 shadow-neo-heavy animate-neo-pulse"></div>
-        <div className="absolute top-40 left-10 w-24 h-24 bg-[#4CAF50] border-4 border-black rounded-2xl z-0 rotate-45 shadow-neo-heavy animate-neo-float"></div>
+        <div className="absolute top-20 right-20 w-40 h-40 bg-[#FFD700] border-4 border-black rounded-2xl z-0 rotate-12 shadow-neo-heavy animate-neo-float"></div>
+        <div className="absolute bottom-40 left-10 w-28 h-28 bg-[#FF6B6B] border-4 border-black rounded-2xl z-0 -rotate-12 shadow-neo-heavy animate-neo-pulse"></div>
+        <div className="absolute top-40 left-10 w-20 h-20 bg-[#4CAF50] border-4 border-black rounded-2xl z-0 rotate-45 shadow-neo-heavy animate-neo-float"></div>
         
         {/* Main content with neo-brutalist slide-in animation */}
         <div 
           className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-500 ease-in-out z-10 transform ${mounted ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
           key={location.pathname} // Key helps React recognize this needs to be re-rendered on route change
         >
-          <div className="p-4 md:p-6 neo-container bg-white mb-6 shadow-neo-heavy border-4 border-black rounded-2xl">
+          <div className="p-3 md:p-5 neo-container bg-white mb-5 shadow-neo-heavy border-4 border-black rounded-2xl">
             {children}
           </div>
         </div>

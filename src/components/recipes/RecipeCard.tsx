@@ -39,7 +39,7 @@ const RecipeCard = ({
             />
           ) : (
             <div className={`w-full h-full ${randomColor} flex items-center justify-center`}>
-              <Utensils className="h-12 w-12 text-white" />
+              <Utensils className="h-10 w-10 text-white" />
             </div>
           )}
           {rating && (
@@ -50,8 +50,8 @@ const RecipeCard = ({
           )}
         </div>
         
-        <div className="p-3">
-          <h3 className="font-heading font-extrabold uppercase text-sm line-clamp-1 transition-all group-hover:text-primary">{title}</h3>
+        <div className="p-2">
+          <h3 className="font-heading font-extrabold uppercase text-sm line-clamp-2 min-h-[2.5rem] transition-all group-hover:text-primary">{title}</h3>
           
           {time && (
             <div className="mt-1 flex items-center text-black text-xs font-bold uppercase">
