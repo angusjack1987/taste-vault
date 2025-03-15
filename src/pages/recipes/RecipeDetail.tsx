@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -49,6 +50,7 @@ import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
 import InstructionsWithTooltips from "@/components/recipes/InstructionsWithTooltips";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import type { CarouselApi } from "@/components/ui/carousel";
 
 interface EnhancedInstruction {
   step: string;
@@ -368,10 +370,11 @@ const RecipeDetail = () => {
           dragFree: true
         }}
         onDragEnd={(api) => {
-          const scrollProgress = api.scrollProgress();
-          if (scrollProgress > 0.75) {
+          // The api parameter is the EmblaCarouselType object, not a DragEvent
+          const progress = api.scrollProgress();
+          if (progress > 0.75) {
             handleSwipeNavigation('left');
-          } else if (scrollProgress < 0.25) {
+          } else if (progress < 0.25) {
             handleSwipeNavigation('right');
           }
         }}
