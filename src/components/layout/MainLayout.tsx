@@ -1,5 +1,4 @@
-
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useMemo } from "react";
 import BottomNav from "./BottomNav";
 import PageHeader from "./PageHeader";
 import { useLocation } from "react-router-dom";
@@ -22,30 +21,51 @@ const MainLayout = ({
   hideNavigation = false,
 }: MainLayoutProps) => {
   const [mounted, setMounted] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const location = useLocation();
   
-  // Add neo-brutalist transition effect when component mounts or route changes
+  // Generate a consistent gradient for the page to prevent flashing
+  const backgroundGradient = useMemo(() => {
+    // Create a deterministic gradient based on pathname to keep it consistent
+    const gradientIndex = location.pathname.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 4;
+    const gradients = [
+      'from-[#AAFFA9] to-[#7FFFD4]', // Green to teal
+      'from-[#FFB347] to-[#FFCC33]', // Orange to yellow
+      'from-[#FF9AA2] to-[#FFB7B2]', // Pink to light pink
+      'from-[#C9FFE5] to-[#7FFFD4]', // Light mint to aquamarine
+    ];
+    return gradients[gradientIndex];
+  }, [location.pathname]);
+  
+  // Handle page transitions
   useEffect(() => {
-    // Set mounted state for staggered animations
-    setMounted(true);
+    const handlePageTransition = async () => {
+      setIsTransitioning(true);
+      setMounted(false);
+      
+      // Short delay to trigger exit animation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Then set mounted to true to trigger entrance animation
+      setMounted(true);
+      
+      // After animation completes, reset transitioning state
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 500);
+    };
     
-    // Slide in the content
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-      mainContent.classList.remove('translate-x-full', 'opacity-0');
-      mainContent.classList.add('translate-x-0', 'opacity-100');
-    }
-    
-    return () => setMounted(false);
-  }, [location.pathname]); // Add location dependency to trigger animation on route change
+    handlePageTransition();
+  }, [location.pathname]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#AAFFA9] to-[#7FFFD4] overflow-hidden">
+    <div className={`flex flex-col min-h-screen bg-gradient-to-br ${backgroundGradient} overflow-hidden`}>
       <PageHeader
         title={title}
         showBackButton={showBackButton}
         showUserMenu={showUserMenu}
         action={action}
+        backgroundGradient={backgroundGradient}
       />
       
       <main className="flex-1 pb-24 pt-4 px-3 md:px-5 relative overflow-x-hidden overflow-y-auto">
@@ -56,7 +76,11 @@ const MainLayout = ({
         
         {/* Main content with neo-brutalist slide-in animation */}
         <div 
-          className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-500 ease-in-out z-10 transform ${mounted ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
+          className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-500 ease-in-out z-10 transform ${
+            mounted 
+              ? 'translate-x-0 opacity-100' 
+              : 'translate-x-full opacity-0'
+          }`}
           key={location.pathname} // Key helps React recognize this needs to be re-rendered on route change
         >
           <div className="p-3 md:p-5 neo-container bg-white mb-5 shadow-neo-heavy border-4 border-black rounded-2xl">
@@ -71,3 +95,4 @@ const MainLayout = ({
 };
 
 export default MainLayout;
+

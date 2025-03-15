@@ -17,6 +17,7 @@ interface PageHeaderProps {
   showBackButton?: boolean;
   showUserMenu?: boolean;
   action?: React.ReactNode;
+  backgroundGradient?: string; // Add prop to receive gradient from parent
 }
 
 const PageHeader = ({
@@ -24,6 +25,7 @@ const PageHeader = ({
   showBackButton = false,
   showUserMenu = true,
   action,
+  backgroundGradient,
 }: PageHeaderProps) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -47,18 +49,20 @@ const PageHeader = ({
 
   const firstName = user?.user_metadata?.first_name || 'Chef';
   
-  // Generate random background gradient for the banner
-  const gradients = [
-    'from-[#FF9AA2] to-[#FFB7B2]', // Pink to light pink
-    'from-[#FFB347] to-[#FFCC33]', // Orange to yellow
-    'from-[#AAFFA9] to-[#11FFBD]', // Green to teal
-    'from-[#C9FFE5] to-[#7FFFD4]', // Light mint to aquamarine
-  ];
-  
-  const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+  // Use provided background gradient or generate a random one if not provided
+  const headerGradient = backgroundGradient || (() => {
+    const gradients = [
+      'from-[#FF9AA2] to-[#FFB7B2]', // Pink to light pink
+      'from-[#FFB347] to-[#FFCC33]', // Orange to yellow
+      'from-[#AAFFA9] to-[#11FFBD]', // Green to teal
+      'from-[#C9FFE5] to-[#7FFFD4]', // Light mint to aquamarine
+    ];
+    
+    return gradients[Math.floor(Math.random() * gradients.length)];
+  })();
 
   return (
-    <header className={`sticky top-0 z-20 bg-gradient-to-r ${randomGradient} backdrop-blur-md pt-6 pb-3 border-b-4 border-black`}>
+    <header className={`sticky top-0 z-20 bg-gradient-to-r ${headerGradient} backdrop-blur-md pt-6 pb-3 border-b-4 border-black transition-colors duration-500`}>
       <div className="flex items-center justify-between max-w-5xl mx-auto px-4">
         <div className="flex items-center gap-3">
           {showBackButton && (
