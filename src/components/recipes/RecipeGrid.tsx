@@ -26,9 +26,9 @@ const RecipeGrid = ({
 }: RecipeGridProps) => {
   if (recipes.length === 0) {
     return (
-      <div className="text-center py-10 bg-white border-4 border-black rounded-xl shadow-neo-heavy">
-        <span className="text-5xl mb-3 block animate-neo-pulse">🍳</span>
-        <span className="font-black uppercase">{emptyMessage}</span>
+      <div className="text-center py-10 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)]">
+        <span className="text-4xl mb-3 block animate-neo-pulse">🍳</span>
+        <span className="font-bold uppercase">{emptyMessage}</span>
       </div>
     );
   }
@@ -36,10 +36,10 @@ const RecipeGrid = ({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
       {recipes.map((recipe) => (
-        <div key={recipe.id} className="relative transform transition-all duration-300 hover:scale-105">
+        <div key={recipe.id} className="relative">
           {selectionMode && (
             <div 
-              className="absolute top-2 left-2 z-10 bg-white border-2 border-black p-1 cursor-pointer rounded-lg shadow-neo-sm"
+              className="absolute top-2 left-2 z-10 bg-white border-1 border-black p-1 cursor-pointer rounded-lg shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)]"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
