@@ -299,7 +299,7 @@ const RecipeDetail = () => {
         <div className="flex gap-2">
           <Button variant="ghost" size="icon" asChild>
             <a href={`/recipes/${id}/edit`}>
-              <Edit className="h-5 w-5" />
+              <Edit className="h-5 w-5 text-primary" />
             </a>
           </Button>
           <AlertDialog>
@@ -385,14 +385,14 @@ const RecipeDetail = () => {
                 onClick={() => setIsFavorited(!isFavorited)}
               >
                 <Heart 
-                  className={`h-5 w-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} 
+                  className={`h-5 w-5 text-primary ${isFavorited ? 'fill-primary' : ''}`} 
                 />
               </Button>
               <Button variant="ghost" size="icon">
-                <Bookmark className="h-5 w-5" />
+                <Bookmark className="h-5 w-5 text-primary" />
               </Button>
               <Button variant="ghost" size="icon">
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-5 w-5 text-primary" />
               </Button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 const RecipeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const isEditing = !!id;
   
@@ -39,6 +40,29 @@ const RecipeForm = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isSubmitting = isCreating || isUpdating;
+  
+  useEffect(() => {
+    const extractedData = location.state?.recipeData;
+    if (extractedData && !isEditing) {
+      setFormData({
+        ...formData,
+        ...extractedData,
+        ingredients: extractedData.ingredients?.length > 0 
+          ? extractedData.ingredients 
+          : [""],
+        instructions: extractedData.instructions?.length > 0 
+          ? extractedData.instructions 
+          : [""]
+      });
+      
+      window.history.replaceState({}, document.title);
+      
+      toast({
+        title: "Recipe extracted from image",
+        description: "Review and edit the details before saving.",
+      });
+    }
+  }, [location.state]);
   
   useEffect(() => {
     if (isEditing && existingRecipe) {
@@ -93,11 +117,9 @@ const RecipeForm = () => {
     if (e.key === 'Enter') {
       e.preventDefault();
       
-      // Only add a new ingredient if the current one has content
       if (formData.ingredients[index].trim()) {
         handleAddIngredient();
         
-        // Focus the newly added ingredient input after a short delay
         setTimeout(() => {
           const inputs = document.querySelectorAll('input[placeholder^="Ingredient"]');
           const newInput = inputs[inputs.length - 1] as HTMLInputElement;
@@ -147,7 +169,6 @@ const RecipeForm = () => {
     setIsUploading(true);
     
     try {
-      // Generate a unique file name using timestamp and random string
       const fileExt = file.name.split('.').pop();
       const randomId = Math.random().toString(36).substring(2, 15);
       const fileName = `${Date.now()}-${randomId}.${fileExt}`;
