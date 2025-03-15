@@ -23,6 +23,7 @@ import Register from "./pages/auth/Register";
 import FoodPreferences from "./pages/settings/FoodPreferences";
 import AISettings from "@/pages/settings/AISettings";
 import BabyFoodPage from "./pages/baby-food/BabyFoodPage";
+import DesignSystem from "./pages/design-system/Index";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,10 @@ const App = () => (
               <AuthGuard>
                 <Profile />
               </AuthGuard>
+            } />
+            {/* Design System Route */}
+            <Route path="/design-system" element={
+              <DesignSystem />
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>
