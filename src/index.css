@@ -2,27 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Additional animation classes */
-@keyframes spin-slow {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spin-reverse {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
-}
-
-.animate-spin-reverse {
-  animation: spin-reverse 2s linear infinite;
-}
-
 @layer base {
   :root {
     --background: 45 100% 98%;
@@ -304,34 +283,5 @@
   
   .animate-neo-float {
     animation: neo-float 3s ease-in-out infinite;
-  }
-  
-  @keyframes bounce {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-  
-  .delay-0 {
-    animation-delay: 0ms;
-  }
-  
-  .delay-100 {
-    animation-delay: 100ms;
-  }
-  
-  .delay-200 {
-    animation-delay: 200ms;
-  }
-  
-  .delay-300 {
-    animation-delay: 300ms;
-  }
-  
-  .delay-400 {
-    animation-delay: 400ms;
   }
 }
