@@ -47,9 +47,9 @@ const RecipeOptionsDialog = ({
         <ScrollArea className="flex-grow overflow-auto pr-4 mt-4">
           {isGeneratingRecipe ? (
             <div className="py-10 text-center relative">
-              {/* Neo-brutalist animation elements */}
-              <div className="absolute top-0 left-10 w-20 h-20 bg-yellow-300 border-4 border-black rounded-2xl animate-neo-float opacity-40"></div>
-              <div className="absolute bottom-10 right-10 w-16 h-16 bg-pink-400 border-4 border-black rounded-2xl animate-bounce opacity-30"></div>
+              {/* Neo-brutalist animation elements - now with rounded circles */}
+              <div className="absolute top-0 left-10 w-20 h-20 bg-yellow-300 border-4 border-black rounded-full animate-neo-float opacity-40"></div>
+              <div className="absolute bottom-10 right-10 w-16 h-16 bg-pink-400 border-4 border-black rounded-full animate-bounce opacity-30"></div>
               
               <div className="relative z-10 bg-white p-6 border-4 border-black rounded-xl shadow-neo-heavy animate-pulse">
                 <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />

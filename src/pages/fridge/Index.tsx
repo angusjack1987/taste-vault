@@ -26,6 +26,7 @@ const FridgePage = () => {
     addItem,
     deleteItem,
     toggleAlwaysAvailable,
+    updateItem,
     clearNonAlwaysAvailableItems,
     isVoiceRecording,
     startVoiceRecording,
@@ -102,6 +103,15 @@ const FridgePage = () => {
     if (window.confirm("Are you sure you want to clear all non-saved items from your fridge?")) {
       clearNonAlwaysAvailableItems.mutate();
     }
+  };
+
+  const handleUpdateCategory = (id: string, category: string) => {
+    if (!id || !category) return;
+    
+    updateItem.mutate({
+      id,
+      category
+    });
   };
 
   const generateRecipeFromFridge = async () => {
@@ -293,6 +303,7 @@ const FridgePage = () => {
                 isLoading={isLoading}
                 onDeleteItem={(id) => deleteItem.mutate(id)}
                 onToggleAlwaysAvailable={(id, value) => toggleAlwaysAvailable.mutate({ id, always_available: value })}
+                onUpdateCategory={handleUpdateCategory}
                 onClearNonSavedItems={handleClearAllItems}
               />
             </TabsContent>

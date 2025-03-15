@@ -11,6 +11,7 @@ interface FridgeItemsListProps {
   isLoading: boolean;
   onDeleteItem: (id: string) => void;
   onToggleAlwaysAvailable: (id: string, value: boolean) => void;
+  onUpdateCategory?: (id: string, category: string) => void;
   onClearNonSavedItems: () => void;
 }
 
@@ -20,6 +21,7 @@ const FridgeItemsList = ({
   isLoading,
   onDeleteItem,
   onToggleAlwaysAvailable,
+  onUpdateCategory,
   onClearNonSavedItems
 }: FridgeItemsListProps) => {
   return (
@@ -65,6 +67,10 @@ const FridgeItemsList = ({
               onDelete={() => onDeleteItem(item.id)}
               onToggleAlwaysAvailable={(always_available) => 
                 onToggleAlwaysAvailable(item.id, always_available)
+              }
+              onUpdateCategory={onUpdateCategory ? 
+                (newCategory) => onUpdateCategory(item.id, newCategory) : 
+                undefined
               }
             />
           ))}

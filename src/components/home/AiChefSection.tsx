@@ -12,11 +12,11 @@ const AiChefSection = ({ onOpenSuggestDialog }: AiChefSectionProps) => {
     <section className="mb-10">
       <div className="section-green flex flex-col items-center text-center py-8 rounded-2xl relative overflow-hidden">
         <div className="absolute -right-6 top-3 transform rotate-12">
-          <div className="w-16 h-16 bg-yellow-300 border-4 border-black rounded-2xl animate-neo-float"></div>
+          <div className="w-16 h-16 bg-yellow-300 border-4 border-black rounded-full animate-neo-float"></div>
         </div>
         
         <div className="absolute -left-4 bottom-3 transform -rotate-12">
-          <div className="w-12 h-12 bg-red-300 border-4 border-black rounded-2xl animate-neo-pulse"></div>
+          <div className="w-12 h-12 bg-red-300 border-4 border-black rounded-full animate-neo-pulse"></div>
         </div>
         
         <Sparkles className="h-12 w-12 text-black mb-3 animate-neo-pulse" strokeWidth={3} />
