@@ -37,12 +37,12 @@ const AiSuggestionButton = ({
       {isLoading ? (
         <div className="flex items-center gap-2">
           <div className="h-5 w-5 rounded-full border-4 border-current border-t-transparent animate-spin" />
-          Processing...
+          <span className="animate-pulse">Processing...</span>
         </div>
       ) : (
         children || (
           <>
-            <Sparkles className="h-5 w-5 mr-2 animate-pulse" strokeWidth={3} />
+            <Sparkles className="h-5 w-5 mr-2 animate-neo-pulse" strokeWidth={3} />
             {label}
           </>
         )

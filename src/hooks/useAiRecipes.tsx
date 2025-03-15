@@ -144,21 +144,16 @@ export const useAiRecipes = () => {
   const suggestMealForPlan = async (data: {
     mealType: string;
     additionalPreferences?: string;
-    season?: string;
   }) => {
     return makeEdgeFunctionRequest(
       "ai-recipe-suggestions",
       "suggest-meal-for-plan",
-      {
-        ...data,
-        season: data.season || getCurrentSeason(),
-      }
+      data
     );
   };
 
-  // Add the missing generateRecipe function for the fridge page
+  // Update the generateRecipe function for the fridge page to be more consistent
   const generateRecipe = async (data: {
-    title: string;
     ingredients: string[];
   }) => {
     return makeEdgeFunctionRequest(
@@ -234,15 +229,6 @@ export const useAiRecipes = () => {
         tooltips: []
       }));
     }
-  };
-
-  // Helper to determine current season
-  const getCurrentSeason = () => {
-    const month = new Date().getMonth();
-    if (month >= 2 && month <= 4) return "spring";
-    if (month >= 5 && month <= 7) return "summer";
-    if (month >= 8 && month <= 10) return "autumn";
-    return "winter";
   };
 
   return {

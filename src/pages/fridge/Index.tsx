@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Mic, Utensils, AudioWaveform } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -41,7 +42,7 @@ const FridgePage = () => {
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   
-  const { generateRecipe } = useAiRecipes();
+  const { generateRecipe, loading: aiLoading } = useAiRecipes();
   const { useCreateRecipe } = useRecipes();
   const { useCreateMealPlan } = useMealPlans();
   
@@ -118,7 +119,6 @@ const FridgePage = () => {
       const availableIngredients = fridgeItems.map(item => item.name);
       
       const recipes = await generateRecipe({
-        title: "Recipe from fridge ingredients",
         ingredients: availableIngredients
       });
       
@@ -257,7 +257,8 @@ const FridgePage = () => {
               onClick={generateRecipeFromFridge}
               label="Generate Recipe from Fridge"
               className="w-full max-w-sm"
-              isLoading={isGeneratingRecipe}
+              isLoading={isGeneratingRecipe || aiLoading}
+              variant="cheese"
             />
           </div>
         </div>
@@ -301,7 +302,7 @@ const FridgePage = () => {
         <RecipeOptionsDialog 
           open={recipeDialogOpen}
           onOpenChange={setRecipeDialogOpen}
-          isGeneratingRecipe={isGeneratingRecipe}
+          isGeneratingRecipe={isGeneratingRecipe || aiLoading}
           generatedRecipes={generatedRecipes}
           selectedRecipeIndex={selectedRecipeIndex}
           onSelectRecipe={setSelectedRecipeIndex}

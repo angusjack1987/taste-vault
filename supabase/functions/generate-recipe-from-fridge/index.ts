@@ -45,33 +45,41 @@ serve(async (req: Request) => {
     );
 
     const {
-      ingredients,
-      userFoodPreferences,
+      type,
+      data,
       aiSettings,
-      userId
     } = await req.json();
+    
+    const userId = data?.userId;
+    
+    console.log("Generate recipe from fridge - Type:", type);
+    console.log("Generate recipe from fridge - Data:", data);
+    console.log("Generate recipe from fridge - AI Settings:", aiSettings);
 
-    console.log("Generating recipes from ingredients:", ingredients);
-    console.log("AI Settings:", aiSettings);
-
-    if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
-      throw new Error("No ingredients provided");
+    let result;
+    
+    if (type === "generate-recipe") {
+      if (!data.ingredients || !Array.isArray(data.ingredients) || data.ingredients.length === 0) {
+        throw new Error("No ingredients provided");
+      }
+      
+      // Generate recipes from the ingredients
+      const prompt = generateRecipePrompt(data.ingredients, data.userFoodPreferences, aiSettings);
+      result = await getRecipesFromAI(prompt, aiSettings);
+    } else {
+      throw new Error(`Unknown operation type: ${type}`);
     }
-
-    // Generate recipes from the ingredients
-    const prompt = generateRecipePrompt(ingredients, userFoodPreferences, aiSettings);
-    const recipes = await getRecipesFromAI(prompt, aiSettings);
 
     // Log the prompt to history if enabled
     if (aiSettings?.promptHistoryEnabled !== false && userId) {
       try {
         // Store a truncated version of the response
-        const responsePreview = JSON.stringify(recipes).substring(0, 150) + '...';
+        const responsePreview = JSON.stringify(result).substring(0, 150) + '...';
           
         await supabaseClient.from('ai_prompt_history').insert({
           user_id: userId,
           endpoint: "generate-recipe-from-fridge",
-          prompt: prompt,
+          prompt: "Generate recipe from fridge ingredients: " + data.ingredients.join(", "),
           response_preview: responsePreview,
           model: aiSettings?.model,
           temperature: aiSettings?.temperature
@@ -83,7 +91,7 @@ serve(async (req: Request) => {
       }
     }
 
-    return new Response(JSON.stringify({ recipes }), {
+    return new Response(JSON.stringify({ result }), {
       status: 200,
       headers: {
         ...corsHeaders,

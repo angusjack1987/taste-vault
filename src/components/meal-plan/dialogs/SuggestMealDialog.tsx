@@ -109,6 +109,7 @@ const SuggestMealDialog = ({
                 onClick={onSuggestMeal} 
                 disabled={aiLoading}
                 className="w-full text-base py-6"
+                variant="cheese"
               >
                 {aiLoading ? (
                   <>
@@ -126,12 +127,19 @@ const SuggestMealDialog = ({
           ) : (
             <div className="mt-4 space-y-6">
               {parsingMealSuggestion ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-4">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                  <p className="text-muted-foreground">Preparing your culinary inspiration...</p>
+                <div className="py-10 relative text-center">
+                  {/* Neo-brutalist animation elements */}
+                  <div className="absolute top-0 left-10 w-16 h-16 bg-green-300 border-4 border-black rounded-2xl animate-neo-float opacity-40 z-0"></div>
+                  <div className="absolute bottom-10 right-10 w-14 h-14 bg-orange-300 border-4 border-black rounded-2xl animate-bounce opacity-30 z-0"></div>
+                  
+                  <div className="relative z-10 bg-white p-6 border-4 border-black rounded-xl shadow-neo-heavy animate-pulse">
+                    <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+                    <div className="text-lg font-black uppercase">Preparing culinary inspiration</div>
+                    <div className="text-muted-foreground font-bold">Cooking up delicious ideas...</div>
+                  </div>
                 </div>
               ) : suggestedMeal.rawResponse ? (
-                <div className="mt-4 p-4 bg-muted rounded-md text-sm whitespace-pre-line">
+                <div className="mt-4 p-5 bg-white border-4 border-black rounded-xl shadow-neo text-sm whitespace-pre-line">
                   {suggestedMeal.rawResponse}
                 </div>
               ) : suggestedMeal.options && Array.isArray(suggestedMeal.options) && suggestedMeal.options.length > 0 ? (
@@ -144,17 +152,17 @@ const SuggestMealDialog = ({
                         key={idx}
                         onClick={() => setSelectedOption(idx)}
                         className={cn(
-                          "border rounded-lg p-4 cursor-pointer transition-all",
+                          "border-4 border-black rounded-xl p-4 cursor-pointer transition-all hover:shadow-neo-hover hover:-translate-y-1",
                           selectedOption === idx 
-                            ? "border-primary bg-primary/5 shadow-md" 
-                            : "hover:border-muted-foreground"
+                            ? "shadow-neo-heavy bg-primary/5" 
+                            : "shadow-neo"
                         )}
                       >
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="text-lg font-semibold">{option.title}</h3>
+                          <h3 className="text-lg font-bold">{option.title}</h3>
                           <div className={cn(
-                            "rounded-full border w-6 h-6 flex items-center justify-center",
-                            selectedOption === idx ? "border-primary text-primary" : "border-muted-foreground"
+                            "rounded-full border-2 border-black w-6 h-6 flex items-center justify-center bg-white",
+                            selectedOption === idx ? "bg-primary text-primary-foreground" : ""
                           )}>
                             {selectedOption === idx 
                               ? <CheckCircle2 className="h-5 w-5" /> 
@@ -169,7 +177,7 @@ const SuggestMealDialog = ({
                           <div className="mb-4">
                             <div className="flex flex-wrap gap-2">
                               {option.highlights.map((highlight, hidx) => (
-                                <div key={hidx} className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full flex items-center">
+                                <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
                                   <Star className="h-3 w-3 mr-1 text-amber-500" />
                                   {highlight}
                                 </div>
@@ -254,6 +262,7 @@ const SuggestMealDialog = ({
                 onClick={() => selectedOption !== null && onSaveSuggestedRecipe(selectedOption)}
                 className="sm:flex-1"
                 disabled={selectedOption === null}
+                variant="cheese"
               >
                 <ArrowRight className="mr-2 h-4 w-4" />
                 {currentDay && currentMealType 

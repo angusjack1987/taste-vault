@@ -46,10 +46,18 @@ const RecipeOptionsDialog = ({
         
         <ScrollArea className="flex-grow overflow-auto pr-4 mt-4">
           {isGeneratingRecipe ? (
-            <div className="py-8 text-center">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-              <div className="text-lg font-medium">Creating delicious recipes</div>
-              <div className="text-muted-foreground">Analyzing your ingredients...</div>
+            <div className="py-10 text-center relative">
+              {/* Neo-brutalist animation elements */}
+              <div className="absolute top-0 left-10 w-20 h-20 bg-yellow-300 border-4 border-black rounded-2xl animate-neo-float opacity-40"></div>
+              <div className="absolute bottom-10 right-10 w-16 h-16 bg-pink-400 border-4 border-black rounded-2xl animate-bounce opacity-30"></div>
+              
+              <div className="relative z-10 bg-white p-6 border-4 border-black rounded-xl shadow-neo-heavy animate-pulse">
+                <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+                <div className="text-lg font-black uppercase">Creating delicious recipes</div>
+                <div className="text-muted-foreground font-bold">
+                  Analyzing your ingredients...
+                </div>
+              </div>
             </div>
           ) : generatedRecipes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -70,17 +78,17 @@ const RecipeOptionsDialog = ({
                   key={index}
                   onClick={() => onSelectRecipe(index)}
                   className={cn(
-                    "border rounded-xl p-4 cursor-pointer transition-all",
+                    "border-4 border-black rounded-xl p-4 cursor-pointer transition-all hover:shadow-neo-hover hover:-translate-y-1",
                     selectedRecipeIndex === index 
-                      ? "border-primary bg-primary/5 shadow-md" 
-                      : "hover:border-muted-foreground"
+                      ? "shadow-neo-heavy bg-primary/5" 
+                      : "shadow-neo"
                   )}
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg font-semibold">{recipe.title}</h3>
+                    <h3 className="text-lg font-black uppercase">{recipe.title}</h3>
                     <div className={cn(
-                      "rounded-full border w-6 h-6 flex items-center justify-center",
-                      selectedRecipeIndex === index ? "border-primary text-primary" : "border-muted-foreground"
+                      "rounded-full border-2 border-black w-6 h-6 flex items-center justify-center bg-white",
+                      selectedRecipeIndex === index ? "bg-primary text-primary-foreground" : ""
                     )}>
                       {selectedRecipeIndex === index 
                         ? <CheckCircle2 className="h-5 w-5" /> 
@@ -95,7 +103,7 @@ const RecipeOptionsDialog = ({
                     <div className="mb-3">
                       <div className="flex flex-wrap gap-2">
                         {recipe.highlights.map((highlight: string, hidx: number) => (
-                          <div key={hidx} className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full flex items-center">
+                          <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
                             <Star className="h-3 w-3 mr-1 text-amber-500" />
                             {highlight}
                           </div>
@@ -106,7 +114,7 @@ const RecipeOptionsDialog = ({
                   
                   <div className="text-sm space-y-4">
                     <div>
-                      <h4 className="font-medium mb-1">Ingredients:</h4>
+                      <h4 className="font-bold mb-1">Ingredients:</h4>
                       <ul className="list-disc pl-5 space-y-1">
                         {recipe.ingredients?.map((ingredient: string, idx: number) => (
                           <li key={idx}>{ingredient}</li>
@@ -115,7 +123,7 @@ const RecipeOptionsDialog = ({
                     </div>
                     
                     <div>
-                      <h4 className="font-medium mb-1">Instructions:</h4>
+                      <h4 className="font-bold mb-1">Instructions:</h4>
                       <ol className="list-decimal pl-5 space-y-2">
                         {recipe.instructions?.map((step: string, idx: number) => (
                           <li key={idx}>{step}</li>
@@ -150,6 +158,7 @@ const RecipeOptionsDialog = ({
               onClick={onSaveToRecipeBook}
               disabled={selectedRecipeIndex === null}
               className="gap-2"
+              variant="bread"
             >
               <BookmarkPlus className="h-4 w-4" />
               Save to Recipe Book
@@ -158,6 +167,7 @@ const RecipeOptionsDialog = ({
               onClick={onAddToMealPlan}
               disabled={selectedRecipeIndex === null}
               className="gap-2"
+              variant="cheese"
             >
               <Calendar className="h-4 w-4" />
               Add to Meal Plan
