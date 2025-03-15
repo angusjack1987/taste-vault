@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { format, addDays, startOfWeek } from "date-fns";
+import { format, addDays, startOfWeek, subWeeks } from "date-fns";
 import { Sparkles, Lightbulb, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
@@ -41,6 +41,7 @@ const MealPlan = () => {
   
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 6);
+  const prevWeekStart = subWeeks(weekStart, 3);
   
   const { useAllRecipes, useCreateRecipe } = useRecipes();
   const { data: recipes, isLoading: recipesLoading } = useAllRecipes();
@@ -56,6 +57,11 @@ const MealPlan = () => {
     data: mealPlans, 
     isLoading: mealPlansLoading 
   } = useMealPlansForRange(weekStart, weekEnd);
+
+  const {
+    data: recentMealPlans,
+    isLoading: recentMealPlansLoading
+  } = useMealPlansForRange(prevWeekStart, weekStart);
   
   const { mutateAsync: createMealPlan } = useCreateMealPlan();
   const { mutateAsync: deleteMealPlan } = useDeleteMealPlan();
@@ -293,7 +299,17 @@ const MealPlan = () => {
         return;
       }
       
-      const batchSize = 5;
+      // Get recent meals for context
+      const recentMeals = recentMealPlans?.map(meal => ({
+        date: meal.date,
+        mealType: meal.meal_type,
+        recipe: meal.recipe?.title
+      })) || [];
+      
+      // Get existing recipes for context
+      const userRecipes = recipes?.slice(0, 20).map(recipe => recipe.title) || [];
+      
+      const batchSize = 3;
       let successCount = 0;
       
       for (let i = 0; i < mealsToGenerate.length; i += batchSize) {
@@ -301,14 +317,23 @@ const MealPlan = () => {
         
         for (const meal of batch) {
           try {
+            // Create a more detailed prompt with context about existing recipes and recent meals
+            const mealContext = `
+              For the meal on ${format(new Date(meal.date), 'EEEE, MMMM d')}.
+              Consider that the user already has these recipes in their collection: ${userRecipes.join(', ')}.
+              Recently, they've had: ${recentMeals.slice(0, 5).map(m => `${m.recipe || 'a meal'} for ${m.mealType} on ${format(new Date(m.date), 'EEE, MMM d')}`).join('; ')}.
+              Please suggest a meal that provides variety based on their recent eating patterns.
+            `;
+            
             const result = await suggestMealForPlan({
               mealType: meal.mealType,
-              additionalPreferences: `For the meal on ${format(new Date(meal.date), 'EEEE, MMMM d')}`
+              additionalPreferences: mealContext
             });
             
             if (result && typeof result === 'object' && result.options && Array.isArray(result.options) && result.options.length > 0) {
               const suggestion = result.options[0];
               
+              // Create the recipe without the rating field
               const newRecipe = await createRecipe({
                 title: suggestion.title,
                 description: suggestion.description || '',
@@ -319,8 +344,7 @@ const MealPlan = () => {
                 image: null,
                 difficulty: null,
                 tags: [],
-                images: [],
-                rating: null
+                images: []
               });
               
               await createMealPlan({
@@ -351,7 +375,7 @@ const MealPlan = () => {
     }
   };
   
-  const isLoading = recipesLoading || mealPlansLoading;
+  const isLoading = recipesLoading || mealPlansLoading || recentMealPlansLoading;
   
   return (
     <MainLayout 

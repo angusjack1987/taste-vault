@@ -117,6 +117,13 @@ const PlanWeekDialog: React.FC<PlanWeekDialogProps> = ({
     onGeneratePlan(selectedDays);
   };
 
+  // Reset form when dialog opens/closes
+  React.useEffect(() => {
+    if (open) {
+      setSelectedDays(initialSelection);
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -126,7 +133,7 @@ const PlanWeekDialog: React.FC<PlanWeekDialogProps> = ({
             Plan My Week
           </DialogTitle>
           <DialogDescription>
-            Select which days and meals you want AI to plan for you
+            Select which days and meals you want AI to plan for you. The AI will consider your existing recipes and recent meals.
           </DialogDescription>
         </DialogHeader>
 
