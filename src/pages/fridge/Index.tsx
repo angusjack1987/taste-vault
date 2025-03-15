@@ -18,6 +18,7 @@ import VoiceInputSection from "@/components/fridge/VoiceInputSection";
 import FridgeItemsList from "@/components/fridge/FridgeItemsList";
 import RecipeOptionsDialog from "@/components/fridge/RecipeOptionsDialog";
 import SaveToMealPlanDialog from "@/components/fridge/SaveToMealPlanDialog";
+import { GridRecipe } from "@/components/recipes/RecipeGrid";
 
 const FridgePage = () => {
   const {
@@ -43,14 +44,16 @@ const FridgePage = () => {
   const [processingProgress, setProcessingProgress] = useState(0);
   
   const { generateRecipe, loading: aiLoading } = useAiRecipes();
-  const { useCreateRecipe } = useRecipes();
+  const { useCreateRecipe, useAllRecipes } = useRecipes();
   const { useCreateMealPlan } = useMealPlans();
   
   const createRecipe = useCreateRecipe();
   const createMealPlan = useCreateMealPlan();
+  const { data: allRecipes = [] } = useAllRecipes();
   
   const [savePlanDialogOpen, setSavePlanDialogOpen] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType>("dinner");
+  const [selectedMealPlanRecipeId, setSelectedMealPlanRecipeId] = useState<string | null>(null);
   
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -175,12 +178,9 @@ const FridgePage = () => {
     }
   };
   
-  const handleAddToMealPlan = () => {
-    if (selectedRecipeIndex === null) {
-      toast.error("Please select a recipe first");
-      return;
-    }
-    
+  const handleAddToMealPlan = async (recipeId: string) => {
+    // Store selected recipe ID
+    setSelectedMealPlanRecipeId(null);
     setSavePlanDialogOpen(true);
   };
   
@@ -193,26 +193,35 @@ const FridgePage = () => {
     try {
       const selected = generatedRecipes[selectedRecipeIndex];
       
-      const savedRecipe = await createRecipe.mutateAsync({
-        title: selected.title,
-        description: selected.description,
-        ingredients: selected.ingredients || [],
-        instructions: selected.instructions || [],
-        time: selected.time || null,
-        servings: selected.servings || null,
-        image: null,
-        images: [],
-        difficulty: null,
-        tags: selected.highlights || [],
-        rating: null
-      });
+      // If no recipe is selected from the collection or the suggested one,
+      // save the generated recipe
+      let recipeId = selectedMealPlanRecipeId;
+      
+      if (!recipeId) {
+        // Save the generated recipe to the recipe book first
+        const savedRecipe = await createRecipe.mutateAsync({
+          title: selected.title,
+          description: selected.description,
+          ingredients: selected.ingredients || [],
+          instructions: selected.instructions || [],
+          time: selected.time || null,
+          servings: selected.servings || null,
+          image: null,
+          images: [],
+          difficulty: null,
+          tags: selected.highlights || [],
+          rating: null
+        });
+        
+        recipeId = savedRecipe.id;
+      }
       
       const today = new Date();
       
       await createMealPlan.mutateAsync({
         date: today,
         meal_type: selectedMealType,
-        recipe_id: savedRecipe.id
+        recipe_id: recipeId
       });
       
       toast.success(`Recipe added to your meal plan for ${format(today, "EEEE")} (${selectedMealType})`);
@@ -241,6 +250,27 @@ const FridgePage = () => {
       (item.category || "Fridge") === category
     );
   };
+  
+  // Convert recipes to GridRecipe format for selection
+  const gridRecipes: GridRecipe[] = allRecipes.map(recipe => ({
+    id: recipe.id,
+    title: recipe.title,
+    image: recipe.image || '',
+    time: recipe.time || undefined,
+    rating: recipe.rating || undefined
+  }));
+  
+  // Get a suggested recipe if we saved one from the generated recipes
+  let suggestedRecipe: GridRecipe | null = null;
+  if (selectedRecipeIndex !== null && generatedRecipes[selectedRecipeIndex]) {
+    const recipe = generatedRecipes[selectedRecipeIndex];
+    suggestedRecipe = {
+      id: "generated-recipe",
+      title: recipe.title,
+      image: "", // Use a placeholder
+      time: recipe.time
+    };
+  }
   
   return (
     <MainLayout title="My Fridge" showBackButton>
@@ -320,6 +350,7 @@ const FridgePage = () => {
           onSelectRecipe={setSelectedRecipeIndex}
           onSaveToRecipeBook={handleSaveToRecipeBook}
           onAddToMealPlan={handleAddToMealPlan}
+          recipes={gridRecipes}
         />
         
         <SaveToMealPlanDialog 
@@ -328,6 +359,11 @@ const FridgePage = () => {
           selectedMealType={selectedMealType}
           onMealTypeChange={setSelectedMealType}
           onSave={handleSaveToMealPlan}
+          recipes={gridRecipes}
+          suggestedRecipe={suggestedRecipe}
+          selectedRecipeId={selectedMealPlanRecipeId}
+          onSelectRecipe={setSelectedMealPlanRecipeId}
+          loading={false}
         />
       </div>
     </MainLayout>
