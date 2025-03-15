@@ -42,7 +42,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
-    rating: data.rating || null,
+    rating: null, // Default to null since the field doesn't exist in DB
   };
 };
 
@@ -87,7 +87,7 @@ export const updateRecipe = async ({
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
-    rating: data.rating || null,
+    rating: null, // Default to null since the field doesn't exist in DB
   };
 };
 

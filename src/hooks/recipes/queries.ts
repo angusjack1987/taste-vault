@@ -1,10 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Recipe } from "./types";
 import { User } from "@supabase/supabase-js";
-import { useAuth } from "../useAuth"; // Add this import
+import { useAuth } from "../useAuth";
 
 export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
   if (!user) return [];
@@ -35,7 +34,7 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
     images: Array.isArray(item.images) 
       ? item.images.map(img => String(img)) 
       : [],
-    rating: item.rating || null,
+    rating: null,
   }));
 };
 
@@ -47,18 +46,14 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
     .select("*")
     .eq("user_id", user.id);
 
-  // Apply filters
   if (filters.title) {
     query = query.ilike('title', `%${filters.title}%`);
   }
   
-  // Add more filters as needed
   if (filters.tags && filters.tags.length > 0) {
-    // This assumes tags is stored as an array in the database
     query = query.contains('tags', filters.tags);
   }
 
-  // Apply sorting
   query = query.order("created_at", { ascending: false });
 
   const { data, error } = await query;
@@ -83,7 +78,7 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
     images: Array.isArray(item.images) 
       ? item.images.map(img => String(img)) 
       : [],
-    rating: item.rating || null,
+    rating: null,
   }));
 };
 
@@ -118,7 +113,7 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
-    rating: data.rating || null,
+    rating: null,
   };
 };
 
