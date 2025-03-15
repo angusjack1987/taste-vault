@@ -21,9 +21,9 @@ const BabyFoodPage = () => {
   const [babyFoodPreferences, setBabyFoodPreferences] = useState<string>('');
 
   useEffect(() => {
+    if (!user) return;
+    
     const fetchBabyProfiles = async () => {
-      if (!user) return;
-      
       try {
         // Fetch baby profiles
         const { data: profilesData, error: profilesError } = await supabase
@@ -49,19 +49,19 @@ const BabyFoodPage = () => {
         if (prefsError && prefsError.code !== 'PGRST116') throw prefsError;
         
         if (prefsData?.preferences) {
-          // Check if preferences is an object and not a string
+          // Safely check if preferences exists and is an object
           const prefs = typeof prefsData.preferences === 'object' ? prefsData.preferences : {};
 
           // Safely access food property
-          if (prefs && typeof prefs === 'object' && 'food' in prefs && typeof prefs.food === 'object' && prefs.food) {
-            const foodPrefs = prefs.food as Record<string, any>;
+          if (prefs && typeof prefs === 'object') {
+            const foodPrefs = prefs.food as Record<string, any> || {};
             
-            if ('babyFoodPreferences' in foodPrefs) {
+            if (foodPrefs && typeof foodPrefs === 'object') {
               setBabyFoodPreferences(String(foodPrefs.babyFoodPreferences || ''));
-            }
-            
-            if ('babyAge' in foodPrefs) {
-              setBabyAge(String(foodPrefs.babyAge || ''));
+              
+              if ('babyAge' in foodPrefs) {
+                setBabyAge(String(foodPrefs.babyAge || ''));
+              }
             }
           }
         }
@@ -100,7 +100,7 @@ const BabyFoodPage = () => {
             onClick={() => navigate('/settings/food-preferences')} 
             variant="outline" 
             size="sm"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
           >
             <Settings size={16} />
             <span className="hidden md:inline">Settings</span>
@@ -108,10 +108,10 @@ const BabyFoodPage = () => {
         </div>
 
         <Tabs defaultValue="generator" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="generator">Recipe Generator</TabsTrigger>
-            <TabsTrigger value="advice">Food Advice</TabsTrigger>
-            <TabsTrigger value="saved">Saved Recipes</TabsTrigger>
+          <TabsList className="grid grid-cols-3 w-full border-2 border-black">
+            <TabsTrigger value="generator" className="data-[state=active]:bg-primary font-bold">Recipe Generator</TabsTrigger>
+            <TabsTrigger value="advice" className="data-[state=active]:bg-primary font-bold">Food Advice</TabsTrigger>
+            <TabsTrigger value="saved" className="data-[state=active]:bg-primary font-bold">Saved Recipes</TabsTrigger>
           </TabsList>
           
           <TabsContent value="generator" className="mt-6">
