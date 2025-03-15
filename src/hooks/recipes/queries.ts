@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Recipe } from "./types";
 import { User } from "@supabase/supabase-js";
+import { useAuth } from "../useAuth"; // Add this import
 
 export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
   if (!user) return [];

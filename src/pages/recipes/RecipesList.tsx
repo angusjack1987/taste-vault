@@ -20,7 +20,7 @@ const RecipesList = () => {
   const { toast } = useToast();
   
   const { useRecipesWithFilters } = useRecipes();
-  const { data: recipes, isLoading, error } = useRecipesWithFilters({
+  const { data: recipes = [], isLoading, error } = useRecipesWithFilters({
     title: searchQuery
   });
   
