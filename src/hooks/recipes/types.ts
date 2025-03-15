@@ -13,6 +13,7 @@ export type Recipe = {
   ingredients: string[];
   instructions: string[];
   tags: string[];
+  rating: number | null;
   created_at: string;
   updated_at: string;
 };
