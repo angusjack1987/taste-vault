@@ -19,7 +19,9 @@ import {
   Fish,
   Apple,
   Egg,
-  Wheat
+  Wheat,
+  ChefHat as ChefHatIcon,
+  Magic
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,6 +48,8 @@ import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
 import InstructionsWithTooltips from "@/components/recipes/InstructionsWithTooltips";
+import { useIsMobile } from "@/hooks/use-mobile";
+import ShareRecipeDialog from "@/components/recipes/ShareRecipeDialog";
 
 interface EnhancedInstruction {
   step: string;
@@ -59,11 +63,13 @@ interface EnhancedInstruction {
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [isFavorited, setIsFavorited] = useState(false);
   const [addingToShoppingList, setAddingToShoppingList] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
   const [variationsDialogOpen, setVariationsDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [suggestedMeal, setSuggestedMeal] = useState<any>(null);
   const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
   const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
@@ -153,6 +159,10 @@ const RecipeDetail = () => {
   
   const handleOpenVariationsDialog = () => {
     setVariationsDialogOpen(true);
+  };
+
+  const handleOpenShareDialog = () => {
+    setShareDialogOpen(true);
   };
 
   const handleGenerateVariation = async (type: string, preferences?: string) => {
@@ -265,6 +275,41 @@ const RecipeDetail = () => {
     }
   };
 
+  const handleShareRecipe = (method: string) => {
+    if (!recipe) return;
+    
+    const recipeUrl = window.location.href;
+    const recipeTitle = recipe.title;
+    const recipeDescription = recipe.description || "Check out this recipe!";
+    
+    switch (method) {
+      case "copy":
+        navigator.clipboard.writeText(recipeUrl).then(() => {
+          toast.success("Link copied to clipboard");
+          setShareDialogOpen(false);
+        });
+        break;
+      case "email":
+        window.location.href = `mailto:?subject=${encodeURIComponent(recipeTitle)}&body=${encodeURIComponent(`${recipeDescription}\n\n${recipeUrl}`)}`;
+        setShareDialogOpen(false);
+        break;
+      case "whatsapp":
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${recipeTitle}\n${recipeDescription}\n\n${recipeUrl}`)}`, "_blank");
+        setShareDialogOpen(false);
+        break;
+      case "twitter":
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${recipeTitle}\n${recipeDescription}`)}&url=${encodeURIComponent(recipeUrl)}`, "_blank");
+        setShareDialogOpen(false);
+        break;
+      case "facebook":
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(recipeUrl)}`, "_blank");
+        setShareDialogOpen(false);
+        break;
+      default:
+        break;
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout title="Loading Recipe..." showBackButton={true}>
@@ -357,7 +402,7 @@ const RecipeDetail = () => {
         
         <div className="page-container">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               {recipe.time && (
                 <div className="flex items-center text-muted-foreground">
                   <Clock className="w-4 h-4 mr-1" />
@@ -381,17 +426,27 @@ const RecipeDetail = () => {
             <div className="flex gap-2">
               <Button
                 variant="ghost"
-                size="icon"
+                size={isMobile ? "sm" : "icon"}
                 onClick={() => setIsFavorited(!isFavorited)}
+                className={isMobile ? "p-1" : ""}
               >
                 <Heart 
                   className={`h-5 w-5 text-primary ${isFavorited ? 'fill-primary' : ''}`} 
                 />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                className={isMobile ? "p-1" : ""}
+              >
                 <Bookmark className="h-5 w-5 text-primary" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                onClick={handleOpenShareDialog}
+                className={isMobile ? "p-1" : ""}
+              >
                 <Share2 className="h-5 w-5 text-primary" />
               </Button>
             </div>
@@ -420,6 +475,17 @@ const RecipeDetail = () => {
                   Enhance Instructions
                 </>
               )}
+            </AiSuggestionButton>
+            
+            <AiSuggestionButton
+              onClick={handleOpenVariationsDialog}
+              label="Create Variations"
+              variant="cheese"
+              isLoading={parsingMealSuggestion}
+              className="w-full md:w-auto"
+            >
+              <Magic className="h-4 w-4 mr-2" />
+              Create Variations
             </AiSuggestionButton>
           </div>
           
@@ -541,6 +607,13 @@ const RecipeDetail = () => {
         recipeName={recipe.title}
         onGenerateVariation={handleGenerateVariation}
         isLoading={parsingMealSuggestion}
+      />
+
+      <ShareRecipeDialog 
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        recipeName={recipe.title}
+        onShare={handleShareRecipe}
       />
     </MainLayout>
   );

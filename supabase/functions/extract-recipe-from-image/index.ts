@@ -110,12 +110,18 @@ serve(async (req) => {
       recipeData = {
         title: recipeData.title || "Untitled Recipe",
         description: recipeData.description || "A delicious recipe",
-        ingredients: Array.isArray(recipeData.ingredients) ? recipeData.ingredients : [],
-        instructions: Array.isArray(recipeData.instructions) ? recipeData.instructions : [],
+        ingredients: Array.isArray(recipeData.ingredients) 
+          ? recipeData.ingredients.map(i => String(i))
+          : [],
+        instructions: Array.isArray(recipeData.instructions) 
+          ? recipeData.instructions.map(i => String(i))
+          : [],
         time: typeof recipeData.time === 'number' ? recipeData.time : 30,
         servings: typeof recipeData.servings === 'number' ? recipeData.servings : 4,
         difficulty: ['Easy', 'Medium', 'Hard'].includes(recipeData.difficulty) ? recipeData.difficulty : 'Medium',
-        tags: Array.isArray(recipeData.tags) ? recipeData.tags : [],
+        tags: Array.isArray(recipeData.tags) 
+          ? recipeData.tags.map(t => String(t))
+          : [],
         noTextDetected: false
       };
       
