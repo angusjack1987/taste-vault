@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import RecipeCard from "./RecipeCard";

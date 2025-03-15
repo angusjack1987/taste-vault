@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -49,8 +48,7 @@ import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
 import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
 import InstructionsWithTooltips from "@/components/recipes/InstructionsWithTooltips";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import type { CarouselApi } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 
 interface EnhancedInstruction {
   step: string;
@@ -368,20 +366,6 @@ const RecipeDetail = () => {
         className="w-full relative"
         opts={{
           dragFree: true
-        }}
-        onDragEnd={(_, __, context) => {
-          if (!context) return;
-          
-          // Get the current scroll progress from the context
-          const scrollSnaps = context.scrollSnapList();
-          const selectedSnapIndex = context.selectedScrollSnap();
-          const progress = selectedSnapIndex / (scrollSnaps.length - 1);
-          
-          if (progress > 0.75) {
-            handleSwipeNavigation('left');
-          } else if (progress < 0.25) {
-            handleSwipeNavigation('right');
-          }
         }}
       >
         <CarouselContent>
