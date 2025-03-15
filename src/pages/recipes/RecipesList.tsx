@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,15 +48,28 @@ const RecipesList = () => {
     
     if (recipeData.title) {
       // If the user clicked "Save Recipe" directly from the modal
-      if (!recipeData.id) {
+      // Check if id exists before using it
+      if (recipeData.id !== undefined) {
+        // Handle existing recipe update if needed
+        // This branch isn't currently used, but we'll keep it for type safety
+        console.log("Updating existing recipe:", recipeData.id);
+      } else {
         // Create a new recipe
         addRecipeMutation.mutate(recipeData as RecipeFormData, {
           onSuccess: () => {
-            toast.success("Recipe saved successfully!");
+            toast({
+              title: "Success",
+              description: "Recipe saved successfully!",
+              variant: "default"
+            });
           },
-          onError: (error) => {
-            console.error("Error saving recipe:", error);
-            toast.error("Failed to save recipe. Please try again.");
+          onError: (err) => {
+            console.error("Error saving recipe:", err);
+            toast({
+              title: "Error",
+              description: "Failed to save recipe. Please try again.",
+              variant: "destructive"
+            });
           }
         });
       }

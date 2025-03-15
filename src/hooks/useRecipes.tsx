@@ -28,7 +28,9 @@ export const useRecipes = () => {
     useDeleteRecipe,
     useBulkDeleteRecipes,
     // Add the useAllRecipes function to fix the error in other components
-    useAllRecipes
+    useAllRecipes,
+    // Add alias for useCreateRecipe to match the code in RecipesList
+    useAddRecipe: useCreateRecipe
   };
 };
 
