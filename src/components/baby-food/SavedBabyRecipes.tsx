@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2, Clock, Baby, Search, ChefHat, Utensils, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Card } from '@/components/ui/card';
 
 interface BabyFoodRecipe {
   id: string;
@@ -75,9 +76,9 @@ const SavedBabyRecipes = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+      <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]">
         <div className="mb-4">
-          <h2 className="text-xl font-black uppercase flex items-center mb-2">
+          <h2 className="text-xl font-bold uppercase flex items-center mb-2">
             <FileText className="mr-2 h-5 w-5" />
             Saved Baby Food Recipes
           </h2>
@@ -103,9 +104,9 @@ const SavedBabyRecipes = () => {
       ) : filteredRecipes.length > 0 ? (
         <div className="space-y-4">
           {filteredRecipes.map((recipe) => (
-            <div 
+            <Card 
               key={recipe.id} 
-              className="border-4 border-black rounded-xl bg-white overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1"
+              className="border-2 border-black rounded-xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]"
             >
               <Accordion type="single" collapsible>
                 <AccordionItem value={recipe.id} className="border-0">
@@ -126,7 +127,7 @@ const SavedBabyRecipes = () => {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up border-t border-black/10">
+                  <AccordionContent className="px-6 pb-6 border-t border-black/10">
                     <div className="space-y-4 pt-2">
                       <p className="text-sm">{recipe.description}</p>
                       
@@ -204,11 +205,11 @@ const SavedBabyRecipes = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </div>
+            </Card>
           ))}
         </div>
       ) : (
-        <div className="text-center py-10 border-4 border-dashed border-muted-foreground/20 rounded-lg">
+        <div className="text-center py-10 border-2 border-dashed border-muted-foreground/20 rounded-lg">
           <ChefHat className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-bold mb-2">No saved recipes yet</h3>
           <p className="text-muted-foreground mb-4">

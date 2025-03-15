@@ -38,8 +38,8 @@ const AiSuggestionButton = ({
         <div className="flex items-center gap-2">
           <div className="relative">
             <div className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-            <div className="absolute -top-2 -right-3 w-3 h-3 bg-yellow-300 border-1 border-black rounded-full animate-neo-pulse opacity-60" />
-            <div className="absolute -bottom-2 -left-3 w-3 h-3 bg-blue-300 border-1 border-black rounded-full animate-neo-float opacity-60" />
+            <div className="absolute -top-2 -right-3 w-3 h-3 bg-yellow-300 border border-black rounded-full animate-neo-pulse opacity-60" />
+            <div className="absolute -bottom-2 -left-3 w-3 h-3 bg-blue-300 border border-black rounded-full animate-neo-float opacity-60" />
           </div>
           <span className="animate-pulse">Processing...</span>
         </div>

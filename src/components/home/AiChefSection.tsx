@@ -27,8 +27,8 @@ const AiChefSection = ({ onOpenSuggestDialog }: AiChefSectionProps) => {
           <div className="w-8 h-8 bg-green-300 border-2 border-black rounded-full animate-bounce opacity-60"></div>
         </div>
         
-        <Sparkles className="h-12 w-12 text-black mb-3 animate-neo-pulse" strokeWidth={3} />
-        <h2 className="text-2xl font-bold uppercase mb-3 neo-text-chunky">AI Recipe Assistant</h2>
+        <Sparkles className="h-12 w-12 text-black mb-3 animate-neo-pulse" strokeWidth={2.5} />
+        <h2 className="text-2xl font-bold uppercase mb-3">AI Recipe Assistant</h2>
         <p className="text-black font-medium mb-5 max-w-md">
           We will feed you tasty and cheap food! Let our AI chef suggest personalized recipes.
         </p>
@@ -36,7 +36,7 @@ const AiChefSection = ({ onOpenSuggestDialog }: AiChefSectionProps) => {
         <AiSuggestionButton
           onClick={onOpenSuggestDialog}
           label="Get Recipe Ideas"
-          className="font-bold text-lg uppercase border-2 border-black px-6 py-4 rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.8)]"
+          className="font-bold text-lg uppercase border-2 border-black px-6 py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]"
           variant="cheese"
         />
       </div>

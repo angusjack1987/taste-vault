@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -132,13 +133,13 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
       )}
 
       {advice && !loading && (
-        <Card className="overflow-hidden rounded-xl border-4 border-black">
+        <Card className="overflow-hidden rounded-xl border-2 border-black">
           <Collapsible
             open={isOpen}
             onOpenChange={setIsOpen}
-            className="transition-all duration-300 ease-in-out"
+            className="w-full"
           >
-            <CollapsibleTrigger className="flex w-full items-center justify-between px-6 py-5 text-left font-semibold hover:bg-[#f4f4f0] transition-colors border-b-2 border-black/10">
+            <CollapsibleTrigger className="flex w-full items-center justify-between px-6 py-5 text-left font-semibold hover:bg-[#f4f4f0] transition-colors border-b border-black/10">
               <div className="flex items-center gap-2">
                 <Utensils className="h-5 w-5 text-primary" />
                 <span className="text-lg font-bold">
@@ -155,7 +156,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
                 />
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="px-6 pb-6 pt-4 data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up bg-white">
+            <CollapsibleContent className="px-6 pb-6 pt-4 bg-white">
               <div className="prose max-w-none">
                 <div dangerouslySetInnerHTML={{ __html: advice }} />
               </div>
