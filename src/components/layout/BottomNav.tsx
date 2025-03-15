@@ -51,8 +51,12 @@ const BottomNav = () => {
           const prefs = typeof data.preferences === 'object' ? data.preferences : {};
 
           // Only access food property if preferences is an object
-          if (prefs && typeof prefs === 'object' && 'food' in prefs && typeof prefs.food === 'object' && prefs.food && 'babyFoodEnabled' in prefs.food) {
-            setBabyFoodEnabled(prefs.food.babyFoodEnabled);
+          if (prefs && typeof prefs === 'object' && 'food' in prefs && typeof prefs.food === 'object' && prefs.food) {
+            // Safe type assertion
+            const foodPrefs = prefs.food as Record<string, any>;
+            if ('babyFoodEnabled' in foodPrefs) {
+              setBabyFoodEnabled(Boolean(foodPrefs.babyFoodEnabled));
+            }
           }
         }
       } catch (error) {

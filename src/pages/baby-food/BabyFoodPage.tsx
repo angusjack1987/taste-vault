@@ -49,12 +49,20 @@ const BabyFoodPage = () => {
         if (prefsError && prefsError.code !== 'PGRST116') throw prefsError;
         
         if (prefsData?.preferences) {
-          const prefs = prefsData.preferences;
-          if (prefs.food && prefs.food.babyFoodPreferences) {
-            setBabyFoodPreferences(prefs.food.babyFoodPreferences);
-          }
-          if (prefs.food && prefs.food.babyAge) {
-            setBabyAge(prefs.food.babyAge);
+          // Check if preferences is an object and not a string
+          const prefs = typeof prefsData.preferences === 'object' ? prefsData.preferences : {};
+
+          // Safely access food property
+          if (prefs && typeof prefs === 'object' && 'food' in prefs && typeof prefs.food === 'object' && prefs.food) {
+            const foodPrefs = prefs.food as Record<string, any>;
+            
+            if ('babyFoodPreferences' in foodPrefs) {
+              setBabyFoodPreferences(String(foodPrefs.babyFoodPreferences || ''));
+            }
+            
+            if ('babyAge' in foodPrefs) {
+              setBabyAge(String(foodPrefs.babyAge || ''));
+            }
           }
         }
       } catch (error) {

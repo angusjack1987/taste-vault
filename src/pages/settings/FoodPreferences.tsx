@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ import { Json } from "@/integrations/supabase/types";
 import { debounce } from "lodash";
 import { Switch } from "@/components/ui/switch";
 import AiSuggestionTooltip from "@/components/ui/ai-suggestion-tooltip";
-import { Baby, ChefHat } from "lucide-react";
+import { Baby, ChefHat, Info } from "lucide-react";
 import BabyProfilesForm from "@/components/baby-food/BabyProfilesForm";
 
 interface FoodPreferences {
@@ -220,12 +219,10 @@ const FoodPreferences = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if the user is currently entering a tag
     const activeElement = document.activeElement as HTMLElement;
     if (activeElement?.tagName === 'INPUT') {
       const inputValue = (activeElement as HTMLInputElement).value.trim();
       if (inputValue) {
-        // Let the TagInput handle this
         return;
       }
     }
@@ -307,7 +304,6 @@ const FoodPreferences = () => {
               </p>
             </div>
 
-            {/* Baby Food Section */}
             <div className="pt-4 border-t mt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -317,18 +313,18 @@ const FoodPreferences = () => {
                 <div className="flex items-center space-x-2">
                   <Label htmlFor="babyFoodEnabled" className="cursor-pointer">Enable Baby Food</Label>
                   <AiSuggestionTooltip content="Enable this to get baby food recommendations and access baby food features">
-                    <Switch
-                      id="babyFoodEnabled"
-                      checked={preferences.babyFoodEnabled}
-                      onCheckedChange={(checked) => handleSwitchChange(checked, 'babyFoodEnabled')}
-                    />
+                    <Info className="h-4 w-4 text-muted-foreground" />
                   </AiSuggestionTooltip>
+                  <Switch
+                    id="babyFoodEnabled"
+                    checked={preferences.babyFoodEnabled}
+                    onCheckedChange={(checked) => handleSwitchChange(checked, 'babyFoodEnabled')}
+                  />
                 </div>
               </div>
 
               {preferences.babyFoodEnabled && (
                 <div className="space-y-6 mt-4 bg-secondary/10 p-5 rounded-lg">
-                  {/* Baby Profiles */}
                   <BabyProfilesForm />
                   
                   <div className="border-t pt-4">
@@ -347,7 +343,9 @@ const FoodPreferences = () => {
                         <Label htmlFor="babyLedWeaning" className="cursor-pointer">
                           Baby-Led Weaning
                         </Label>
-                        <AiSuggestionTooltip content="Focus on finger foods that baby can self-feed, rather than purees" />
+                        <AiSuggestionTooltip content="Focus on finger foods that baby can self-feed, rather than purees">
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </AiSuggestionTooltip>
                       </div>
                       
                       <div>

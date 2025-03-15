@@ -1,21 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import useAuth from '@/hooks/useAuth';
 import useAiRecipes from '@/hooks/useAiRecipes';
 import { useFridge } from '@/hooks/useFridge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { Sprout, Baby, Clock, Heart, Save, ChefHat } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface BabyFoodGeneratorProps {
   babyAge: string;
@@ -41,8 +38,8 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
   const { useFridgeItems } = useFridge();
   const { data: fridgeItems, isLoading: isFridgeLoading } = useFridgeItems();
   
+  const [shouldUseFridge, setShouldUseFridge] = useState(true);
   const [customPrompt, setCustomPrompt] = useState('');
-  const [useFridge, setUseFridge] = useState(true);
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
   const [availableIngredients, setAvailableIngredients] = useState<string[]>([]);
   const [generatedRecipes, setGeneratedRecipes] = useState<BabyFoodRecipe[]>([]);
@@ -146,13 +143,13 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
           <div className="flex items-center space-x-2 mb-4">
             <Switch
               id="use-fridge"
-              checked={useFridge}
-              onCheckedChange={setUseFridge}
+              checked={shouldUseFridge}
+              onCheckedChange={setShouldUseFridge}
             />
             <Label htmlFor="use-fridge">Use ingredients from my fridge</Label>
           </div>
 
-          {useFridge && (
+          {shouldUseFridge && (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2 mb-4">
                 {isFridgeLoading ? (
@@ -187,11 +184,11 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
 
         <div className="mb-6">
           <h3 className="text-sm font-bold mb-2">Recipe preferences (optional)</h3>
-          <Textarea
+          <Input
             placeholder="Add any specific preferences or requirements for the recipe..."
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
-            className="h-24"
+            className="w-full"
           />
           <p className="text-xs text-muted-foreground mt-1">E.g., "Finger foods for baby-led weaning", "Purees for 6-month old", etc.</p>
         </div>

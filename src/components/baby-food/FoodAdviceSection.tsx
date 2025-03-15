@@ -8,7 +8,6 @@ import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Baby, Carrot, Apple, Info } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 
 interface FoodAdviceSectionProps {
   babyAge: string;
