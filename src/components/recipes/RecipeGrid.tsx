@@ -1,4 +1,5 @@
 
+import { Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import RecipeCard from "./RecipeCard";
 
@@ -35,7 +36,7 @@ const RecipeGrid = ({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
       {recipes.map((recipe) => (
-        <div key={recipe.id} className="relative group">
+        <div key={recipe.id} className="relative">
           {selectionMode && (
             <div 
               className="absolute top-2 left-2 z-10 bg-white border-2 border-black p-1 cursor-pointer rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"

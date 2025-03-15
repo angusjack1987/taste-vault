@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import useAuth from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useMemo } from "react";
 
 interface PageHeaderProps {
   title: string;
@@ -30,19 +29,6 @@ const PageHeader = ({
   const { signOut, user } = useAuth();
   const { toast } = useToast();
 
-  // Generate random background gradient for the banner
-  // Using useMemo to ensure the gradient doesn't change during re-renders
-  const randomGradient = useMemo(() => {
-    const gradients = [
-      'from-[#FF9AA2] to-[#FFB7B2]', // Pink to light pink
-      'from-[#FFB347] to-[#FFCC33]', // Orange to yellow
-      'from-[#AAFFA9] to-[#11FFBD]', // Green to teal
-      'from-[#C9FFE5] to-[#7FFFD4]', // Light mint to aquamarine
-    ];
-    
-    return gradients[Math.floor(Math.random() * gradients.length)];
-  }, [title]); // Only re-generate when title changes (i.e., when navigating to a different page)
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -60,6 +46,16 @@ const PageHeader = ({
   };
 
   const firstName = user?.user_metadata?.first_name || 'Chef';
+  
+  // Generate random background gradient for the banner
+  const gradients = [
+    'from-[#FF9AA2] to-[#FFB7B2]', // Pink to light pink
+    'from-[#FFB347] to-[#FFCC33]', // Orange to yellow
+    'from-[#AAFFA9] to-[#11FFBD]', // Green to teal
+    'from-[#C9FFE5] to-[#7FFFD4]', // Light mint to aquamarine
+  ];
+  
+  const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
 
   return (
     <header className={`sticky top-0 z-20 bg-gradient-to-r ${randomGradient} backdrop-blur-md pt-6 pb-3 border-b-4 border-black`}>
