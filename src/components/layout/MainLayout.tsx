@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState, useMemo } from "react";
 import BottomNav from "./BottomNav";
 import PageHeader from "./PageHeader";
 import { useLocation } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -23,6 +24,7 @@ const MainLayout = ({
   const [mounted, setMounted] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   // Generate a consistent gradient for the page to prevent flashing
   const backgroundGradient = useMemo(() => {
