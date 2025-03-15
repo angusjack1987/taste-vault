@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Mic, Utensils, AudioWaveform } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -164,7 +163,8 @@ const FridgePage = () => {
         image: null,
         images: [],
         difficulty: null,
-        tags: selected.highlights || []
+        tags: selected.highlights || [],
+        rating: null
       });
       
       toast.success("Recipe saved to your recipe book!");
@@ -203,7 +203,8 @@ const FridgePage = () => {
         image: null,
         images: [],
         difficulty: null,
-        tags: selected.highlights || []
+        tags: selected.highlights || [],
+        rating: null
       });
       
       const today = new Date();

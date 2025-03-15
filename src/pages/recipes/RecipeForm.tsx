@@ -33,7 +33,8 @@ const RecipeForm = () => {
     description: "",
     ingredients: [""],
     instructions: [""],
-    tags: []
+    tags: [],
+    rating: null
   });
   
   const [newTag, setNewTag] = useState("");
@@ -76,7 +77,8 @@ const RecipeForm = () => {
         description: existingRecipe.description || "",
         ingredients: existingRecipe.ingredients.length > 0 ? existingRecipe.ingredients : [""],
         instructions: existingRecipe.instructions.length > 0 ? existingRecipe.instructions : [""],
-        tags: existingRecipe.tags
+        tags: existingRecipe.tags,
+        rating: existingRecipe.rating
       });
     }
   }, [isEditing, existingRecipe]);

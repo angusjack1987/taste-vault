@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Sparkles, Lightbulb } from "lucide-react";
@@ -10,7 +9,6 @@ import useAiRecipes from "@/hooks/useAiRecipes";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Import our components
 import WeekView from "@/components/meal-plan/WeekView";
 import ShoppingList from "@/components/meal-plan/ShoppingList";
 import AddMealDialog from "@/components/meal-plan/dialogs/AddMealDialog";
@@ -238,7 +236,8 @@ const MealPlan = () => {
         image: null,
         difficulty: null,
         tags: [],
-        images: [] // Add the missing images property
+        images: [],
+        rating: null
       });
       
       if (currentDay && currentMealType) {

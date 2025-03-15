@@ -11,6 +11,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
     ...recipeData,
     user_id: user.id,
     images: recipeData.images || [],
+    rating: recipeData.rating || null,
   };
 
   const { data, error } = await supabase
@@ -41,6 +42,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
+    rating: data.rating || null,
   };
 };
 
@@ -53,6 +55,7 @@ export const updateRecipe = async ({
   const updateData = {
     ...recipeData,
     images: recipeData.images || [],
+    rating: recipeData.rating || null,
   };
 
   const { data, error } = await supabase
@@ -84,6 +87,7 @@ export const updateRecipe = async ({
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
+    rating: data.rating || null,
   };
 };
 

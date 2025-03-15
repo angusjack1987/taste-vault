@@ -35,6 +35,7 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
     images: Array.isArray(item.images) 
       ? item.images.map(img => String(img)) 
       : [],
+    rating: item.rating || null,
   }));
 };
 
@@ -82,6 +83,7 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
     images: Array.isArray(item.images) 
       ? item.images.map(img => String(img)) 
       : [],
+    rating: item.rating || null,
   }));
 };
 
@@ -116,6 +118,7 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
     images: Array.isArray(data.images) 
       ? data.images.map(img => String(img)) 
       : [],
+    rating: data.rating || null,
   };
 };
 
