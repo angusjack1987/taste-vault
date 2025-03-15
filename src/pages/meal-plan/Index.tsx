@@ -246,7 +246,8 @@ const MealPlan = () => {
         image: null,
         difficulty: null,
         tags: [],
-        images: []
+        images: [],
+        rating: null
       });
       
       if (currentDay && currentMealType) {
@@ -363,7 +364,7 @@ const MealPlan = () => {
                 Array.isArray(result.options) && result.options.length > 0) {
               const suggestion = result.options[0];
               
-              // Create the recipe without the rating field
+              // Create the recipe and include the rating property as null
               const newRecipe = await createRecipe({
                 title: suggestion.title,
                 description: suggestion.description || '',
@@ -374,7 +375,8 @@ const MealPlan = () => {
                 image: null,
                 difficulty: null,
                 tags: [],
-                images: []
+                images: [],
+                rating: null
               });
               
               await createMealPlan({

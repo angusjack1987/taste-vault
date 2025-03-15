@@ -20,5 +20,5 @@ export type Recipe = {
 
 export type RecipeFormData = Omit<Recipe, "id" | "created_at" | "updated_at"> & {
   images?: string[]; // Make images optional in the form data
-  rating?: number | null; // Make rating optional in form data
 };
+
