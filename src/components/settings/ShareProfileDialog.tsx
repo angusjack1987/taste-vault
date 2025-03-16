@@ -29,12 +29,37 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setCanShare(!!navigator.share);
   }, []);
   
-  // Generate a new token when the dialog opens or when requested
+  // Fetch the existing token when the dialog opens
   useEffect(() => {
     if (open && user) {
-      generateShareToken();
+      fetchShareToken();
     }
   }, [open, user]);
+  
+  const fetchShareToken = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('share_token')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data && data.share_token) {
+        setShareToken(data.share_token);
+      } else {
+        // No token exists yet, generate one
+        generateShareToken();
+      }
+    } catch (error) {
+      console.error("Error fetching share token:", error);
+      // If there's an error, try to generate a new token
+      generateShareToken();
+    }
+  };
   
   const generateShareToken = async () => {
     if (!user) return;
@@ -50,7 +75,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       const { error } = await supabase
         .from('profiles')
         .update({ 
-          share_token: newToken // This field is now in the database
+          share_token: newToken
         } as any)
         .eq('id', user.id);
       

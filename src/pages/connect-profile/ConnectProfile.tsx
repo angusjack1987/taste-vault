@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, UserPlus, X } from "lucide-react";
@@ -10,12 +10,15 @@ import useAuth from "@/hooks/useAuth";
 
 const ConnectProfile = () => {
   const { ownerId } = useParams<{ ownerId: string }>();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [ownerName, setOwnerName] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'not_connected' | 'pending' | 'connected' | 'self' | 'not_found'>('not_connected');
+  const [validToken, setValidToken] = useState(false);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -32,19 +35,23 @@ const ConnectProfile = () => {
       }
 
       try {
-        // First, try to get the owner's profile info
-        const { data: ownerProfile } = await supabase
+        // First, verify the token is valid for this owner
+        const { data: ownerProfile, error: tokenError } = await supabase
           .from('profiles')
-          .select('first_name')
+          .select('first_name, share_token')
           .eq('id', ownerId)
           .single();
 
-        if (!ownerProfile) {
+        // If we can't find the profile or the token doesn't match
+        if (!ownerProfile || (token && ownerProfile.share_token !== token)) {
+          console.log('Token validation failed:', { provided: token, stored: ownerProfile?.share_token });
           setConnectionStatus('not_found');
           setIsLoading(false);
           return;
         }
 
+        // Token is valid or not required
+        setValidToken(true);
         setOwnerName(ownerProfile.first_name || 'User');
 
         // If logged in, check if already connected
@@ -73,11 +80,20 @@ const ConnectProfile = () => {
     };
 
     checkConnection();
-  }, [ownerId, user]);
+  }, [ownerId, user, token]);
 
   const handleConnect = async () => {
     if (!user || !ownerId) {
-      navigate('/auth/login', { state: { returnUrl: `/connect-profile/${ownerId}` } });
+      navigate('/auth/login', { state: { returnUrl: `/connect-profile/${ownerId}${token ? `?token=${token}` : ''}` } });
+      return;
+    }
+
+    if (!validToken) {
+      toast({
+        title: "Invalid Link",
+        description: "This sharing link is invalid or has expired.",
+        variant: "destructive",
+      });
       return;
     }
 
