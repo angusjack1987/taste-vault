@@ -17,7 +17,6 @@ import ShoppingListPage from "./pages/shopping/Index";
 import FridgePage from "./pages/fridge/Index";
 import Settings from "./pages/settings/Index";
 import Profile from "./pages/settings/Profile";
-import ProfileSharing from "./pages/settings/ProfileSharing";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -25,8 +24,7 @@ import FoodPreferences from "./pages/settings/FoodPreferences";
 import AISettings from "@/pages/settings/AISettings";
 import BabyFoodPage from "./pages/baby-food/BabyFoodPage";
 import DesignSystem from "./pages/settings/DesignSystem";
-import Onboarding from "./pages/onboarding/Index";
-import ConnectProfile from "./pages/connect-profile/ConnectProfile";
+import Onboarding from "./pages/onboarding/Index"; // Add this new import
 
 const queryClient = new QueryClient();
 
@@ -49,9 +47,6 @@ const App = () => (
                 <Register />
               </AuthGuard>
             } />
-            
-            {/* Profile connection route - special handling for authentication */}
-            <Route path="/connect-profile/:ownerId" element={<ConnectProfile />} />
             
             {/* Onboarding route - requires authentication */}
             <Route path="/onboarding" element={
@@ -106,7 +101,6 @@ const App = () => (
                 <BabyFoodPage />
               </AuthGuard>
             } />
-            
             {/* Settings Routes */}
             <Route path="/settings" element={
               <AuthGuard>
@@ -126,11 +120,6 @@ const App = () => (
             <Route path="/settings/design-system" element={
               <AuthGuard>
                 <DesignSystem />
-              </AuthGuard>
-            } />
-            <Route path="/settings/profile-sharing" element={
-              <AuthGuard>
-                <ProfileSharing />
               </AuthGuard>
             } />
             <Route path="/profile" element={

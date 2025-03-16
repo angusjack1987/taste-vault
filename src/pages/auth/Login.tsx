@@ -1,105 +1,130 @@
 
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  // Extract returnUrl from location state if it exists
-  const returnUrl = location.state?.returnUrl || '/';
-  const isConnectProfile = returnUrl.includes('/connect-profile/');
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     setIsLoading(true);
-    setErrorMessage(null);
-    
+    setAuthError(null);
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: preferences } = await supabase
+        .from('user_preferences')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .single();
+
+      const isNewUser = !preferences;
       
-      if (error) throw error;
+      if (isNewUser) {
+        navigate("/onboarding");
+      } else {
+        const returnUrl = location.state && (location.state as any).returnUrl || "/";
+        navigate(returnUrl);
+      }
       
       toast({
-        title: "Login successful",
-        description: "Welcome back to TasteVault!",
+        title: "Success",
+        description: "Successfully logged in"
       });
-      
-      console.log("Login successful, navigating to:", returnUrl);
-      navigate(returnUrl);
-      
     } catch (error: any) {
-      console.error('Login error:', error);
-      setErrorMessage(error.message || 'An error occurred during login');
+      console.error("Login error:", error);
+      setAuthError(error.message || "Failed to login");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
-            {isConnectProfile 
-              ? "Log in to connect with a shared profile" 
-              : "Enter your credentials to access your account"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-sage-100 to-cream-100 p-4">
+      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-primary">Welcome Back!</h1>
+          <p className="mt-2 text-muted-foreground">Sign in to access your delicious recipes</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="mt-8 space-y-6">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="m@example.com"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
             </div>
-            {errorMessage && (
-              <p className="text-red-500 text-sm">{errorMessage}</p>
-            )}
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Logging in..." : "Sign in"}
-            </Button>
-          </form>
-          <div className="text-center">
-            <Link to="/auth/register" className="text-sm text-muted-foreground hover:text-primary">
-              Don't have an account? Sign up
+          </div>
+
+          {authError && (
+            <div className="text-sm text-red-500 font-medium">
+              {authError}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full group"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign in"}
+            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </Button>
+
+          <div className="text-center text-sm">
+            <span className="text-muted-foreground">Don't have an account? </span>
+            <Link to="/auth/register" className="font-medium text-primary hover:underline">
+              Sign up
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        </form>
+      </div>
     </div>
   );
 };

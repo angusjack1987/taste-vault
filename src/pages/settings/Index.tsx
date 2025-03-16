@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -10,8 +11,7 @@ import {
   Lock,
   HelpCircle,
   Info,
-  Palette,
-  Share2
+  Palette
 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,12 +31,6 @@ const Settings = () => {
           label: "Profile",
           path: "/profile",
           bgColor: "bg-blue-100",
-        },
-        {
-          icon: <Share2 className="h-5 w-5 text-purple-600" />,
-          label: "Profile Sharing",
-          path: "/settings/profile-sharing",
-          bgColor: "bg-purple-100",
         },
       ]
     },

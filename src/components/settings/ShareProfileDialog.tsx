@@ -1,11 +1,13 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import useAuth from "@/hooks/useAuth";
-import ShareLinkSection from "./share/ShareLinkSection";
-import ShareButton from "./share/ShareButton";
-import { useShareToken } from "@/hooks/useShareToken";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { Copy, Check, Share2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import useAuth from "@/hooks/useAuth";
 
 type ShareProfileDialogProps = {
   open: boolean;
@@ -14,30 +16,62 @@ type ShareProfileDialogProps = {
 
 const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => {
   const { user } = useAuth();
-  const [canShare, setCanShare] = useState(false);
-  const { shareUrl, isLoading, fetchShareToken } = useShareToken(user, open);
+  const [copied, setCopied] = useState(false);
+  const [partnerEmail, setPartnerEmail] = useState("");
+  const [isSharing, setIsSharing] = useState(false);
   
-  // Check if Web Share API is available
-  useEffect(() => {
-    setCanShare(!!navigator.share);
-  }, []);
+  // Generate a share URL that includes the user's ID
+  const shareUrl = `${window.location.origin}/connect-profile/${user?.id}`;
   
-  // Get token when dialog opens
-  useEffect(() => {
-    if (open && user && !shareUrl) {
-      console.log("ShareProfileDialog: No share URL available, fetching token");
-      fetchShareToken();
-    }
-  }, [open, user, shareUrl]);
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
   
-  const handleCopyToClipboard = () => {
-    const copyButton = document.getElementById("share-link-copy-btn");
-    if (copyButton) {
-      (copyButton as HTMLButtonElement).click();
+  const handleInvitePartner = async () => {
+    if (!partnerEmail || !partnerEmail.includes('@')) {
       toast({
-        title: "Share link copied",
-        description: "Now send this link to someone you want to sync profiles with."
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
       });
+      return;
+    }
+    
+    setIsSharing(true);
+    
+    try {
+      // Use a type assertion to avoid TypeScript inference issues
+      const { error } = await supabase
+        .from('profile_sharing')
+        .insert([{
+          owner_id: user?.id,
+          shared_with_email: partnerEmail,
+          status: 'pending'
+        }] as any);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Invitation sent!",
+        description: `Profile sharing invitation sent to ${partnerEmail}`,
+      });
+      
+      setPartnerEmail("");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error sharing profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to share profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSharing(false);
     }
   };
   
@@ -52,18 +86,49 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          <ShareLinkSection 
-            shareUrl={shareUrl}
-            isLoading={isLoading}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="share-link">Share link</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                id="share-link"
+                value={shareUrl}
+                readOnly
+                className="flex-1"
+              />
+              <Button 
+                type="button" 
+                size="icon" 
+                variant="outline" 
+                onClick={copyToClipboard}
+                className="flex-shrink-0"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="partner-email">Or invite a partner directly</Label>
+            <Input
+              id="partner-email"
+              type="email"
+              placeholder="partner@example.com"
+              value={partnerEmail}
+              onChange={(e) => setPartnerEmail(e.target.value)}
+            />
+          </div>
         </div>
         
         <DialogFooter>
-          <ShareButton 
-            shareUrl={shareUrl}
-            canShare={canShare}
-            onCopyFallback={handleCopyToClipboard}
-          />
+          <Button
+            type="button"
+            onClick={handleInvitePartner}
+            disabled={isSharing}
+            className="w-full sm:w-auto"
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            {isSharing ? "Sending invitation..." : "Invite Partner"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -56,10 +56,9 @@ const AuthGuard = ({
     if (!isLoading && !checkingOnboarding) {
       const isAuthenticated = !!user;
       const isOnboardingRoute = location.pathname === '/onboarding';
-      const isConnectProfileRoute = location.pathname.includes('/connect-profile/');
       
-      if (requireAuth && !isAuthenticated && !isConnectProfileRoute) {
-        // User needs to be logged in but isn't - ensure connect-profile pages don't redirect immediately
+      if (requireAuth && !isAuthenticated) {
+        // User needs to be logged in but isn't
         navigate("/auth/login", { 
           state: { returnUrl: location.pathname } 
         });
@@ -83,14 +82,10 @@ const AuthGuard = ({
 
   // Only render children if:
   // 1. We require auth and user is authenticated (and has completed onboarding if that's required), OR
-  // 2. We don't require auth and user is not authenticated, OR
-  // 3. Special case: It's a connect-profile route which can work with or without authentication
-  const isConnectProfileRoute = location.pathname.includes('/connect-profile/');
-  
+  // 2. We don't require auth and user is not authenticated
   const shouldRender = 
     (requireAuth && !!user && (hasCompletedOnboarding !== false || location.pathname === '/onboarding')) || 
-    (!requireAuth && !user) ||
-    isConnectProfileRoute;
+    (!requireAuth && !user);
 
   // If conditions aren't met, render nothing (navigation will happen via useEffect)
   if (!shouldRender && !isLoading && !checkingOnboarding) {
