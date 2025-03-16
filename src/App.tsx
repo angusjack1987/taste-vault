@@ -24,6 +24,7 @@ import FoodPreferences from "./pages/settings/FoodPreferences";
 import AISettings from "@/pages/settings/AISettings";
 import BabyFoodPage from "./pages/baby-food/BabyFoodPage";
 import DesignSystem from "./pages/settings/DesignSystem";
+import Onboarding from "./pages/onboarding/Index"; // Add this new import
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,13 @@ const App = () => (
             <Route path="/auth/register" element={
               <AuthGuard requireAuth={false}>
                 <Register />
+              </AuthGuard>
+            } />
+            
+            {/* Onboarding route - requires authentication */}
+            <Route path="/onboarding" element={
+              <AuthGuard>
+                <Onboarding />
               </AuthGuard>
             } />
             

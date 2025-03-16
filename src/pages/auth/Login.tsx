@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,35 +11,43 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setAuthError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
       });
 
       if (error) {
         throw error;
       }
 
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in",
-      });
+      const { data: preferences } = await supabase
+        .from('user_preferences')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .single();
+
+      const isNewUser = !preferences;
       
-      navigate("/");
+      if (isNewUser) {
+        navigate("/onboarding");
+      } else {
+        const returnUrl = location.state?.returnUrl || "/";
+        navigate(returnUrl);
+      }
+      
+      toast.success("Successfully logged in");
     } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Login error:", error);
+      setAuthError(error.message || "Failed to login");
     } finally {
       setIsLoading(false);
     }
