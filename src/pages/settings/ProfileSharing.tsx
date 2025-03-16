@@ -12,20 +12,20 @@ const ProfileSharing = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   
   return (
-    <MainLayout title="Profile Sharing">
+    <MainLayout title="Profile Syncing">
       <div className="space-y-6 pb-8">
         <div className="flex flex-col gap-4 pb-2">
-          <h2 className="text-2xl font-bold mb-2">Profile Sharing</h2>
+          <h2 className="text-2xl font-bold mb-2">Profile Syncing</h2>
           <p className="text-muted-foreground">
-            Share your profile with friends and family to sync recipes, meal plans, and shopping lists.
+            Sync your profile with friends and family to share recipes, meal plans, and shopping lists in both directions.
           </p>
           
           <Alert className="border-2 border-amber-500 bg-amber-50">
             <Info className="h-4 w-4 text-amber-500" />
-            <AlertTitle>Email Delivery Note</AlertTitle>
+            <AlertTitle>Sharing Note</AlertTitle>
             <AlertDescription>
-              Currently, we don't automatically send email invitations. After adding someone to your sharing list, 
-              please send them the share link directly via your preferred method.
+              Share the link with someone you want to sync profiles with. After connecting, all your recipes and meal plans
+              will be automatically shared between both accounts.
             </AlertDescription>
           </Alert>
           
@@ -34,7 +34,7 @@ const ProfileSharing = () => {
             className="w-full sm:w-auto rounded-xl border-2 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
           >
             <Share2 className="mr-2 h-5 w-5" />
-            Invite Someone
+            Invite Someone to Sync
           </Button>
         </div>
         

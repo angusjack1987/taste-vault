@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,42 +8,66 @@ import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type SharingInvite = {
+type SyncedProfile = {
   id: string;
-  shared_with_email: string;
-  status: string;
+  user_id_1: string;
+  user_id_2: string;
+  profile: {
+    first_name: string | null;
+  } | null;
   created_at: string;
 };
 
 const ManageProfileSharingCard = () => {
   const { user } = useAuth();
-  const [invites, setInvites] = useState<SharingInvite[]>([]);
+  const [syncedProfiles, setSyncedProfiles] = useState<SyncedProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRevoking, setIsRevoking] = useState<{[key: string]: boolean}>({});
 
-  const fetchInvites = async () => {
+  const fetchSyncedProfiles = async () => {
     if (!user) return;
 
     setIsLoading(true);
     try {
-      console.log("Fetching sharing invites for user", user.id);
+      console.log("Fetching synced profiles for user", user.id);
       
-      // Get connections where the current user is the owner
+      // Get connections where the current user is either user_id_1 or user_id_2
       const { data, error } = await supabase
         .from('profile_sharing')
-        .select('*')
-        .eq('owner_id', user.id)
+        .select(`
+          *,
+          profile:profiles!profile_sharing_user_id_2_fkey (
+            first_name
+          )
+        `)
+        .eq('user_id_1', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      console.log("Fetched invites:", data);
-      setInvites(data || []);
+      // Also get connections where current user is user_id_2
+      const { data: data2, error: error2 } = await supabase
+        .from('profile_sharing')
+        .select(`
+          *,
+          profile:profiles!profile_sharing_user_id_1_fkey (
+            first_name
+          )
+        `)
+        .eq('user_id_2', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error2) throw error2;
+      
+      // Combine results
+      const allProfiles = [...(data || []), ...(data2 || [])];
+      console.log("Fetched synced profiles:", allProfiles);
+      setSyncedProfiles(allProfiles);
     } catch (error) {
-      console.error("Error fetching sharing invites:", error);
+      console.error("Error fetching synced profiles:", error);
       toast({
         title: "Error",
-        description: "Failed to load your sharing invites",
+        description: "Failed to load your synced profiles",
         variant: "destructive",
       });
     } finally {
@@ -52,41 +75,40 @@ const ManageProfileSharingCard = () => {
     }
   };
 
-  const revokeInvite = async (inviteId: string) => {
+  const disconnectProfile = async (connectionId: string) => {
     if (!user) return;
 
-    setIsRevoking(prev => ({ ...prev, [inviteId]: true }));
+    setIsRevoking(prev => ({ ...prev, [connectionId]: true }));
     try {
-      console.log("Revoking invite", inviteId);
+      console.log("Disconnecting profile with connection ID", connectionId);
       const { error } = await supabase
         .from('profile_sharing')
         .delete()
-        .eq('id', inviteId)
-        .eq('owner_id', user.id);
+        .eq('id', connectionId);
 
       if (error) throw error;
       
       toast({
-        title: "Access revoked",
-        description: "Profile sharing revoked successfully",
+        title: "Profile disconnected",
+        description: "Profile sync connection removed successfully",
       });
       
-      setInvites(prev => prev.filter(invite => invite.id !== inviteId));
+      setSyncedProfiles(prev => prev.filter(profile => profile.id !== connectionId));
     } catch (error) {
-      console.error("Error revoking invite:", error);
+      console.error("Error disconnecting profile:", error);
       toast({
         title: "Error",
-        description: "Failed to revoke sharing access",
+        description: "Failed to disconnect profile",
         variant: "destructive",
       });
     } finally {
-      setIsRevoking(prev => ({ ...prev, [inviteId]: false }));
+      setIsRevoking(prev => ({ ...prev, [connectionId]: false }));
     }
   };
 
   useEffect(() => {
     if (user) {
-      fetchInvites();
+      fetchSyncedProfiles();
     }
   }, [user]);
 
@@ -98,15 +120,13 @@ const ManageProfileSharingCard = () => {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">Active</span>;
-      case 'rejected':
-        return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">Rejected</span>;
-      case 'pending':
-      default:
-        return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">Pending</span>;
+  const getProfileName = (syncedProfile: SyncedProfile) => {
+    // If current user is user_id_1, show name of user_id_2's profile
+    // Otherwise show name of user_id_1's profile
+    if (user?.id === syncedProfile.user_id_1) {
+      return syncedProfile.profile?.first_name || 'Unknown User';
+    } else {
+      return syncedProfile.profile?.first_name || 'Unknown User';
     }
   };
 
@@ -114,11 +134,11 @@ const ManageProfileSharingCard = () => {
     <Card className="border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-lg">Profile Sharing</h3>
+          <h3 className="font-bold text-lg">Synced Profiles</h3>
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={fetchInvites}
+            onClick={fetchSyncedProfiles}
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -132,36 +152,34 @@ const ManageProfileSharingCard = () => {
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
-        ) : invites.length === 0 ? (
+        ) : syncedProfiles.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>You haven't shared your profile with anyone yet.</p>
+            <p>You haven't synced with any other profiles yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Shared On</TableHead>
+                  <TableHead>Profile Name</TableHead>
+                  <TableHead>Connected Since</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invites.map((invite) => (
-                  <TableRow key={invite.id}>
-                    <TableCell>{invite.shared_with_email}</TableCell>
-                    <TableCell>{getStatusBadge(invite.status)}</TableCell>
-                    <TableCell>{formatDate(invite.created_at)}</TableCell>
+                {syncedProfiles.map((profile) => (
+                  <TableRow key={profile.id}>
+                    <TableCell>{getProfileName(profile)}</TableCell>
+                    <TableCell>{formatDate(profile.created_at)}</TableCell>
                     <TableCell>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => revokeInvite(invite.id)}
-                        disabled={isRevoking[invite.id]}
+                        onClick={() => disconnectProfile(profile.id)}
+                        disabled={isRevoking[profile.id]}
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="ml-2">Revoke</span>
+                        <span className="ml-2">Disconnect</span>
                       </Button>
                     </TableCell>
                   </TableRow>

@@ -36,7 +36,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       (copyButton as HTMLButtonElement).click();
       toast({
         title: "Share link copied",
-        description: "Now send this link to someone you want to connect with."
+        description: "Now send this link to someone you want to sync profiles with."
       });
     }
   };

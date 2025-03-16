@@ -88,8 +88,8 @@ const ConnectProfile = () => {
     if (connectionStatus === 'connected') {
       return (
         <ProfileConnectionCard
-          title="Profiles Connected!"
-          description={`You are now connected with ${ownerName}'s profile. You can now share recipes, meal plans, and shopping lists.`}
+          title="Profiles Synced!"
+          description={`You are now synced with ${ownerName}'s profile. You can now share recipes, meal plans, and shopping lists.`}
           primaryButtonProps={{
             label: "Manage Profile Sharing",
             onClick: () => navigate('/settings/profile-sharing')
@@ -98,27 +98,14 @@ const ConnectProfile = () => {
       );
     }
 
-    if (connectionStatus === 'pending') {
-      return (
-        <ProfileConnectionCard
-          title="Pending Connection"
-          description={`Your connection with ${ownerName}'s profile is pending. Please wait for them to approve it.`}
-          primaryButtonProps={{
-            label: "View Status",
-            onClick: () => navigate('/settings/profile-sharing')
-          }}
-        />
-      );
-    }
-
     return (
       <ProfileConnectionCard
-        title={`Connect with ${ownerName || 'User'}`}
+        title={`Sync with ${ownerName || 'User'}`}
         description={!user 
-          ? "Sign in or create an account to connect with this profile." 
-          : `Connect with ${ownerName || 'User'}'s profile to share recipes, meal plans, and shopping lists.`}
+          ? "Sign in or create an account to sync with this profile." 
+          : `Sync with ${ownerName || 'User'}'s profile to share recipes, meal plans, and shopping lists in both directions.`}
         primaryButtonProps={{
-          label: user ? "Connect" : "Sign In",
+          label: user ? "Sync Profiles" : "Sign In",
           onClick: handleConnect,
           isLoading: isConnecting,
           icon: <UserPlus className="mr-2 h-4 w-4" />
