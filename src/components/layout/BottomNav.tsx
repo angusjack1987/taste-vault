@@ -11,21 +11,25 @@ import useAuth from "@/hooks/useAuth";
 const navItems = [{
   to: "/",
   label: "Home",
-  Icon: Home
+  Icon: Home,
+  tourClass: "tour-step-1"
 }, {
   to: "/recipes",
   label: "Recipes",
-  Icon: Book
+  Icon: Book,
+  tourClass: "tour-step-2"
 },
 // Plus button will go here in the UI, but not in this array
 {
   to: "/meal-plan",
   label: "Meal Plan",
-  Icon: Calendar
+  Icon: Calendar,
+  tourClass: "tour-step-3"
 }, {
   to: "/settings",
   label: "Settings",
-  Icon: Settings
+  Icon: Settings,
+  tourClass: "tour-step-4"
 }];
 
 const BottomNav = () => {
@@ -71,7 +75,7 @@ const BottomNav = () => {
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
       <div className="grid grid-cols-5 items-center bg-white border-2 border-black text-black rounded-2xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] max-w-md px-0 mx-[8px] py-[2px] my-[11px]">
         {/* First navigation item */}
-        <div className="flex justify-center">
+        <div className={`flex justify-center ${navItems[0].tourClass}`}>
           <Link to={navItems[0].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[0].to ? "text-primary font-black" : "text-black font-bold")}>
             <div className="flex justify-center w-full">
               {React.createElement(navItems[0].Icon, {
@@ -84,7 +88,7 @@ const BottomNav = () => {
         </div>
 
         {/* Second navigation item */}
-        <div className="flex justify-center">
+        <div className={`flex justify-center ${navItems[1].tourClass}`}>
           <Link to={navItems[1].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[1].to || navItems[1].to !== "/" && pathname.startsWith(navItems[1].to) ? "text-primary font-black" : "text-black font-bold")}>
             <div className="flex justify-center w-full">
               {React.createElement(navItems[1].Icon, {
@@ -97,7 +101,7 @@ const BottomNav = () => {
         </div>
 
         {/* Center Action Button */}
-        <div className="flex justify-center relative">
+        <div className="flex justify-center relative tour-step-5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary hover:bg-primary/90 transition-all border-2 border-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 group">
@@ -111,19 +115,19 @@ const BottomNav = () => {
                   Add Recipe
                 </DropdownMenuItem>
               </Link>
-              <Link to="/fridge">
+              <Link to="/fridge" className="tour-step-6">
                 <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
                   <Refrigerator className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
                   Fridge
                 </DropdownMenuItem>
               </Link>
-              <Link to="/shopping">
+              <Link to="/shopping" className="tour-step-7">
                 <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
                   <ShoppingCart className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
                   Shopping List
                 </DropdownMenuItem>
               </Link>
-              <Link to="/sous-chef">
+              <Link to="/sous-chef" className="tour-step-8">
                 <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
                   <ChefHat className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
                   Sous Chef
@@ -142,7 +146,7 @@ const BottomNav = () => {
         </div>
 
         {/* Third navigation item */}
-        <div className="flex justify-center">
+        <div className={`flex justify-center ${navItems[2].tourClass}`}>
           <Link to={navItems[2].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[2].to || navItems[2].to !== "/" && pathname.startsWith(navItems[2].to) ? "text-primary font-black" : "text-black font-bold")}>
             <div className="flex justify-center w-full px-0 mx-0 my-0">
               {React.createElement(navItems[2].Icon, {
@@ -155,7 +159,7 @@ const BottomNav = () => {
         </div>
 
         {/* Fourth navigation item */}
-        <div className="flex justify-center">
+        <div className={`flex justify-center ${navItems[3].tourClass}`}>
           <Link to={navItems[3].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[3].to || navItems[3].to !== "/" && pathname.startsWith(navItems[3].to) ? "text-primary font-black" : "text-black font-bold")}>
             <div className="flex justify-center w-full">
               {React.createElement(navItems[3].Icon, {

@@ -1,4 +1,3 @@
-
 import { Plus, Loader2, ChefHat, Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,19 +18,14 @@ const Dashboard = () => {
   const location = useLocation();
   const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
   
-  // Check if we're coming from onboarding
   useEffect(() => {
-    // We can detect if we're coming from onboarding by checking
-    // the state or we could also use sessionStorage
     const comingFromOnboarding = location.state?.fromOnboarding || 
                                 sessionStorage.getItem('fromOnboarding') === 'true';
     
     if (comingFromOnboarding) {
       setShowWelcomeAnimation(true);
-      // Clear the state to prevent showing animation on refresh
       sessionStorage.removeItem('fromOnboarding');
       
-      // Hide animation after a delay
       const timer = setTimeout(() => {
         setShowWelcomeAnimation(false);
       }, 2500);
@@ -53,7 +47,6 @@ const Dashboard = () => {
   const popular = formattedRecipes.slice(0, 4);
   const emptyStateMessage = "You haven't created any recipes yet. Click the + button to add your first recipe!";
   
-  // Welcome animation variants
   const welcomeVariants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { 
@@ -88,7 +81,6 @@ const Dashboard = () => {
 
   return (
     <MainLayout title="Flavor Librarian">
-      {/* Welcome animation overlay */}
       {showWelcomeAnimation && (
         <motion.div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-[#AAFFA9] to-[#7FFFD4]"
@@ -139,7 +131,7 @@ const Dashboard = () => {
       )}
       
       <motion.div 
-        className="page-container"
+        className="page-container tour-step-9"
         variants={contentVariants}
         initial="hidden"
         animate="visible"
