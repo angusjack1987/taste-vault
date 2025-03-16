@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Copy, Check, Share2 } from "lucide-react";
+import { Copy, Check, Share2, RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 import { v4 as uuidv4 } from 'uuid';
 import useSync from "@/hooks/useSync";
+import { Separator } from "@/components/ui/separator";
 
 type ShareProfileDialogProps = {
   open: boolean;
@@ -27,6 +28,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [connectToken, setConnectToken] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
   
   // Fetch share token when dialog opens
   useEffect(() => {
@@ -152,19 +154,23 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       return;
     }
     
-    connectWithUserMutation.mutate(connectToken, {
-      onSuccess: (successful) => {
-        if (successful) {
-          toast.success("Successfully connected with user");
-          setConnectToken("");
-          onOpenChange(false);
-        }
-      },
-      onError: (error) => {
-        console.error('Error connecting with token:', error);
-        toast.error("Failed to connect with user: " + (error instanceof Error ? error.message : String(error)));
+    setIsConnecting(true);
+    
+    try {
+      console.log("Attempting to connect with token:", connectToken);
+      const success = await connectWithUserMutation.mutateAsync(connectToken);
+      
+      if (success) {
+        toast.success("Successfully connected with user");
+        setConnectToken("");
+        onOpenChange(false);
       }
-    });
+    } catch (error) {
+      console.error('Error connecting with token:', error);
+      toast.error("Failed to connect with user: " + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsConnecting(false);
+    }
   };
   
   return (
@@ -209,13 +215,16 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                 onClick={regenerateToken}
                 disabled={isGenerating}
               >
+                {isGenerating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
                 {isGenerating ? "Generating..." : "Regenerate"}
               </Button>
             </div>
           </div>
+
+          <Separator />
           
           <div className="space-y-2">
-            <Label htmlFor="connect-token">Or connect with someone's token</Label>
+            <Label htmlFor="connect-token">Connect with someone's token</Label>
             <div className="flex space-x-2">
               <Input
                 id="connect-token"
@@ -228,12 +237,20 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
               <Button 
                 type="button" 
                 onClick={handleConnectWithToken}
-                disabled={!connectToken || connectWithUserMutation.isPending}
+                disabled={!connectToken || isConnecting}
               >
-                {connectWithUserMutation.isPending ? "Connecting..." : "Connect"}
+                {isConnecting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                {isConnecting ? "Connecting..." : "Connect"}
               </Button>
             </div>
+            {connectWithUserMutation.isError && (
+              <p className="text-sm text-red-500 mt-1">
+                Failed to connect. Please check the token and try again.
+              </p>
+            )}
           </div>
+          
+          <Separator />
           
           <div className="space-y-2">
             <Label htmlFor="partner-email">Or invite a partner directly</Label>
@@ -254,7 +271,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
             disabled={isSharing || !shareToken || isGenerating || !partnerEmail}
             className="w-full sm:w-auto"
           >
-            <Share2 className="mr-2 h-4 w-4" />
+            {isSharing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Share2 className="h-4 w-4 mr-1" />}
             {isSharing ? "Sending invitation..." : "Invite Partner"}
           </Button>
         </DialogFooter>

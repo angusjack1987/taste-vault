@@ -217,10 +217,25 @@ export const useSync = () => {
         return false;
       }
       
-      // Find user with the given token - FIXED QUERY
+      // Check if token matches current user's token
+      const { data: currentUserProfile } = await supabase
+        .from('profiles')
+        .select('share_token')
+        .eq('id', user.id)
+        .maybeSingle();
+        
+      if (currentUserProfile?.share_token === shareToken.trim()) {
+        console.error("Cannot connect with your own token");
+        toast.error("You cannot connect with yourself");
+        return false;
+      }
+      
+      // Find user with the given token - with improved error logging
+      console.log("Searching for profile with token:", shareToken.trim());
+      
       const { data: targetUser, error: lookupError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, first_name')
         .eq('share_token', shareToken.trim())
         .maybeSingle();
       
@@ -245,6 +260,8 @@ export const useSync = () => {
       }
       
       // Check if connection already exists
+      console.log("Checking for existing connection between", user.id, "and", targetUser.id);
+      
       const { data: existingConn, error: connCheckError } = await supabase
         .from('profile_sharing')
         .select('id')
@@ -258,17 +275,22 @@ export const useSync = () => {
       }
       
       if (existingConn) {
+        console.log("Connection already exists:", existingConn);
         toast.info("You're already connected with this user");
         return true;
       }
       
-      // Create a new connection - FIXED INSERT
-      const { data: newConnection, error: createConnError } = await supabase
+      // Create a new connection with explicit values and better logging
+      console.log("Creating new connection between", user.id, "and", targetUser.id);
+      
+      const newConnection = {
+        user_id_1: user.id,
+        user_id_2: targetUser.id
+      };
+      
+      const { data, error: createConnError } = await supabase
         .from('profile_sharing')
-        .insert({
-          user_id_1: user.id,
-          user_id_2: targetUser.id
-        })
+        .insert(newConnection)
         .select('id')
         .single();
         
@@ -278,12 +300,12 @@ export const useSync = () => {
         return false;
       }
       
-      console.log("Successfully created connection:", newConnection);
+      console.log("Successfully created connection:", data);
       
       // Sync data from target user
       await syncData(targetUser.id);
       
-      toast.success("Successfully connected with user");
+      toast.success(`Successfully connected with ${targetUser.first_name || 'user'}`);
       queryClient.invalidateQueries({ queryKey: ['connected-users'] });
       return true;
     } catch (err) {
