@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share, ArrowLeft, Copy, Check, RefreshCw } from "lucide-react";
@@ -44,14 +43,12 @@ const SyncSettings = () => {
     mealPlan: true
   });
 
-  // Fetch any existing share token
   useEffect(() => {
     if (user) {
       fetchShareToken();
     }
   }, [user]);
 
-  // Set initial sharing preferences from the query
   useEffect(() => {
     if (sharingPreferences) {
       setSharingPrefs(sharingPreferences);
@@ -62,9 +59,9 @@ const SyncSettings = () => {
     try {
       console.log("Fetching share token for user:", user?.id);
       const { data, error } = await supabase
-        .from('profiles')
-        .select('share_token')
-        .eq('id', user?.id)
+        .from('share_tokens')
+        .select('token')
+        .eq('user_id', user?.id)
         .maybeSingle();
         
       if (error) {
@@ -75,9 +72,9 @@ const SyncSettings = () => {
       
       console.log('Share token data:', data);
       
-      if (data?.share_token) {
-        console.log('Found existing share token:', data.share_token);
-        setShareToken(data.share_token);
+      if (data?.token) {
+        console.log('Found existing share token:', data.token);
+        setShareToken(data.token);
       } else {
         console.log('No share token found for user');
       }
@@ -87,7 +84,6 @@ const SyncSettings = () => {
     }
   };
 
-  // Generate a new share token
   const generateShareToken = async () => {
     if (!user) return;
     try {
@@ -95,12 +91,30 @@ const SyncSettings = () => {
       const newToken = uuidv4().substring(0, 12); // Generate a shorter token for easier sharing
       console.log('Generating new share token:', newToken);
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ share_token: newToken })
-        .eq('id', user.id)
-        .select('share_token')
-        .single();
+      const { data: existingToken, error: checkError } = await supabase
+        .from('share_tokens')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      let result;
+      
+      if (existingToken) {
+        result = await supabase
+          .from('share_tokens')
+          .update({ token: newToken })
+          .eq('id', existingToken.id)
+          .select('token')
+          .single();
+      } else {
+        result = await supabase
+          .from('share_tokens')
+          .insert({ user_id: user.id, token: newToken })
+          .select('token')
+          .single();
+      }
+      
+      const { data, error } = result;
         
       if (error) {
         console.error('Error updating share token:', error);
@@ -119,7 +133,6 @@ const SyncSettings = () => {
     }
   };
 
-  // Save sharing preferences
   const savePreferences = async () => {
     if (!user) return;
     try {
@@ -138,7 +151,6 @@ const SyncSettings = () => {
     }
   };
 
-  // Connect with another user via token
   const connectWithToken = async () => {
     if (!user || !recipientToken) {
       toast.error("Please enter a valid token");
@@ -161,14 +173,10 @@ const SyncSettings = () => {
     });
   };
 
-  // Send invitation by email
   const sendInvitation = async () => {
     if (!user || !targetEmail || !shareToken) return;
     try {
       setIsProcessing(true);
-
-      // This would normally send an email invitation
-      // For now, we'll just show a success message with the share token
 
       toast.success(`Invitation would be sent to ${targetEmail} with your share token`);
     } catch (error) {
@@ -179,7 +187,6 @@ const SyncSettings = () => {
     }
   };
 
-  // Copy share token to clipboard
   const copyShareToken = () => {
     if (!shareToken) return;
     navigator.clipboard.writeText(shareToken).then(() => {

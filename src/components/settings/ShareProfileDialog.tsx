@@ -45,9 +45,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     try {
       console.log("Fetching share token for user:", user.id);
       const { data, error } = await supabase
-        .from('profiles')
-        .select('share_token')
-        .eq('id', user.id)
+        .from('share_tokens')
+        .select('token')
+        .eq('user_id', user.id)
         .maybeSingle();
         
       if (error) {
@@ -58,8 +58,8 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       
       console.log("Share token data:", data);
       
-      if (data?.share_token) {
-        setShareToken(data.share_token);
+      if (data?.token) {
+        setShareToken(data.token);
       } else {
         // Generate a token if none exists
         generateShareToken();
@@ -80,12 +80,33 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       const newToken = uuidv4().substring(0, 12); // Using shorter token for better usability
       console.log("Generating new share token:", newToken);
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ share_token: newToken })
-        .eq('id', user.id)
-        .select('share_token')
-        .single();
+      // First check if there's an existing token to update
+      const { data: existingToken, error: checkError } = await supabase
+        .from('share_tokens')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      let result;
+      
+      if (existingToken) {
+        // Update existing token
+        result = await supabase
+          .from('share_tokens')
+          .update({ token: newToken, updated_at: new Date().toISOString() })
+          .eq('id', existingToken.id)
+          .select('token')
+          .single();
+      } else {
+        // Insert new token
+        result = await supabase
+          .from('share_tokens')
+          .insert({ user_id: user.id, token: newToken })
+          .select('token')
+          .single();
+      }
+      
+      const { data, error } = result;
         
       if (error) {
         console.error('Error generating share token:', error);
@@ -100,16 +121,16 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       // Verify token was saved correctly
       setTimeout(async () => {
         const { data: verifyData, error: verifyError } = await supabase
-          .from('profiles')
-          .select('share_token')
-          .eq('id', user.id)
+          .from('share_tokens')
+          .select('token')
+          .eq('user_id', user.id)
           .maybeSingle();
           
         if (verifyError) {
           console.error('Error verifying token:', verifyError);
         } else {
           console.log("Verification of token:", verifyData);
-          if (verifyData?.share_token !== newToken) {
+          if (verifyData?.token !== newToken) {
             console.warn("Token verification failed - saved token doesn't match generated token");
           }
         }
@@ -181,28 +202,40 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     try {
       console.log("Attempting to connect with token:", connectToken);
       
-      // First check if this token exists in database
+      // First check if this token exists in the new share_tokens table
       const { data: tokenCheck, error: tokenCheckError } = await supabase
-        .from('profiles')
-        .select('id, first_name')
-        .eq('share_token', connectToken.trim())
+        .from('share_tokens')
+        .select('user_id')
+        .eq('token', connectToken.trim())
         .maybeSingle();
         
       console.log("Token check result:", tokenCheck, tokenCheckError);
       
       if (tokenCheckError) {
         console.error("Error checking token:", tokenCheckError);
+        toast.error("Error checking token: " + tokenCheckError.message);
+        setIsConnecting(false);
+        return;
       } else if (!tokenCheck) {
-        console.error("No profile found with this token");
+        console.error("No user found with this token");
         toast.error("Invalid token. No user found with this token.");
         setIsConnecting(false);
         return;
       }
       
+      // Now get the user's name for better feedback
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', tokenCheck.user_id)
+        .maybeSingle();
+        
+      const username = userProfile?.first_name || 'user';
+      
       const success = await connectWithUserMutation.mutateAsync(connectToken);
       
       if (success) {
-        toast.success("Successfully connected with user");
+        toast.success(`Successfully connected with ${username}`);
         setConnectToken("");
         onOpenChange(false);
       }

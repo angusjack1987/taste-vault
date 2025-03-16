@@ -20,13 +20,10 @@ interface ConnectedUser {
   created_at: string;
 }
 
-// Helper function to safely parse JSON preferences
 const getSharingPreferences = (preferences: Json | null): SharingPreferences => {
   if (!preferences) return getDefaultSharingPreferences();
   
-  // Handle object-type Json
   if (typeof preferences === 'object' && preferences !== null && !Array.isArray(preferences)) {
-    // Type assertion to access the 'sharing' property
     const prefsObject = preferences as Record<string, Json>;
     const sharing = prefsObject.sharing;
     
@@ -45,7 +42,6 @@ const getSharingPreferences = (preferences: Json | null): SharingPreferences => 
   return getDefaultSharingPreferences();
 };
 
-// Default sharing preferences
 const getDefaultSharingPreferences = (): SharingPreferences => ({
   recipes: true,
   babyRecipes: true,
@@ -59,7 +55,6 @@ export const useSync = () => {
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Fetch the current user's sharing preferences
   const fetchSharingPreferences = async (): Promise<SharingPreferences | null> => {
     if (!user) return null;
     
@@ -70,7 +65,7 @@ export const useSync = () => {
         .eq('user_id', user.id)
         .maybeSingle();
         
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (error && error.code !== 'PGRST116') {
         console.error("Error fetching sharing preferences:", error);
         throw error;
       }
@@ -86,34 +81,28 @@ export const useSync = () => {
     }
   };
 
-  // Update sharing preferences
   const updateSharingPreferences = async (sharingPrefs: SharingPreferences): Promise<SharingPreferences> => {
     if (!user) throw new Error("User not authenticated");
     
     try {
       setIsProcessing(true);
       
-      // First get existing preferences
       const { data: existingData } = await supabase
         .from('user_preferences')
         .select('id, preferences')
         .eq('user_id', user.id)
         .maybeSingle();
       
-      // Create a JSON-compatible preferences object
       let newPreferences: Record<string, any> = {};
       
       if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
-        // Use type assertion to safely copy existing preferences
         const existingPrefs = existingData.preferences as Record<string, any>;
         
-        // Manually copy properties instead of using spread operator
         Object.keys(existingPrefs).forEach(key => {
           newPreferences[key] = existingPrefs[key];
         });
       }
       
-      // Add sharing preferences
       newPreferences = {
         ...newPreferences,
         sharing: {
@@ -126,7 +115,6 @@ export const useSync = () => {
       };
       
       if (existingData) {
-        // Update existing preferences
         const { error } = await supabase
           .from('user_preferences')
           .update({ preferences: newPreferences as Json })
@@ -134,7 +122,6 @@ export const useSync = () => {
         
         if (error) throw error;
       } else {
-        // Create new preferences
         const { error } = await supabase
           .from('user_preferences')
           .insert({
@@ -154,12 +141,10 @@ export const useSync = () => {
     }
   };
 
-  // Fetch connected users
   const fetchConnectedUsers = async (): Promise<ConnectedUser[]> => {
     if (!user) return [];
     
     try {
-      // Get all connections where current user is either user_id_1 or user_id_2
       const { data: connections, error } = await supabase
         .from('profile_sharing')
         .select('user_id_1, user_id_2')
@@ -174,14 +159,12 @@ export const useSync = () => {
       
       if (!connections || connections.length === 0) return [];
       
-      // Extract other user IDs
       const otherUserIds = connections.map(conn => 
         conn.user_id_1 === user.id ? conn.user_id_2 : conn.user_id_1
       );
       
       console.log("Found connected user IDs:", otherUserIds);
       
-      // Fetch profiles for connected users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, share_token, created_at')
@@ -201,14 +184,12 @@ export const useSync = () => {
     }
   };
 
-  // Connect with another user
   const connectWithUser = async (shareToken: string): Promise<boolean> => {
     if (!user) throw new Error("User not authenticated");
     
     try {
       setIsProcessing(true);
       
-      // Clean token - trim whitespace
       const cleanToken = shareToken.trim();
       console.log("Attempting to connect with token:", cleanToken);
       
@@ -218,81 +199,59 @@ export const useSync = () => {
         return false;
       }
       
-      // Directly check database for token to debug
-      console.log("Checking all profiles for token...");
-      const { data: allProfiles, error: allProfilesError } = await supabase
-        .from('profiles')
-        .select('id, share_token')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      
-      if (allProfilesError) {
-        console.error("Error fetching profiles:", allProfilesError);
-      } else {
-        console.log("All profiles:", allProfiles);
-        const matchingProfile = allProfiles?.find(p => p.share_token === cleanToken);
-        console.log("Matching profile from all profiles check:", matchingProfile);
-      }
-      
-      // Check if token matches current user's token
-      const { data: currentUserProfile } = await supabase
-        .from('profiles')
-        .select('share_token')
-        .eq('id', user.id)
+      const { data: currentUserToken } = await supabase
+        .from('share_tokens')
+        .select('token')
+        .eq('user_id', user.id)
         .maybeSingle();
         
-      if (currentUserProfile?.share_token === cleanToken) {
+      if (currentUserToken?.token === cleanToken) {
         console.error("Cannot connect with your own token");
         toast.error("You cannot connect with yourself");
         return false;
       }
       
-      // Find user with the given token - with improved error logging
-      console.log("Searching for profile with exact token:", cleanToken);
-      
-      const { data: targetUser, error: lookupError } = await supabase
-        .from('profiles')
-        .select('id, first_name')
-        .eq('share_token', cleanToken)
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('share_tokens')
+        .select('user_id')
+        .eq('token', cleanToken)
         .maybeSingle();
       
-      console.log("Target user lookup result:", targetUser, lookupError);
+      console.log("Token lookup result:", tokenData, tokenError);
 
-      if (lookupError) {
-        console.error("Error looking up user by token:", lookupError);
-        toast.error("Error looking up user: " + lookupError.message);
+      if (tokenError) {
+        console.error("Error looking up token:", tokenError);
+        toast.error("Error looking up token: " + tokenError.message);
         return false;
       }
       
-      if (!targetUser || !targetUser.id) {
-        console.error("No user found with the provided token:", cleanToken);
-        
-        // Let's try a more flexible search to help debug
-        const { data: similarTokens } = await supabase
-          .from('profiles')
-          .select('id, first_name, share_token')
-          .ilike('share_token', `%${cleanToken.substring(0, 8)}%`)
-          .limit(5);
-          
-        console.log("Similar tokens found:", similarTokens);
-        
+      if (!tokenData || !tokenData.user_id) {
+        console.error("No user found with the provided token");
         toast.error("Invalid share token. No user found with this token.");
         return false;
       }
 
-      // Don't allow connecting to self
-      if (targetUser.id === user.id) {
+      const targetUserId = tokenData.user_id;
+      
+      const { data: targetUser, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, first_name')
+        .eq('id', targetUserId)
+        .maybeSingle();
+        
+      if (profileError) {
+        console.error("Error fetching target user profile:", profileError);
+      }
+
+      if (targetUserId === user.id) {
         toast.error("You cannot connect with yourself");
         return false;
       }
       
-      // Check if connection already exists
-      console.log("Checking for existing connection between", user.id, "and", targetUser.id);
-      
       const { data: existingConn, error: connCheckError } = await supabase
         .from('profile_sharing')
         .select('id')
-        .or(`and(user_id_1.eq.${user.id},user_id_2.eq.${targetUser.id}),and(user_id_1.eq.${targetUser.id},user_id_2.eq.${user.id})`)
+        .or(`and(user_id_1.eq.${user.id},user_id_2.eq.${targetUserId}),and(user_id_1.eq.${targetUserId},user_id_2.eq.${user.id})`)
         .maybeSingle();
       
       if (connCheckError) {
@@ -307,12 +266,9 @@ export const useSync = () => {
         return true;
       }
       
-      // Create a new connection with explicit values and better logging
-      console.log("Creating new connection between", user.id, "and", targetUser.id);
-      
       const newConnection = {
         user_id_1: user.id,
-        user_id_2: targetUser.id
+        user_id_2: targetUserId
       };
       
       const { data, error: createConnError } = await supabase
@@ -329,10 +285,10 @@ export const useSync = () => {
       
       console.log("Successfully created connection:", data);
       
-      // Sync data from target user
-      await syncData(targetUser.id);
+      await syncData(targetUserId);
       
-      toast.success(`Successfully connected with ${targetUser.first_name || 'user'}`);
+      const firstName = targetUser?.first_name || 'user';
+      toast.success(`Successfully connected with ${firstName}`);
       queryClient.invalidateQueries({ queryKey: ['connected-users'] });
       return true;
     } catch (err) {
@@ -344,7 +300,6 @@ export const useSync = () => {
     }
   };
 
-  // Remove connection with another user
   const removeConnection = async (otherUserId: string): Promise<boolean> => {
     if (!user) throw new Error("User not authenticated");
     
@@ -369,14 +324,12 @@ export const useSync = () => {
     }
   };
 
-  // Sync data from another user
   const syncData = async (fromUserId: string): Promise<boolean> => {
     if (!user) throw new Error("User not authenticated");
     
     try {
       setIsProcessing(true);
       
-      // Get sharing preferences of the other user
       const { data: prefsData, error: prefsError } = await supabase
         .from('user_preferences')
         .select('preferences')
@@ -385,30 +338,24 @@ export const useSync = () => {
         
       if (prefsError && prefsError.code !== 'PGRST116') throw prefsError;
       
-      // Get sharing preferences or use defaults
       const sharingPrefs = getSharingPreferences(prefsData?.preferences || null);
       
-      // Sync recipes if allowed
       if (sharingPrefs.recipes) {
         await syncRecipes(fromUserId);
       }
       
-      // Sync baby recipes if allowed
       if (sharingPrefs.babyRecipes) {
         await syncBabyRecipes(fromUserId);
       }
       
-      // Sync fridge items if allowed
       if (sharingPrefs.fridgeItems) {
         await syncFridgeItems(fromUserId);
       }
       
-      // Sync shopping list if allowed
       if (sharingPrefs.shoppingList) {
         await syncShoppingList(fromUserId);
       }
       
-      // Sync meal plans if allowed
       if (sharingPrefs.mealPlan) {
         await syncMealPlans(fromUserId);
       }
@@ -424,9 +371,7 @@ export const useSync = () => {
     }
   };
 
-  // Helper function to sync recipes
   const syncRecipes = async (fromUserId: string): Promise<void> => {
-    // Get recipes from other user
     const { data: recipes, error } = await supabase
       .from('recipes')
       .select('*')
@@ -436,7 +381,6 @@ export const useSync = () => {
     
     if (!recipes || recipes.length === 0) return;
     
-    // For each recipe, check if we already have it (by title) and add if not
     for (const recipe of recipes) {
       const { data: existingRecipe } = await supabase
         .from('recipes')
@@ -446,10 +390,9 @@ export const useSync = () => {
         .maybeSingle();
         
       if (!existingRecipe) {
-        // Create a new recipe for current user
         const newRecipe = {
           ...recipe,
-          id: undefined, // Let Supabase generate a new ID
+          id: undefined,
           user_id: user!.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -459,13 +402,10 @@ export const useSync = () => {
       }
     }
     
-    // Invalidate recipes query
     queryClient.invalidateQueries({ queryKey: ['recipes'] });
   };
 
-  // Helper function to sync baby recipes
   const syncBabyRecipes = async (fromUserId: string): Promise<void> => {
-    // Get baby recipes from other user
     const { data: babyRecipes, error } = await supabase
       .from('baby_food_recipes')
       .select('*')
@@ -475,7 +415,6 @@ export const useSync = () => {
     
     if (!babyRecipes || babyRecipes.length === 0) return;
     
-    // For each recipe, check if we already have it (by title) and add if not
     for (const recipe of babyRecipes) {
       const { data: existingRecipe } = await supabase
         .from('baby_food_recipes')
@@ -485,10 +424,9 @@ export const useSync = () => {
         .maybeSingle();
         
       if (!existingRecipe) {
-        // Create a new recipe for current user
         const newRecipe = {
           ...recipe,
-          id: undefined, // Let Supabase generate a new ID
+          id: undefined,
           user_id: user!.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -498,7 +436,6 @@ export const useSync = () => {
       }
     }
     
-    // Also sync baby profiles if available
     const { data: babyProfiles, error: profilesError } = await supabase
       .from('baby_profiles')
       .select('*')
@@ -528,9 +465,7 @@ export const useSync = () => {
     }
   };
 
-  // Helper function to sync fridge items
   const syncFridgeItems = async (fromUserId: string): Promise<void> => {
-    // Get fridge items from other user
     const { data: fridgeItems, error } = await supabase
       .from('fridge_items')
       .select('*')
@@ -540,7 +475,6 @@ export const useSync = () => {
     
     if (!fridgeItems || fridgeItems.length === 0) return;
     
-    // For each item, check if we already have it (by name) and add if not
     for (const item of fridgeItems) {
       const { data: existingItem } = await supabase
         .from('fridge_items')
@@ -550,10 +484,9 @@ export const useSync = () => {
         .maybeSingle();
         
       if (!existingItem) {
-        // Create a new item for current user
         const newItem = {
           ...item,
-          id: undefined, // Let Supabase generate a new ID
+          id: undefined,
           user_id: user!.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -563,13 +496,10 @@ export const useSync = () => {
       }
     }
     
-    // Invalidate fridge items query
     queryClient.invalidateQueries({ queryKey: ['fridge-items'] });
   };
 
-  // Helper function to sync shopping list items
   const syncShoppingList = async (fromUserId: string): Promise<void> => {
-    // Get shopping list items from other user
     const { data: shoppingItems, error } = await supabase
       .from('shopping_list')
       .select('*')
@@ -579,7 +509,6 @@ export const useSync = () => {
     
     if (!shoppingItems || shoppingItems.length === 0) return;
     
-    // For each item, check if we already have it (by ingredient) and add if not
     for (const item of shoppingItems) {
       const { data: existingItem } = await supabase
         .from('shopping_list')
@@ -589,10 +518,9 @@ export const useSync = () => {
         .maybeSingle();
         
       if (!existingItem) {
-        // Create a new item for current user
         const newItem = {
           ...item,
-          id: undefined, // Let Supabase generate a new ID
+          id: undefined,
           user_id: user!.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -602,13 +530,10 @@ export const useSync = () => {
       }
     }
     
-    // Invalidate shopping list query
     queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
   };
 
-  // Helper function to sync meal plans
   const syncMealPlans = async (fromUserId: string): Promise<void> => {
-    // Get meal plans from other user
     const { data: mealPlans, error } = await supabase
       .from('meal_plans')
       .select('*')
@@ -618,7 +543,6 @@ export const useSync = () => {
     
     if (!mealPlans || mealPlans.length === 0) return;
     
-    // For each plan, check if we already have one for that date/meal_type and add if not
     for (const plan of mealPlans) {
       const { data: existingPlan } = await supabase
         .from('meal_plans')
@@ -629,10 +553,9 @@ export const useSync = () => {
         .maybeSingle();
         
       if (!existingPlan) {
-        // Create a new plan for current user
         const newPlan = {
           ...plan,
-          id: undefined, // Let Supabase generate a new ID
+          id: undefined,
           user_id: user!.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -642,11 +565,9 @@ export const useSync = () => {
       }
     }
     
-    // Invalidate meal plans query
     queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
   };
 
-  // React Query hooks
   const useSharingPreferencesQuery = () => {
     return useQuery({
       queryKey: ['sharing-preferences'],
