@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CookingTemperatureGuide } from "@/components/sous-chef/CookingTemperatureGuide";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import ChefVoiceAssistant from "@/components/sous-chef/ChefVoiceAssistant";
 
 const SousChefContent = () => {
   useEffect(() => {
@@ -23,6 +24,17 @@ const SousChefContent = () => {
       <p className="text-base text-muted-foreground">
         Your personal cooking assistant with helpful guides and tools.
       </p>
+      
+      {/* Add Chef Voice Assistant at the top */}
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 shadow-sm border border-amber-100">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+            <h2 className="text-lg font-semibold text-orange-800 mb-1">Chef Assistant</h2>
+            <p className="text-sm text-amber-700">Ask me anything about cooking!</p>
+          </div>
+          <ChefVoiceAssistant />
+        </div>
+      </div>
       
       <Separator className="my-2" />
       
