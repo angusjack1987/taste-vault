@@ -45,19 +45,18 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setIsSharing(true);
     
     try {
-      // Check if user exists with that email - using explicit type for the query
-      const { error: userError } = await supabase
+      // Check if user exists with that email - simplified query to avoid type issues
+      const { data, error } = await supabase
         .from('profiles')
         .select('id')
-        .eq('email', partnerEmail)
-        .maybeSingle();
+        .eq('email', partnerEmail);
         
-      if (userError) {
-        throw userError;
+      if (error) {
+        throw error;
       }
       
       // Create a sharing relationship in the database
-      const { error } = await supabase
+      const { error: sharingError } = await supabase
         .from('profile_sharing')
         .insert({
           owner_id: user?.id,
@@ -65,7 +64,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
           status: 'pending'
         });
         
-      if (error) throw error;
+      if (sharingError) throw sharingError;
       
       toast({
         title: "Invitation sent!",
