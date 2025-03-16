@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
   User, 
@@ -19,9 +19,11 @@ import { Separator } from "@/components/ui/separator";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import ManageProfileSharingCard from "@/components/settings/ManageProfileSharingCard";
+import ShareProfileDialog from "@/components/settings/ShareProfileDialog";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   
   const settingsGroups = [
     {
@@ -36,9 +38,8 @@ const Settings = () => {
         {
           icon: <Share2 className="h-5 w-5 text-purple-600" />,
           label: "Profile Sharing",
-          path: "/settings",
+          action: () => setShareDialogOpen(true),
           bgColor: "bg-purple-100",
-          isActive: true,
         },
       ]
     },
@@ -113,18 +114,33 @@ const Settings = () => {
               <div>
                 {group.items.map((item, itemIndex) => (
                   <React.Fragment key={itemIndex}>
-                    <Link 
-                      to={item.path}
-                      className={`flex items-center justify-between p-6 ${item.isActive ? item.bgColor : `hover:${item.bgColor}`} transition-colors`}
-                    >
-                      <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
-                        <div className="bg-white p-2 rounded-md border-2 border-black">
-                          {item.icon}
+                    {item.path ? (
+                      <Link 
+                        to={item.path}
+                        className={`flex items-center justify-between p-6 hover:${item.bgColor} transition-colors`}
+                      >
+                        <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
+                          <div className="bg-white p-2 rounded-md border-2 border-black">
+                            {item.icon}
+                          </div>
+                          <span className="font-medium">{item.label}</span>
                         </div>
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </Link>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={item.action}
+                        className={`flex items-center justify-between p-6 w-full text-left hover:${item.bgColor} transition-colors`}
+                      >
+                        <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
+                          <div className="bg-white p-2 rounded-md border-2 border-black">
+                            {item.icon}
+                          </div>
+                          <span className="font-medium">{item.label}</span>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </button>
+                    )}
                     {itemIndex < group.items.length - 1 && <Separator className="bg-black/10" />}
                   </React.Fragment>
                 ))}
@@ -143,6 +159,8 @@ const Settings = () => {
           Sign Out
         </Button>
       </div>
+      
+      <ShareProfileDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
     </MainLayout>
   );
 };
