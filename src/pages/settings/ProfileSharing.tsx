@@ -4,8 +4,9 @@ import MainLayout from "@/components/layout/MainLayout";
 import ManageProfileSharingCard from "@/components/settings/ManageProfileSharingCard";
 import ShareProfileDialog from "@/components/settings/ShareProfileDialog";
 import { Button } from "@/components/ui/button";
-import { Share2 } from "lucide-react";
+import { Share2, Info } from "lucide-react";
 import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ProfileSharing = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -18,6 +19,15 @@ const ProfileSharing = () => {
           <p className="text-muted-foreground">
             Share your profile with friends and family to sync recipes, meal plans, and shopping lists.
           </p>
+          
+          <Alert className="border-2 border-amber-500 bg-amber-50">
+            <Info className="h-4 w-4 text-amber-500" />
+            <AlertTitle>Email Delivery Note</AlertTitle>
+            <AlertDescription>
+              Currently, we don't automatically send email invitations. After adding someone to your sharing list, 
+              please send them the share link directly via your preferred method.
+            </AlertDescription>
+          </Alert>
           
           <Button 
             onClick={() => setShareDialogOpen(true)}

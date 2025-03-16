@@ -45,6 +45,23 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setIsSharing(true);
     
     try {
+      // First check if an invitation already exists for this email
+      const { data: existingInvitations } = await supabase
+        .from('profile_sharing')
+        .select('*')
+        .eq('owner_id', user?.id)
+        .eq('shared_with_email', partnerEmail);
+      
+      if (existingInvitations && existingInvitations.length > 0) {
+        toast({
+          title: "Invitation already exists",
+          description: `You've already sent an invitation to ${partnerEmail}`,
+          variant: "destructive",
+        });
+        setIsSharing(false);
+        return;
+      }
+      
       // Use a type assertion to avoid TypeScript inference issues
       const { error } = await supabase
         .from('profile_sharing')
@@ -56,9 +73,11 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       
       if (error) throw error;
       
+      // Currently there is no automated email sending directly from Supabase for this use case
+      // We need to inform the user about this limitation
       toast({
-        title: "Invitation sent!",
-        description: `Profile sharing invitation sent to ${partnerEmail}`,
+        title: "Invitation recorded!",
+        description: `Profile sharing invitation for ${partnerEmail} has been saved. Currently, you need to manually notify them with the share link.`,
       });
       
       setPartnerEmail("");
@@ -105,6 +124,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Copy this link and share it directly with your partner
+            </p>
           </div>
           
           <div className="space-y-2">
@@ -116,6 +138,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
               value={partnerEmail}
               onChange={(e) => setPartnerEmail(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              This will save their email to your invited list, but you'll need to share the link with them separately
+            </p>
           </div>
         </div>
         
