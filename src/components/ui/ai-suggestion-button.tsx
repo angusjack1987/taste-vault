@@ -12,6 +12,7 @@ interface AiSuggestionButtonProps {
   isLoading?: boolean;
   children?: React.ReactNode;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "clean" | "menu" | "tomato" | "lettuce" | "cheese" | "bread" | "blueberry" | "grape" | "orange" | "mint";
+  action?: string; // New prop for the action being performed
 }
 
 const AiSuggestionButton = ({
@@ -22,6 +23,7 @@ const AiSuggestionButton = ({
   isLoading = false,
   children,
   variant = "cheese",
+  action = "Generate", // Default action text
 }: AiSuggestionButtonProps) => {
   return (
     <div className="ai-btn-container relative">
@@ -46,14 +48,14 @@ const AiSuggestionButton = ({
               <div className="absolute -top-2 -right-2 w-2.5 h-2.5 bg-yellow-300 border border-black rounded-full animate-bounce opacity-80" />
               <div className="absolute -bottom-2 -left-2 w-2.5 h-2.5 bg-blue-300 border border-black rounded-full animate-pulse opacity-80" />
             </div>
-            <span className="animate-pulse">Working...</span>
+            <span className="animate-pulse">{action}ing...</span>
           </div>
         ) : (
           children || (
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="h-4 w-4 animate-pulse" strokeWidth={2.5} />
               <span className="sm:inline hidden">{label}</span>
-              <span className="sm:hidden inline">AI</span>
+              <span className="sm:hidden inline">AI {action}</span>
             </div>
           )
         )}

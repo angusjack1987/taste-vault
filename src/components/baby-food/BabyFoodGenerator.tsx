@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import useAuth from '@/hooks/useAuth';
-import useAiRecipes from '@/hooks/useAiRecipes';
-import { useFridge } from '@/hooks/useFridge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import AiSuggestionButton from '@/components/ui/ai-suggestion-button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Sprout, Baby, Clock, Heart, Save, ChefHat, ChevronDown, ChevronUp, Utensils } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CleanNeoBrutalistAccordion } from '@/components/ui/clean-accordion';
 
@@ -222,6 +219,7 @@ const BabyFoodGenerator: React.FC<BabyFoodGeneratorProps> = ({ babyAge, babyName
         <AiSuggestionButton
           onClick={handleGenerateRecipe}
           label="Generate Baby Food Recipes"
+          action="Create"
           isLoading={aiLoading}
           className="w-full"
         />

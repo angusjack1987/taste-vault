@@ -121,6 +121,7 @@ const FoodAdviceSection: React.FC<FoodAdviceSectionProps> = ({ babyAge, babyName
           <AiSuggestionButton
             onClick={handleGetAdvice}
             label="Get Advice"
+            action="Analyze"
             isLoading={loading}
             size="default"
           />

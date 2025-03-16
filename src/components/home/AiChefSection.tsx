@@ -36,6 +36,7 @@ const AiChefSection = ({ onOpenSuggestDialog }: AiChefSectionProps) => {
         <AiSuggestionButton
           onClick={onOpenSuggestDialog}
           label="Get Recipe Ideas"
+          action="Suggest"
           className="font-bold text-lg uppercase"
           variant="cheese"
         />
