@@ -22,7 +22,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [canShare, setCanShare] = useState(false);
   
   // Generate a share URL that includes the user's ID and a token
-  const shareUrl = user ? `${window.location.origin}/connect-profile/${user.id}${shareToken ? `?token=${shareToken}` : ''}` : '';
+  const shareUrl = user ? `${window.location.origin}/connect-profile/${user.id}?token=${shareToken}` : '';
   
   // Check if Web Share API is available
   useEffect(() => {
@@ -46,7 +46,11 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         .eq('id', user.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching share token:", error);
+        generateShareToken();
+        return;
+      }
       
       if (data && data.share_token) {
         setShareToken(data.share_token);
@@ -71,15 +75,17 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       const newToken = Math.random().toString(36).substring(2, 15);
       
       // Save the token to the user's profile
-      // Use type assertion with 'as any' to bypass the TypeScript type check
       const { error } = await supabase
         .from('profiles')
         .update({ 
           share_token: newToken
-        } as any)
+        })
         .eq('id', user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error generating share token:", error);
+        throw error;
+      }
       
       setShareToken(newToken);
       toast({
@@ -146,7 +152,6 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
           description: "Your profile link has been shared.",
         });
       } catch (error) {
-        // User cancelled or share failed
         console.error('Error sharing:', error);
         
         // If sharing fails, fall back to copying to clipboard

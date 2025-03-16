@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, UserPlus, X } from "lucide-react";
@@ -11,14 +11,19 @@ import useAuth from "@/hooks/useAuth";
 const ConnectProfile = () => {
   const { ownerId } = useParams<{ ownerId: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const token = searchParams.get('token');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [ownerName, setOwnerName] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'not_connected' | 'pending' | 'connected' | 'self' | 'not_found'>('not_connected');
+  const [connectionStatus, setConnectionStatus] = useState<'not_connected' | 'pending' | 'connected' | 'self' | 'not_found' | 'invalid_token'>('not_connected');
   const [validToken, setValidToken] = useState(false);
+  
+  console.log("ConnectProfile - Current path:", location.pathname + location.search);
+  console.log("ConnectProfile - Token:", token);
+  console.log("ConnectProfile - Owner ID:", ownerId);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -41,11 +46,23 @@ const ConnectProfile = () => {
           .select('first_name, share_token')
           .eq('id', ownerId)
           .single();
+        
+        console.log("Owner profile data:", ownerProfile);
+        console.log("Token provided:", token);
+        console.log("Token in DB:", ownerProfile?.share_token);
 
         // If we can't find the profile or the token doesn't match
-        if (!ownerProfile || (token && ownerProfile.share_token !== token)) {
-          console.log('Token validation failed:', { provided: token, stored: ownerProfile?.share_token });
+        if (!ownerProfile) {
+          console.log('Profile not found');
           setConnectionStatus('not_found');
+          setIsLoading(false);
+          return;
+        }
+        
+        // If token is required but doesn't match
+        if (token && ownerProfile.share_token !== token) {
+          console.log('Token validation failed:', { provided: token, stored: ownerProfile?.share_token });
+          setConnectionStatus('invalid_token');
           setIsLoading(false);
           return;
         }
@@ -84,7 +101,10 @@ const ConnectProfile = () => {
 
   const handleConnect = async () => {
     if (!user || !ownerId) {
-      navigate('/auth/login', { state: { returnUrl: `/connect-profile/${ownerId}${token ? `?token=${token}` : ''}` } });
+      // Include the token in the redirect URL
+      const returnUrl = `/connect-profile/${ownerId}${token ? `?token=${token}` : ''}`;
+      console.log("Redirecting to login with return URL:", returnUrl);
+      navigate('/auth/login', { state: { returnUrl } });
       return;
     }
 
@@ -128,7 +148,7 @@ const ConnectProfile = () => {
             shared_with_id: user.id,
             shared_with_email: user.email,
             status: 'active'
-          }] as any);
+          }]);
 
         if (insertError) throw insertError;
       }
@@ -157,6 +177,27 @@ const ConnectProfile = () => {
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="mt-4 text-muted-foreground">Checking connection status...</p>
         </div>
+      );
+    }
+
+    if (connectionStatus === 'invalid_token') {
+      return (
+        <Card className="w-full max-w-md border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+          <CardHeader>
+            <CardTitle className="text-xl">Invalid or Expired Link</CardTitle>
+            <CardDescription>
+              The sharing link you're using is invalid or has expired. Please ask for a new link.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button 
+              onClick={() => navigate('/')}
+              className="w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
+            >
+              Go Home
+            </Button>
+          </CardFooter>
+        </Card>
       );
     }
 
