@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import useAuth from "@/hooks/useAuth";
 import ShareLinkSection from "./share/ShareLinkSection";
@@ -15,18 +15,18 @@ type ShareProfileDialogProps = {
 const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => {
   const { user } = useAuth();
   const [canShare, setCanShare] = useState(false);
-  const { shareUrl, isRegenerating, generateShareToken } = useShareToken(user, open);
+  const { shareUrl, isLoading, fetchShareToken } = useShareToken(user, open);
   
   // Check if Web Share API is available
   useEffect(() => {
     setCanShare(!!navigator.share);
   }, []);
   
-  // Regenerate token if needed when dialog opens
+  // Get token when dialog opens
   useEffect(() => {
     if (open && user && !shareUrl) {
-      console.log("ShareProfileDialog: No share URL available, generating token");
-      generateShareToken();
+      console.log("ShareProfileDialog: No share URL available, fetching token");
+      fetchShareToken();
     }
   }, [open, user, shareUrl]);
   
@@ -54,8 +54,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         <div className="space-y-6 py-4">
           <ShareLinkSection 
             shareUrl={shareUrl}
-            isRegenerating={isRegenerating}
-            onRegenerate={generateShareToken}
+            isLoading={isLoading}
           />
         </div>
         

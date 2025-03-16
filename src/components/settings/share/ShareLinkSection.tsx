@@ -4,15 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Check, RefreshCw } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 
 interface ShareLinkSectionProps {
   shareUrl: string;
-  isRegenerating: boolean;
-  onRegenerate: () => void;
+  isLoading: boolean;
 }
 
-const ShareLinkSection = ({ shareUrl, isRegenerating, onRegenerate }: ShareLinkSectionProps) => {
+const ShareLinkSection = ({ shareUrl, isLoading }: ShareLinkSectionProps) => {
   const [copied, setCopied] = useState(false);
   
   const copyToClipboard = () => {
@@ -42,24 +41,11 @@ const ShareLinkSection = ({ shareUrl, isRegenerating, onRegenerate }: ShareLinkS
   
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label htmlFor="share-link">Share link</Label>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={onRegenerate}
-          disabled={isRegenerating}
-          className="flex items-center gap-1 text-xs h-7"
-        >
-          <RefreshCw className="h-3 w-3" />
-          {isRegenerating ? 'Generating...' : 'Regenerate'}
-        </Button>
-      </div>
+      <Label htmlFor="share-link">Share link</Label>
       <div className="flex items-center space-x-2">
         <Input
           id="share-link"
-          value={shareUrl}
+          value={isLoading ? "Loading..." : shareUrl}
           readOnly
           className="flex-1"
         />
@@ -70,12 +56,13 @@ const ShareLinkSection = ({ shareUrl, isRegenerating, onRegenerate }: ShareLinkS
           variant="outline" 
           onClick={copyToClipboard}
           className="flex-shrink-0"
+          disabled={isLoading || !shareUrl}
         >
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-1">
-        Copy this link and share it directly with your partner. You can regenerate the link if you need a new one.
+        Copy this link and share it directly with your partner.
       </p>
     </div>
   );

@@ -6,7 +6,6 @@ import { User } from "@supabase/supabase-js";
 
 export function useShareToken(user: User | null, dialogOpen: boolean) {
   const [shareToken, setShareToken] = useState<string>("");
-  const [isRegenerating, setIsRegenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   // Generate a share URL that includes the user's ID and a token
@@ -36,7 +35,7 @@ export function useShareToken(user: User | null, dialogOpen: boolean) {
       
       if (error) {
         console.error("Error fetching share token:", error);
-        generateShareToken();
+        createStaticToken();
         return;
       }
       
@@ -47,26 +46,24 @@ export function useShareToken(user: User | null, dialogOpen: boolean) {
       } else {
         // No token exists yet, generate one
         console.log("No existing token found, generating new one");
-        generateShareToken();
+        createStaticToken();
       }
     } catch (error) {
       console.error("Error fetching share token:", error);
       // If there's an error, try to generate a new token
-      generateShareToken();
+      createStaticToken();
     } finally {
       setIsLoading(false);
     }
   };
   
-  const generateShareToken = async () => {
+  const createStaticToken = async () => {
     if (!user) return;
     
-    setIsRegenerating(true);
-    
     try {
-      // Generate a random token
-      const newToken = Math.random().toString(36).substring(2, 15);
-      console.log("Generated new share token:", newToken);
+      // Generate a simple static token using the first part of user ID
+      const newToken = user.id.split('-')[0];
+      console.log("Generated static share token:", newToken);
       
       // Save the token to the user's profile
       const { error } = await supabase
@@ -82,28 +79,20 @@ export function useShareToken(user: User | null, dialogOpen: boolean) {
       }
       
       setShareToken(newToken);
-      toast({
-        title: "Share link updated",
-        description: "Your sharing link has been regenerated successfully."
-      });
     } catch (error) {
       console.error("Error generating share token:", error);
       toast({
         title: "Error",
-        description: "Failed to generate a new sharing link. Please try again.",
+        description: "Failed to generate sharing link. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsRegenerating(false);
     }
   };
   
   return {
     shareToken,
     shareUrl,
-    isRegenerating,
     isLoading,
-    generateShareToken,
     fetchShareToken
   };
 }
