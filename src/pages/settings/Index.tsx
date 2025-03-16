@@ -121,7 +121,7 @@ const Settings = () => {
                       </Link>
                     ) : (
                       <button 
-                        onClick={item.action}
+                        onClick={() => item.onClick?.()}
                         className={`flex items-center justify-between p-6 w-full text-left hover:${item.bgColor} transition-colors`}
                       >
                         <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
