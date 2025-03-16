@@ -14,6 +14,7 @@ import useAuth from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import { SharingPreferences } from "@/hooks/useSync";
+import { Json } from "@/integrations/supabase/types";
 
 const SyncSettings = () => {
   const { user } = useAuth();
@@ -97,21 +98,24 @@ const SyncSettings = () => {
         .eq('user_id', user.id)
         .single();
       
-      // Create a properly typed preferences object
-      let newPreferences: Record<string, unknown> = {};
+      // Create a JSON-compatible preferences object
+      let newPreferences: Json = {};
       
       if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
-        // Copy existing preferences using type assertion
-        newPreferences = { ...(existingData.preferences as Record<string, unknown>) };
+        // Copy existing preferences
+        newPreferences = existingData.preferences as Json;
       }
       
       // Add sharing preferences
-      newPreferences.sharing = {
-        recipes: sharingPrefs.recipes,
-        babyRecipes: sharingPrefs.babyRecipes,
-        fridgeItems: sharingPrefs.fridgeItems,
-        shoppingList: sharingPrefs.shoppingList,
-        mealPlan: sharingPrefs.mealPlan
+      newPreferences = {
+        ...newPreferences,
+        sharing: {
+          recipes: sharingPrefs.recipes,
+          babyRecipes: sharingPrefs.babyRecipes,
+          fridgeItems: sharingPrefs.fridgeItems,
+          shoppingList: sharingPrefs.shoppingList,
+          mealPlan: sharingPrefs.mealPlan
+        }
       };
       
       if (existingData) {
@@ -126,10 +130,10 @@ const SyncSettings = () => {
         // Create new preferences
         const { error } = await supabase
           .from('user_preferences')
-          .insert([{
+          .insert({
             user_id: user.id,
             preferences: newPreferences
-          }]);
+          });
         
         if (error) throw error;
       }

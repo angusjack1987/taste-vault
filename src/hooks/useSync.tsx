@@ -101,21 +101,24 @@ export const useSync = () => {
         .eq('user_id', user.id)
         .single();
       
-      // Create a properly typed preferences object
-      let newPreferences: Record<string, unknown> = {};
+      // Create a JSON-compatible preferences object
+      let newPreferences: Json = {};
       
       if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
         // Use type assertion to safely copy existing preferences
-        newPreferences = { ...(existingData.preferences as Record<string, unknown>) };
+        newPreferences = existingData.preferences as Json;
       }
       
       // Add sharing preferences
-      newPreferences.sharing = {
-        recipes: sharingPrefs.recipes,
-        babyRecipes: sharingPrefs.babyRecipes,
-        fridgeItems: sharingPrefs.fridgeItems,
-        shoppingList: sharingPrefs.shoppingList,
-        mealPlan: sharingPrefs.mealPlan
+      newPreferences = {
+        ...newPreferences,
+        sharing: {
+          recipes: sharingPrefs.recipes,
+          babyRecipes: sharingPrefs.babyRecipes,
+          fridgeItems: sharingPrefs.fridgeItems,
+          shoppingList: sharingPrefs.shoppingList,
+          mealPlan: sharingPrefs.mealPlan
+        }
       };
       
       if (existingData) {
@@ -130,10 +133,10 @@ export const useSync = () => {
         // Create new preferences
         const { error } = await supabase
           .from('user_preferences')
-          .insert([{ 
+          .insert({
             user_id: user.id,
             preferences: newPreferences
-          }]);
+          });
         
         if (error) throw error;
       }
