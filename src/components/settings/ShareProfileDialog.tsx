@@ -29,10 +29,12 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [isGenerating, setIsGenerating] = useState(false);
   const [connectToken, setConnectToken] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Fetch share token when dialog opens
   useEffect(() => {
     if (open && user) {
+      setIsLoading(true);
       fetchShareToken();
     }
   }, [open, user]);
@@ -65,6 +67,8 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     } catch (error) {
       console.error("Error fetching share token:", error);
       toast.error("Error fetching share token");
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -92,6 +96,24 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       console.log("Token generated and saved:", data);
       setShareToken(newToken);
       toast.success("Share token generated successfully");
+      
+      // Verify token was saved correctly
+      setTimeout(async () => {
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('profiles')
+          .select('share_token')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (verifyError) {
+          console.error('Error verifying token:', verifyError);
+        } else {
+          console.log("Verification of token:", verifyData);
+          if (verifyData?.share_token !== newToken) {
+            console.warn("Token verification failed - saved token doesn't match generated token");
+          }
+        }
+      }, 1000);
     } catch (error) {
       console.error("Error generating share token:", error);
       toast.error("Failed to generate share token");
@@ -158,6 +180,25 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     
     try {
       console.log("Attempting to connect with token:", connectToken);
+      
+      // First check if this token exists in database
+      const { data: tokenCheck, error: tokenCheckError } = await supabase
+        .from('profiles')
+        .select('id, first_name')
+        .eq('share_token', connectToken.trim())
+        .maybeSingle();
+        
+      console.log("Token check result:", tokenCheck, tokenCheckError);
+      
+      if (tokenCheckError) {
+        console.error("Error checking token:", tokenCheckError);
+      } else if (!tokenCheck) {
+        console.error("No profile found with this token");
+        toast.error("Invalid token. No user found with this token.");
+        setIsConnecting(false);
+        return;
+      }
+      
       const success = await connectWithUserMutation.mutateAsync(connectToken);
       
       if (success) {
@@ -172,6 +213,19 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       setIsConnecting(false);
     }
   };
+  
+  if (isLoading && !shareToken) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <div className="py-8 flex justify-center items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            <span className="ml-2">Loading your share token...</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

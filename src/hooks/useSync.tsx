@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -209,12 +208,30 @@ export const useSync = () => {
     try {
       setIsProcessing(true);
       
-      console.log("Attempting to connect with token:", shareToken);
+      // Clean token - trim whitespace
+      const cleanToken = shareToken.trim();
+      console.log("Attempting to connect with token:", cleanToken);
       
-      if (!shareToken || shareToken.trim() === '') {
+      if (!cleanToken) {
         console.error("Empty share token provided");
         toast.error("Please enter a valid share token");
         return false;
+      }
+      
+      // Directly check database for token to debug
+      console.log("Checking all profiles for token...");
+      const { data: allProfiles, error: allProfilesError } = await supabase
+        .from('profiles')
+        .select('id, share_token')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (allProfilesError) {
+        console.error("Error fetching profiles:", allProfilesError);
+      } else {
+        console.log("All profiles:", allProfiles);
+        const matchingProfile = allProfiles?.find(p => p.share_token === cleanToken);
+        console.log("Matching profile from all profiles check:", matchingProfile);
       }
       
       // Check if token matches current user's token
@@ -224,19 +241,19 @@ export const useSync = () => {
         .eq('id', user.id)
         .maybeSingle();
         
-      if (currentUserProfile?.share_token === shareToken.trim()) {
+      if (currentUserProfile?.share_token === cleanToken) {
         console.error("Cannot connect with your own token");
         toast.error("You cannot connect with yourself");
         return false;
       }
       
       // Find user with the given token - with improved error logging
-      console.log("Searching for profile with token:", shareToken.trim());
+      console.log("Searching for profile with exact token:", cleanToken);
       
       const { data: targetUser, error: lookupError } = await supabase
         .from('profiles')
         .select('id, first_name')
-        .eq('share_token', shareToken.trim())
+        .eq('share_token', cleanToken)
         .maybeSingle();
       
       console.log("Target user lookup result:", targetUser, lookupError);
@@ -248,7 +265,17 @@ export const useSync = () => {
       }
       
       if (!targetUser || !targetUser.id) {
-        console.error("No user found with the provided token:", shareToken);
+        console.error("No user found with the provided token:", cleanToken);
+        
+        // Let's try a more flexible search to help debug
+        const { data: similarTokens } = await supabase
+          .from('profiles')
+          .select('id, first_name, share_token')
+          .ilike('share_token', `%${cleanToken.substring(0, 8)}%`)
+          .limit(5);
+          
+        console.log("Similar tokens found:", similarTokens);
+        
         toast.error("Invalid share token. No user found with this token.");
         return false;
       }
