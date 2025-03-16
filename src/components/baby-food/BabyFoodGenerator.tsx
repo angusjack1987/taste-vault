@@ -11,6 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CleanNeoBrutalistAccordion } from '@/components/ui/clean-accordion';
+import useAuth from '@/hooks/useAuth';
+import useAiRecipes from '@/hooks/useAiRecipes';
+import useFridge from '@/hooks/useFridge';
 
 interface BabyFoodGeneratorProps {
   babyAge: string;
