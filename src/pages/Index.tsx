@@ -20,7 +20,7 @@ const IndexPage = () => {
   const { useAllRecipes } = useRecipes();
   const { useTodaysMeals } = useMealPlans();
   const { suggestMealForPlan, loading: aiLoading } = useAiRecipes();
-  const { getMemoryInsights, insights, loading: memoryLoading, isMemoryEnabled, lastUpdated } = useAiMemory();
+  const { getMemoryInsights, insights, loading: memoryLoading, isMemoryEnabled, lastUpdated, extractPreview } = useAiMemory();
   
   const { data: recipes = [], isLoading: recipesLoading } = useAllRecipes();
   const { data: todaysMeals = [], isLoading: mealsLoading } = useTodaysMeals();
@@ -48,29 +48,19 @@ const IndexPage = () => {
       if (!insights && !memoryLoading) {
         getMemoryInsights().then(insights => {
           if (insights) {
-            // Get the first paragraph for preview
-            const firstParagraph = extractFirstParagraph(insights);
-            setMemoryPreview(firstParagraph);
-            console.log("Memory preview set:", firstParagraph);
+            // Get a concise preview of the insights
+            const preview = extractPreview(insights);
+            setMemoryPreview(preview);
+            console.log("Memory preview set:", preview);
           }
         });
       } else if (insights) {
         // If we already have insights, set the preview
-        const firstParagraph = extractFirstParagraph(insights);
-        setMemoryPreview(firstParagraph);
+        const preview = extractPreview(insights);
+        setMemoryPreview(preview);
       }
     }
-  }, [user, insights, memoryLoading, getMemoryInsights, isMemoryEnabled]);
-
-  const extractFirstParagraph = (html: string): string => {
-    // Simple extraction - get content up to first paragraph break
-    // This is a basic implementation that assumes the first chunk of HTML is a paragraph
-    const firstChunk = html.split('</p>')[0];
-    if (firstChunk) {
-      return firstChunk + '</p>';
-    }
-    return html;
-  };
+  }, [user, insights, memoryLoading, getMemoryInsights, isMemoryEnabled, extractPreview]);
 
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
@@ -130,7 +120,7 @@ const IndexPage = () => {
         {/* Memory Insights Section - Always visible */}
         <MemoryInsightsSection 
           memoryLoading={memoryLoading}
-          memoryPreview={memoryPreview || ""}
+          memoryPreview={memoryPreview}
           isMemoryEnabled={isMemoryEnabled}
           onOpenMemoryDialog={() => setMemoryDialogOpen(true)}
           onGenerateInsights={getMemoryInsights}

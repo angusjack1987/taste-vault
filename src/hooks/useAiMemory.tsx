@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,12 +187,67 @@ export const useAiMemory = () => {
     }
   };
 
+  // Extract a short preview from insights for homepage
+  const extractPreview = (html: string): string => {
+    // Create a more concise preview rather than just taking the first paragraph
+    
+    // Extract key points from different sections
+    const sections = html.split(/<h[2-3][^>]*>(.*?)<\/h[2-3]>/i);
+    
+    // Start with a brief intro
+    let preview = '<p class="font-bold mb-2">Key Insights:</p><ul class="list-disc pl-5 space-y-1">';
+    
+    // Add bullet points for each section
+    let bulletCount = 0;
+    const maxBullets = 3;
+    
+    // Look for headings and extract short points
+    const headings = html.match(/<h[2-3][^>]*>(.*?)<\/h[2-3]>/gi) || [];
+    for (let i = 0; i < headings.length && bulletCount < maxBullets; i++) {
+      const headingText = headings[i].replace(/<\/?h[2-3][^>]*>/gi, '');
+      // Skip any "AI Usage" sections - focus on food insights
+      if (headingText.toLowerCase().includes('ai usage')) continue;
+      
+      preview += `<li>${headingText}</li>`;
+      bulletCount++;
+    }
+    
+    // If we didn't get enough bullets from headings, look for suggestions
+    if (bulletCount < maxBullets && html.toLowerCase().includes('suggestion')) {
+      const suggestionMatch = html.match(/<strong>([^<]+)<\/strong>/gi) || [];
+      for (let i = 0; i < suggestionMatch.length && bulletCount < maxBullets; i++) {
+        const suggestion = suggestionMatch[i].replace(/<\/?strong>/gi, '');
+        preview += `<li>${suggestion}</li>`;
+        bulletCount++;
+      }
+    }
+    
+    // If we still need more, add general points
+    if (bulletCount < maxBullets) {
+      const paragraphs = html.match(/<p>(.*?)<\/p>/gi) || [];
+      for (let i = 0; i < paragraphs.length && bulletCount < maxBullets; i++) {
+        // Get the first sentence from each paragraph
+        const paragraph = paragraphs[i].replace(/<\/?p>/gi, '');
+        const firstSentence = paragraph.split(/\.\s+/)[0] + '.';
+        if (firstSentence.length > 30 && !preview.includes(firstSentence)) {
+          preview += `<li>${firstSentence}</li>`;
+          bulletCount++;
+        }
+      }
+    }
+    
+    preview += '</ul>';
+    
+    return preview;
+  };
+
   return {
     loading,
     insights,
     lastUpdated,
     getMemoryInsights,
     isMemoryEnabled: aiSettings?.useMemory ?? true,
+    extractPreview, // Make the preview extraction function available
   };
 };
 
