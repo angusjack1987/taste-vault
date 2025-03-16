@@ -19,9 +19,15 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [copied, setCopied] = useState(false);
   const [shareToken, setShareToken] = useState<string>("");
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [canShare, setCanShare] = useState(false);
   
   // Generate a share URL that includes the user's ID and a token
   const shareUrl = user ? `${window.location.origin}/connect-profile/${user.id}${shareToken ? `?token=${shareToken}` : ''}` : '';
+  
+  // Check if Web Share API is available
+  useEffect(() => {
+    setCanShare(!!navigator.share);
+  }, []);
   
   // Generate a new token when the dialog opens or when requested
   useEffect(() => {
@@ -68,16 +74,41 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   };
   
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
+    if (!shareUrl) return;
     
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        setCopied(true);
+        toast({
+          title: "Link copied",
+          description: "Share link copied to clipboard. You can now paste it to share with others.",
+        });
+        
+        setTimeout(() => {
+          setCopied(false);
+        }, 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy text: ', err);
+        toast({
+          title: "Copy failed",
+          description: "Could not copy to clipboard. Please try again.",
+          variant: "destructive",
+        });
+      });
   };
   
   const handleShare = async () => {
-    if (navigator.share) {
+    if (!shareUrl) {
+      toast({
+        title: "Error",
+        description: "No share URL available. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (canShare) {
       try {
         await navigator.share({
           title: 'Connect with me on TasteVault',
@@ -92,14 +123,13 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       } catch (error) {
         // User cancelled or share failed
         console.error('Error sharing:', error);
+        
+        // If sharing fails, fall back to copying to clipboard
+        copyToClipboard();
       }
     } else {
       // Fallback for browsers that don't support the Web Share API
       copyToClipboard();
-      toast({
-        title: "Link copied",
-        description: "Share link copied to clipboard. You can now paste it to share with others.",
-      });
     }
   };
   
@@ -159,7 +189,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
             className="w-full sm:w-auto"
           >
             <Share2 className="mr-2 h-4 w-4" />
-            Share Profile
+            {canShare ? "Share Profile" : "Copy Link"}
           </Button>
         </DialogFooter>
       </DialogContent>
