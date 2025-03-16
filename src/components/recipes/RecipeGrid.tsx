@@ -26,7 +26,7 @@ const RecipeGrid = ({
         <span className="font-bold uppercase">{emptyMessage}</span>
       </div>;
   }
-  return <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mx-[4px] my-0">
+  return <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 my-0 mx-[10px] py-[7px]">
       {recipes.map(recipe => <div key={recipe.id} className="relative">
           {selectionMode && <div className="absolute top-2 left-2 z-10 bg-white border-1 border-black p-1 cursor-pointer rounded-lg shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)]" onClick={e => {
         e.preventDefault();
