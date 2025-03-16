@@ -183,23 +183,33 @@ export const useSync = () => {
       
       console.log("Fetched connected profiles:", profiles);
       
-      // Use profile data if available, otherwise create placeholder profiles for connected users
+      // Create a map of profiles by ID for easier lookup
+      const profileMap = new Map();
       if (profiles && profiles.length > 0) {
-        return profiles.map(profile => ({
-          id: profile.id,
-          first_name: profile.first_name || 'Unknown User',
-          share_token: null,
-          created_at: profile.created_at
-        }));
-      } else {
-        // Create placeholder profiles for connected users if no profile data is found
-        return otherUserIds.map(id => ({
-          id,
-          first_name: 'Connected User',
-          share_token: null,
-          created_at: new Date().toISOString()
-        }));
+        profiles.forEach(profile => {
+          profileMap.set(profile.id, {
+            id: profile.id,
+            first_name: profile.first_name || 'Connected User',
+            share_token: null,
+            created_at: profile.created_at
+          });
+        });
       }
+      
+      // Create result array with profile data if available, or fallback to defaults
+      return otherUserIds.map(id => {
+        const profile = profileMap.get(id);
+        if (profile) {
+          return profile;
+        } else {
+          return {
+            id,
+            first_name: 'Connected User',
+            share_token: null,
+            created_at: new Date().toISOString()
+          };
+        }
+      });
     } catch (err) {
       console.error("Error in fetchConnectedUsers:", err);
       return [];
@@ -406,8 +416,10 @@ export const useSync = () => {
           // Some operations failed, but not all
           toast.warning("Some data couldn't be synced. Try again later.");
         }
-      } else {
+      } else if (results.length > 0) {
         toast.success("Data sync completed successfully!");
+      } else {
+        toast.info("No data to sync based on sharing preferences");
       }
       
       return true;
@@ -448,12 +460,19 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingRecipe) {
+          // Create a clean recipe object with only the needed fields
           const newRecipe = {
-            ...recipe,
-            id: undefined, // Remove id so a new one is generated
+            title: recipe.title,
+            description: recipe.description || '',
+            ingredients: recipe.ingredients || [],
+            instructions: recipe.instructions || [],
+            tags: recipe.tags || [],
             user_id: user!.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            servings: recipe.servings || null,
+            time: recipe.time || null,
+            difficulty: recipe.difficulty || null,
+            images: recipe.images || [],
+            rating: recipe.rating || null
           };
           
           const { error: insertError } = await supabase
@@ -504,12 +523,17 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingRecipe) {
+          // Create a clean baby recipe object with only the needed fields
           const newRecipe = {
-            ...recipe,
-            id: undefined, // Remove id so a new one is generated
-            user_id: user!.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            title: recipe.title,
+            description: recipe.description || '',
+            age_range: recipe.age_range || '',
+            ingredients: recipe.ingredients || [],
+            instructions: recipe.instructions || [],
+            preparation_time: recipe.preparation_time || null,
+            storage_tips: recipe.storage_tips || '',
+            nutritional_benefits: recipe.nutritional_benefits || [],
+            user_id: user!.id
           };
           
           const { error: insertError } = await supabase
@@ -545,12 +569,11 @@ export const useSync = () => {
             .maybeSingle();
             
           if (!existingProfile) {
+            // Create a clean baby profile object
             const newProfile = {
-              ...profile,
-              id: undefined, // Remove id so a new one is generated
-              user_id: user!.id,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
+              name: profile.name,
+              age_in_months: profile.age_in_months,
+              user_id: user!.id
             };
             
             const { error: insertError } = await supabase
@@ -574,71 +597,114 @@ export const useSync = () => {
   };
 
   const syncFridgeItems = async (fromUserId: string): Promise<void> => {
-    const { data: fridgeItems, error } = await supabase
-      .from('fridge_items')
-      .select('*')
-      .eq('user_id', fromUserId);
-      
-    if (error) throw error;
-    
-    if (!fridgeItems || fridgeItems.length === 0) return;
-    
-    for (const item of fridgeItems) {
-      const { data: existingItem } = await supabase
+    console.log(`Syncing fridge items from user ${fromUserId}`);
+    try {
+      const { data: fridgeItems, error } = await supabase
         .from('fridge_items')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('name', item.name)
-        .maybeSingle();
+        .select('*')
+        .eq('user_id', fromUserId);
         
-      if (!existingItem) {
-        const newItem = {
-          ...item,
-          id: undefined,
-          user_id: user!.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        await supabase.from('fridge_items').insert([newItem]);
+      if (error) {
+        console.error("Error fetching fridge items:", error);
+        throw error;
       }
+      
+      if (!fridgeItems || fridgeItems.length === 0) return;
+      
+      let syncedCount = 0;
+      
+      for (const item of fridgeItems) {
+        const { data: existingItem } = await supabase
+          .from('fridge_items')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('name', item.name)
+          .maybeSingle();
+          
+        if (!existingItem) {
+          // Create clean fridge item object
+          const newItem = {
+            name: item.name,
+            quantity: item.quantity || null,
+            category: item.category || 'Fridge',
+            expiry_date: item.expiry_date || null,
+            user_id: user!.id
+          };
+          
+          const { error: insertError } = await supabase
+            .from('fridge_items')
+            .insert([newItem]);
+            
+          if (insertError) {
+            console.error(`Error syncing fridge item "${item.name}":`, insertError);
+          } else {
+            syncedCount++;
+          }
+        }
+      }
+      
+      console.log(`Successfully synced ${syncedCount} fridge items`);
+      queryClient.invalidateQueries({ queryKey: ['fridge-items'] });
+    } catch (err) {
+      console.error("Error in syncFridgeItems:", err);
+      throw err;
     }
-    
-    queryClient.invalidateQueries({ queryKey: ['fridge-items'] });
   };
 
   const syncShoppingList = async (fromUserId: string): Promise<void> => {
-    const { data: shoppingItems, error } = await supabase
-      .from('shopping_list')
-      .select('*')
-      .eq('user_id', fromUserId);
-      
-    if (error) throw error;
-    
-    if (!shoppingItems || shoppingItems.length === 0) return;
-    
-    for (const item of shoppingItems) {
-      const { data: existingItem } = await supabase
+    console.log(`Syncing shopping list from user ${fromUserId}`);
+    try {
+      const { data: shoppingItems, error } = await supabase
         .from('shopping_list')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('ingredient', item.ingredient)
-        .maybeSingle();
+        .select('*')
+        .eq('user_id', fromUserId);
         
-      if (!existingItem) {
-        const newItem = {
-          ...item,
-          id: undefined,
-          user_id: user!.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        await supabase.from('shopping_list').insert([newItem]);
+      if (error) {
+        console.error("Error fetching shopping items:", error);
+        throw error;
       }
+      
+      if (!shoppingItems || shoppingItems.length === 0) return;
+      
+      let syncedCount = 0;
+      
+      for (const item of shoppingItems) {
+        const { data: existingItem } = await supabase
+          .from('shopping_list')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('ingredient', item.ingredient)
+          .maybeSingle();
+          
+        if (!existingItem) {
+          // Create clean shopping list item object
+          const newItem = {
+            ingredient: item.ingredient,
+            quantity: item.quantity || null,
+            category: item.category || null,
+            is_checked: item.is_checked || false,
+            recipe_id: null, // Don't copy recipe_id as it may not exist in the user's recipes
+            user_id: user!.id
+          };
+          
+          const { error: insertError } = await supabase
+            .from('shopping_list')
+            .insert([newItem]);
+            
+          if (insertError) {
+            console.error(`Error syncing shopping item "${item.ingredient}":`, insertError);
+          } else {
+            syncedCount++;
+          }
+        }
+      }
+      
+      console.log(`Successfully synced ${syncedCount} shopping items`);
+      queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+    } catch (err) {
+      console.error("Error in syncShoppingList:", err);
+      throw err;
     }
-    
-    queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
   };
 
   const syncMealPlans = async (fromUserId: string): Promise<void> => {
@@ -670,12 +736,13 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingPlan) {
+          // Create clean meal plan object
           const newPlan = {
-            ...plan,
-            id: undefined, // Remove id so a new one is generated
-            user_id: user!.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            date: plan.date,
+            meal_type: plan.meal_type,
+            note: plan.note || null,
+            recipe_id: null, // Don't copy recipe_id as it may not exist in the user's recipes
+            user_id: user!.id
           };
           
           const { error: insertError } = await supabase

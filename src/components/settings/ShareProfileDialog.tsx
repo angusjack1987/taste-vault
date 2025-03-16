@@ -216,7 +216,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('first_name')
+        .select('id, first_name')
         .eq('id', tokenCheck.user_id)
         .maybeSingle();
         
@@ -228,7 +228,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         toast.success(`Successfully connected with ${username}`);
         setConnectToken("");
         setActiveTab("connections");
-        // Perform an immediate data sync
+        // Sync immediately after connecting
         await syncDataMutation.mutateAsync(tokenCheck.user_id);
         refetchConnections();
       }
