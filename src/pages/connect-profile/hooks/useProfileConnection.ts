@@ -84,7 +84,7 @@ export const useProfileConnection = (
           const { data: existingConnection, error: connectionError } = await supabase
             .from('profile_sharing')
             .select('status')
-            .or(`and(owner_id.eq.${ownerId},shared_with_email.eq.${user.email}),and(owner_id.eq.${user.id},shared_with_email.eq.${ownerProfile.email})`)
+            .or(`and(owner_id.eq.${ownerId},shared_with_email.eq.${user.email}),and(owner_id.eq.${user.id},shared_with_email.eq.${user.email})`)
             .maybeSingle();
 
           console.log("Existing connection:", existingConnection, "Error:", connectionError);
@@ -139,15 +139,6 @@ export const useProfileConnection = (
     setIsConnecting(true);
 
     try {
-      // Fetch the owner's email for the sharing record
-      const { data: ownerData } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', ownerId)
-        .single();
-      
-      const ownerEmail = ownerData?.email;
-
       // Check for existing invitations by email
       const { data: existingInvitation } = await supabase
         .from('profile_sharing')
