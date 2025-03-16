@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,6 +26,7 @@ import AISettings from "@/pages/settings/AISettings";
 import BabyFoodPage from "./pages/baby-food/BabyFoodPage";
 import DesignSystem from "./pages/settings/DesignSystem";
 import Onboarding from "./pages/onboarding/Index";
+import ConnectProfile from "./pages/connect-profile/ConnectProfile";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,9 @@ const App = () => (
                 <Register />
               </AuthGuard>
             } />
+            
+            {/* Profile connection route - doesn't require authentication initially */}
+            <Route path="/connect-profile/:ownerId" element={<ConnectProfile />} />
             
             {/* Onboarding route - requires authentication */}
             <Route path="/onboarding" element={
