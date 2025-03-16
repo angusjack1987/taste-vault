@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
@@ -21,6 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import ShareProfileDialog from "@/components/settings/ShareProfileDialog";
+import { Share2 } from "lucide-react";
 
 const profileSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -36,6 +37,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -46,7 +48,6 @@ const Profile = () => {
     },
   });
 
-  // Fetch profile data when component mounts
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
@@ -118,7 +119,6 @@ const Profile = () => {
     }
   };
 
-  // Function to handle avatar change (placeholder for future implementation)
   const handleAvatarChange = () => {
     toast({
       title: "Coming soon",
@@ -133,6 +133,18 @@ const Profile = () => {
   return (
     <MainLayout title="Profile" showBackButton>
       <div className="page-container max-w-md mx-auto">
+        <div className="flex justify-end mb-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setShareDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Share2 className="h-4 w-4" />
+            Share Profile
+          </Button>
+        </div>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex flex-col items-center justify-center mb-6">
@@ -216,6 +228,11 @@ const Profile = () => {
           </form>
         </Form>
       </div>
+      
+      <ShareProfileDialog 
+        open={shareDialogOpen} 
+        onOpenChange={setShareDialogOpen} 
+      />
     </MainLayout>
   );
 };
