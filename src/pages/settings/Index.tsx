@@ -11,27 +11,17 @@ import {
   Lock,
   HelpCircle,
   Info,
-  Palette,
-  LayoutGrid
+  Palette
 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  
-  const simulateOnboarding = () => {
-    toast({
-      title: "Onboarding Simulation",
-      description: "Opening onboarding in simulation mode.",
-    });
-    navigate("/onboarding?simulation=true");
-  };
   
   const settingsGroups = [
     {
@@ -101,18 +91,7 @@ const Settings = () => {
           bgColor: "bg-blue-100",
         },
       ]
-    },
-    {
-      title: "Developer",
-      items: [
-        {
-          icon: <LayoutGrid className="h-5 w-5 text-indigo-500" />,
-          label: "Simulate Onboarding",
-          action: simulateOnboarding,
-          bgColor: "bg-indigo-100",
-        },
-      ]
-    },
+    }
   ];
   
   return (
