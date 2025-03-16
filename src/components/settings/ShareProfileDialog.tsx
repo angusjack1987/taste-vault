@@ -45,12 +45,14 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setIsSharing(true);
     
     try {
-      // Using a simpler approach to avoid TypeScript inference issues
-      const { error } = await supabase.from('profile_sharing').insert({
-        owner_id: user?.id,
-        shared_with_email: partnerEmail,
-        status: 'pending'
-      });
+      // Use a type assertion to avoid TypeScript inference issues
+      const { error } = await supabase
+        .from('profile_sharing')
+        .insert([{
+          owner_id: user?.id,
+          shared_with_email: partnerEmail,
+          status: 'pending'
+        }] as any);
       
       if (error) throw error;
       
