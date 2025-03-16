@@ -67,8 +67,16 @@ export const useUpdateRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<RecipeFormData> }) => {
+    mutationFn: async (params: { id: string; data: Partial<RecipeFormData> } | Partial<RecipeFormData> & { id: string }) => {
       if (!user) throw new Error("User not authenticated");
+      
+      // Support both formats: { id, data } and { id, ...otherProps }
+      const id = 'id' in params ? params.id : '';
+      const data = 'data' in params 
+        ? params.data 
+        : Object.fromEntries(
+            Object.entries(params).filter(([key]) => key !== 'id')
+          );
       
       const { error } = await supabase
         .from("recipes")
@@ -94,22 +102,48 @@ export const useBulkUpdateRecipes = (user: User | null) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<RecipeFormData> }) => {
+    mutationFn: async (params: { ids: string[]; data: Partial<RecipeFormData> } | { id: string; updates: Record<string, any> }[]) => {
       if (!user) throw new Error("User not authenticated");
       
-      const { error } = await supabase
-        .from("recipes")
-        .update(data)
-        .in("id", ids)
-        .eq("user_id", user.id);
+      // Handle both formats
+      if (Array.isArray(params)) {
+        // Handle array of {id, updates}
+        const ids = params.map(item => item.id);
+        // When dealing with multiple items with different updates,
+        // we need to run multiple update operations
+        for (const item of params) {
+          const { error } = await supabase
+            .from("recipes")
+            .update(item.updates)
+            .eq("id", item.id)
+            .eq("user_id", user.id);
+            
+          if (error) {
+            toast.error(`Failed to update recipe ${item.id}`);
+            throw error;
+          }
+        }
         
-      if (error) {
-        toast.error("Failed to update recipes");
-        throw error;
+        toast.success("Recipes updated successfully");
+        return ids;
+      } else {
+        // Handle {ids, data} format
+        const { ids, data } = params;
+        
+        const { error } = await supabase
+          .from("recipes")
+          .update(data)
+          .in("id", ids)
+          .eq("user_id", user.id);
+          
+        if (error) {
+          toast.error("Failed to update recipes");
+          throw error;
+        }
+        
+        toast.success("Recipes updated successfully");
+        return ids;
       }
-      
-      toast.success("Recipes updated successfully");
-      return ids;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });

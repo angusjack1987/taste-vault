@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
@@ -219,7 +220,7 @@ const RecipeForm = () => {
     
     if (isEditing && id) {
       updateRecipe(
-        { id, ...cleanedData },
+        { id, data: cleanedData },
         {
           onSuccess: () => {
             navigate(`/recipes/${id}`);
