@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Share, ArrowLeft, Copy, Check } from "lucide-react";
+import { Share, ArrowLeft, Copy, Check, RefreshCw } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,6 @@ import useAuth from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import useSync, { SharingPreferences } from "@/hooks/useSync";
-import { Json } from "@/integrations/supabase/types";
 
 const SyncSettings = () => {
   const { user } = useAuth();
@@ -22,10 +21,12 @@ const SyncSettings = () => {
   const { 
     useSharingPreferencesQuery,
     useUpdateSharingPreferences,
-    useConnectWithUser
+    useConnectWithUser,
+    useConnectedUsersQuery,
   } = useSync();
   
   const { data: sharingPreferences } = useSharingPreferencesQuery();
+  const { data: connectedUsers } = useConnectedUsersQuery();
   const updateSharingPrefsMutation = useUpdateSharingPreferences();
   const connectWithUserMutation = useConnectWithUser();
   
@@ -33,6 +34,7 @@ const SyncSettings = () => {
   const [targetEmail, setTargetEmail] = useState("");
   const [recipientToken, setRecipientToken] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [sharingPrefs, setSharingPrefs] = useState<SharingPreferences>({
     recipes: true,
@@ -58,16 +60,20 @@ const SyncSettings = () => {
 
   const fetchShareToken = async () => {
     try {
+      console.log("Fetching share token for user:", user?.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('share_token')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
         
       if (error) {
         console.error('Error fetching share token:', error);
+        toast.error("Error fetching share token: " + error.message);
         return;
       }
+      
+      console.log('Share token data:', data);
       
       if (data?.share_token) {
         console.log('Found existing share token:', data.share_token);
@@ -77,6 +83,7 @@ const SyncSettings = () => {
       }
     } catch (error) {
       console.error('Error fetching share token:', error);
+      toast.error("Error fetching share token");
     }
   };
 
@@ -84,14 +91,16 @@ const SyncSettings = () => {
   const generateShareToken = async () => {
     if (!user) return;
     try {
-      setIsProcessing(true);
+      setIsGenerating(true);
       const newToken = uuidv4();
       console.log('Generating new share token:', newToken);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update({ share_token: newToken })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select('share_token')
+        .single();
         
       if (error) {
         console.error('Error updating share token:', error);
@@ -99,13 +108,14 @@ const SyncSettings = () => {
         return;
       }
       
+      console.log('Token updated response:', data);
       setShareToken(newToken);
       toast.success("Share token generated successfully");
     } catch (error) {
       console.error('Error generating share token:', error);
       toast.error("Failed to generate share token");
     } finally {
-      setIsProcessing(false);
+      setIsGenerating(false);
     }
   };
 
@@ -186,6 +196,26 @@ const SyncSettings = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Settings
         </Button>
+        
+        {connectedUsers && connectedUsers.length > 0 && (
+          <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+            <CardHeader>
+              <CardTitle className="text-xl">Connected Users</CardTitle>
+              <CardDescription>
+                Users you are currently sharing with
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {connectedUsers.map(user => (
+                  <li key={user.id} className="p-2 border rounded flex justify-between items-center">
+                    <span>{user.first_name || 'Unknown user'}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
         
         <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader>
@@ -296,19 +326,33 @@ const SyncSettings = () => {
             <CardContent>
               <div className="space-y-4">
                 {shareToken ? (
-                  <div className="flex space-x-2">
-                    <Input readOnly value={shareToken} className="font-mono text-sm" />
-                    <Button onClick={copyShareToken} variant="outline" size="icon">
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
+                  <div>
+                    <div className="flex space-x-2">
+                      <Input readOnly value={shareToken} className="font-mono text-sm" />
+                      <Button onClick={copyShareToken} variant="outline" size="icon">
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <Button 
+                        onClick={generateShareToken} 
+                        disabled={isGenerating} 
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center"
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        {isGenerating ? "Generating..." : "Regenerate"}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <Button 
                     onClick={generateShareToken} 
-                    disabled={isProcessing} 
+                    disabled={isGenerating} 
                     className="w-full"
                   >
-                    Generate Share Token
+                    {isGenerating ? "Generating..." : "Generate Share Token"}
                   </Button>
                 )}
 

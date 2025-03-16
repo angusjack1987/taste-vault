@@ -21,6 +21,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [partnerEmail, setPartnerEmail] = useState("");
   const [isSharing, setIsSharing] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // Fetch share token when dialog opens
   useEffect(() => {
@@ -33,6 +34,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     if (!user) return;
     
     try {
+      console.log("Fetching share token for user:", user.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('share_token')
@@ -41,8 +43,11 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         
       if (error) {
         console.error('Error fetching share token:', error);
+        toast.error("Error fetching share token: " + error.message);
         return;
       }
+      
+      console.log("Share token data:", data);
       
       if (data?.share_token) {
         setShareToken(data.share_token);
@@ -52,6 +57,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       }
     } catch (error) {
       console.error("Error fetching share token:", error);
+      toast.error("Error fetching share token");
     }
   };
   
@@ -59,23 +65,37 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     if (!user) return;
     
     try {
+      setIsGenerating(true);
       const newToken = uuidv4();
+      console.log("Generating new share token:", newToken);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update({ share_token: newToken })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select('share_token')
+        .single();
         
       if (error) {
         console.error('Error generating share token:', error);
-        toast.error("Failed to generate share token");
+        toast.error("Failed to generate share token: " + error.message);
         return;
       }
       
+      console.log("Token generated and saved:", data);
       setShareToken(newToken);
+      toast.success("Share token generated successfully");
     } catch (error) {
       console.error("Error generating share token:", error);
       toast.error("Failed to generate share token");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
+  const regenerateToken = () => {
+    if (window.confirm("Are you sure you want to generate a new token? This will invalidate your existing share token.")) {
+      generateShareToken();
     }
   };
   
@@ -137,7 +157,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
             <div className="flex items-center space-x-2">
               <Input
                 id="share-token"
-                value={shareToken || "Generating..."}
+                value={isGenerating ? "Generating..." : (shareToken || "No token generated")}
                 readOnly
                 className="flex-1 font-mono"
               />
@@ -146,15 +166,26 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                 size="icon" 
                 variant="outline" 
                 onClick={copyToClipboard}
-                disabled={!shareToken}
+                disabled={!shareToken || isGenerating}
                 className="flex-shrink-0"
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Share this token with someone to connect your accounts
-            </p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-sm text-muted-foreground">
+                Share this token with someone to connect your accounts
+              </p>
+              <Button 
+                type="button" 
+                size="sm" 
+                variant="outline"
+                onClick={regenerateToken}
+                disabled={isGenerating}
+              >
+                {isGenerating ? "Generating..." : "Regenerate"}
+              </Button>
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -173,7 +204,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
           <Button
             type="button"
             onClick={handleInvitePartner}
-            disabled={isSharing || !shareToken}
+            disabled={isSharing || !shareToken || isGenerating}
             className="w-full sm:w-auto"
           >
             <Share2 className="mr-2 h-4 w-4" />

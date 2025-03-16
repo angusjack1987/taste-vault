@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -232,8 +231,12 @@ export const useSync = () => {
         .select('id')
         .or(`and(user_id_1.eq.${user.id},user_id_2.eq.${targetUser.id}),and(user_id_1.eq.${targetUser.id},user_id_2.eq.${user.id})`)
         .maybeSingle();
-        
-      if (connCheckError) throw connCheckError;
+      
+      if (connCheckError) {
+        console.error("Error checking existing connection:", connCheckError);
+        toast.error("Error checking connection: " + connCheckError.message);
+        return false;
+      }
       
       if (existingConn) {
         toast.info("You're already connected with this user");
@@ -241,12 +244,14 @@ export const useSync = () => {
       }
       
       // Create a new connection
-      const { error: createConnError } = await supabase
+      const { data: newConnection, error: createConnError } = await supabase
         .from('profile_sharing')
         .insert({
           user_id_1: user.id,
           user_id_2: targetUser.id
-        });
+        })
+        .select('id')
+        .single();
         
       if (createConnError) {
         console.error("Error creating connection:", createConnError);
@@ -254,10 +259,13 @@ export const useSync = () => {
         return false;
       }
       
+      console.log("Successfully created connection:", newConnection);
+      
       // Sync data from target user
       await syncData(targetUser.id);
       
       toast.success("Successfully connected with user");
+      queryClient.invalidateQueries({ queryKey: ['connected-users'] });
       return true;
     } catch (err) {
       console.error("Error in connectWithUser:", err);
