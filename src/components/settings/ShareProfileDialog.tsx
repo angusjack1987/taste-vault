@@ -17,8 +17,6 @@ type ShareProfileDialogProps = {
 const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
-  const [partnerEmail, setPartnerEmail] = useState("");
-  const [isSharing, setIsSharing] = useState(false);
   const [shareToken, setShareToken] = useState<string>("");
   const [isRegenerating, setIsRegenerating] = useState(false);
   
@@ -78,66 +76,30 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     }, 2000);
   };
   
-  const handleInvitePartner = async () => {
-    if (!partnerEmail || !partnerEmail.includes('@')) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSharing(true);
-    
-    try {
-      // First check if an invitation already exists for this email
-      const { data: existingInvitations } = await supabase
-        .from('profile_sharing')
-        .select('*')
-        .eq('owner_id', user?.id)
-        .eq('shared_with_email', partnerEmail);
-      
-      if (existingInvitations && existingInvitations.length > 0) {
-        toast({
-          title: "Invitation already exists",
-          description: `You've already sent an invitation to ${partnerEmail}`,
-          variant: "destructive",
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Connect with me on TasteVault',
+          text: 'Join my TasteVault profile to sync recipes, meal plans, and shopping lists!',
+          url: shareUrl,
         });
-        setIsSharing(false);
-        return;
+        
+        toast({
+          title: "Shared successfully",
+          description: "Your profile link has been shared.",
+        });
+      } catch (error) {
+        // User cancelled or share failed
+        console.error('Error sharing:', error);
       }
-      
-      // Use a type assertion to avoid TypeScript inference issues
-      const { error } = await supabase
-        .from('profile_sharing')
-        .insert([{
-          owner_id: user?.id,
-          shared_with_email: partnerEmail,
-          status: 'pending',
-          share_token: shareToken
-        }] as any);
-      
-      if (error) throw error;
-      
-      // Currently there is no automated email sending directly from Supabase for this use case
-      // We need to inform the user about this limitation
+    } else {
+      // Fallback for browsers that don't support the Web Share API
+      copyToClipboard();
       toast({
-        title: "Invitation recorded!",
-        description: `Profile sharing invitation for ${partnerEmail} has been saved. Currently, you need to manually notify them with the share link.`,
+        title: "Link copied",
+        description: "Share link copied to clipboard. You can now paste it to share with others.",
       });
-      
-      setPartnerEmail("");
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error sharing profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to share profile. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSharing(false);
     }
   };
   
@@ -188,31 +150,16 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
               Copy this link and share it directly with your partner. You can regenerate the link if you need a new one.
             </p>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="partner-email">Or invite a partner directly</Label>
-            <Input
-              id="partner-email"
-              type="email"
-              placeholder="partner@example.com"
-              value={partnerEmail}
-              onChange={(e) => setPartnerEmail(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This will save their email to your invited list, but you'll need to share the link with them separately
-            </p>
-          </div>
         </div>
         
         <DialogFooter>
           <Button
             type="button"
-            onClick={handleInvitePartner}
-            disabled={isSharing}
+            onClick={handleShare}
             className="w-full sm:w-auto"
           >
             <Share2 className="mr-2 h-4 w-4" />
-            {isSharing ? "Sending invitation..." : "Invite Partner"}
+            Share Profile
           </Button>
         </DialogFooter>
       </DialogContent>
