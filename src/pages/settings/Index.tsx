@@ -19,11 +19,26 @@ import { Separator } from "@/components/ui/separator";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
+// Define the interface for settings items
+interface SettingsItem {
+  icon: React.ReactNode;
+  label: string;
+  path?: string;
+  bgColor: string;
+  onClick?: () => void;
+}
+
+// Define the interface for settings groups
+interface SettingsGroup {
+  title: string;
+  items: SettingsItem[];
+}
+
 const Settings = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   
-  const settingsGroups = [
+  const settingsGroups: SettingsGroup[] = [
     {
       title: "User",
       items: [
