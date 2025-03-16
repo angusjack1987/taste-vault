@@ -12,18 +12,19 @@ const ConnectProfile = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const token = searchParams.get('token');
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   
   console.log("ConnectProfile - Current path:", location.pathname + location.search);
   console.log("ConnectProfile - Token:", token);
   console.log("ConnectProfile - Owner ID:", ownerId);
   console.log("ConnectProfile - User:", user?.id || "Not logged in");
+  console.log("ConnectProfile - Auth loading:", authLoading);
 
   const {
     connectionStatus,
     ownerName,
-    isLoading,
+    isLoading: connectionLoading,
     isConnecting,
     handleConnect
   } = useProfileConnection(ownerId, token, user, navigate);
@@ -31,10 +32,16 @@ const ConnectProfile = () => {
   useEffect(() => {
     // Log status changes
     console.log("ConnectProfile - Connection status:", connectionStatus);
-  }, [connectionStatus]);
+    console.log("ConnectProfile - Connection loading:", connectionLoading);
+  }, [connectionStatus, connectionLoading]);
+
+  // Show loading while waiting for auth to initialize
+  if (authLoading) {
+    return <LoadingState message="Checking authentication..." />;
+  }
 
   const renderContent = () => {
-    if (isLoading) {
+    if (connectionLoading) {
       return <LoadingState />;
     }
 
@@ -105,10 +112,10 @@ const ConnectProfile = () => {
 
     return (
       <ProfileConnectionCard
-        title={`Connect with ${ownerName}`}
+        title={`Connect with ${ownerName || 'User'}`}
         description={!user 
           ? "Sign in or create an account to connect with this profile." 
-          : `Connect with ${ownerName}'s profile to share recipes, meal plans, and shopping lists.`}
+          : `Connect with ${ownerName || 'User'}'s profile to share recipes, meal plans, and shopping lists.`}
         primaryButtonProps={{
           label: user ? "Connect" : "Sign In",
           onClick: handleConnect,

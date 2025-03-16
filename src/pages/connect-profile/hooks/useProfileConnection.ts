@@ -30,40 +30,45 @@ export const useProfileConnection = (
   useEffect(() => {
     const checkConnection = async () => {
       if (!ownerId) {
+        console.log("No owner ID provided");
         setConnectionStatus('not_found');
         setIsLoading(false);
         return;
       }
 
       if (user?.id === ownerId) {
+        console.log("Self-connection detected");
         setConnectionStatus('self');
         setIsLoading(false);
         return;
       }
 
       try {
-        // First, verify the token is valid for this owner
-        const { data: ownerProfile, error: tokenError } = await supabase
+        console.log("Checking connection for owner:", ownerId);
+        
+        // First, verify the token is valid for this owner by fetching the profile
+        const { data: ownerProfile, error: profileError } = await supabase
           .from('profiles')
           .select('first_name, share_token')
           .eq('id', ownerId)
           .single();
         
-        console.log("Owner profile data:", ownerProfile);
-        console.log("Token provided:", token);
-        console.log("Token in DB:", ownerProfile?.share_token);
-
-        // If we can't find the profile or the token doesn't match
-        if (!ownerProfile) {
-          console.log('Profile not found');
+        if (profileError || !ownerProfile) {
+          console.log('Profile not found or error:', profileError);
           setConnectionStatus('not_found');
           setIsLoading(false);
           return;
         }
         
-        // If token is required but doesn't match
-        if (token && ownerProfile.share_token !== token) {
-          console.log('Token validation failed:', { provided: token, stored: ownerProfile?.share_token });
+        console.log("Owner profile data:", ownerProfile);
+        console.log("Token provided:", token);
+        console.log("Token in DB:", ownerProfile.share_token);
+
+        // Check token validity - either it matches or we don't need to check it
+        const isTokenValid = !token || ownerProfile.share_token === token;
+        
+        if (!isTokenValid) {
+          console.log('Token validation failed:', { provided: token, stored: ownerProfile.share_token });
           setConnectionStatus('invalid_token');
           setIsLoading(false);
           return;
@@ -76,15 +81,21 @@ export const useProfileConnection = (
         // If logged in, check if already connected
         if (user) {
           // Check for any existing connection between these users (in either direction)
-          const { data: existingConnection } = await supabase
+          const { data: existingConnection, error: connectionError } = await supabase
             .from('profile_sharing')
-            .select('*')
-            .or(`and(owner_id.eq.${ownerId},shared_with_id.eq.${user.id}),and(owner_id.eq.${user.id},shared_with_id.eq.${ownerId})`)
-            .single();
+            .select('status')
+            .or(`and(owner_id.eq.${ownerId},shared_with_email.eq.${user.email}),and(owner_id.eq.${user.id},shared_with_email.eq.${ownerProfile.email})`)
+            .maybeSingle();
+
+          console.log("Existing connection:", existingConnection, "Error:", connectionError);
 
           if (existingConnection) {
             setConnectionStatus(existingConnection.status === 'active' ? 'connected' : 'pending');
+          } else {
+            setConnectionStatus('not_connected');
           }
+        } else {
+          setConnectionStatus('not_connected');
         }
       } catch (error) {
         console.error('Error checking connection:', error);
@@ -93,17 +104,20 @@ export const useProfileConnection = (
           description: "Could not check connection status. Please try again.",
           variant: "destructive",
         });
+        setConnectionStatus('not_connected');
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Reset loading state when dependencies change
+    setIsLoading(true);
     checkConnection();
   }, [ownerId, user, token]);
 
   const handleConnect = async () => {
     if (!user || !ownerId) {
-      // Construct the full return URL with token
+      // Redirect to login with return URL
       const returnUrl = `/connect-profile/${ownerId}${token ? `?token=${token}` : ''}`;
       console.log("Redirecting to login with return URL:", returnUrl);
       
@@ -125,13 +139,22 @@ export const useProfileConnection = (
     setIsConnecting(true);
 
     try {
+      // Fetch the owner's email for the sharing record
+      const { data: ownerData } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', ownerId)
+        .single();
+      
+      const ownerEmail = ownerData?.email;
+
       // Check for existing invitations by email
       const { data: existingInvitation } = await supabase
         .from('profile_sharing')
         .select('*')
         .eq('owner_id', ownerId)
         .eq('shared_with_email', user.email)
-        .single();
+        .maybeSingle();
 
       if (existingInvitation) {
         console.log("Updating existing invitation:", existingInvitation);
@@ -139,7 +162,6 @@ export const useProfileConnection = (
         const { error: updateError } = await supabase
           .from('profile_sharing')
           .update({
-            shared_with_id: user.id,
             status: 'active',
           })
           .eq('id', existingInvitation.id);
@@ -147,12 +169,11 @@ export const useProfileConnection = (
         if (updateError) throw updateError;
       } else {
         console.log("Creating new connection");
-        // Create a new connection if no invitation exists
+        // Create a new connection
         const { error: insertError } = await supabase
           .from('profile_sharing')
           .insert([{
             owner_id: ownerId,
-            shared_with_id: user.id,
             shared_with_email: user.email,
             status: 'active'
           }]);
