@@ -1,11 +1,12 @@
-
 import React, { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Thermometer, Beef, Drumstick, Fish, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export const CookingTemperatureGuide = () => {
   const [activeTab, setActiveTab] = useState("meat");
+  const [tempUnit, setTempUnit] = useState<"F" | "C">("F");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const meatTemperatures = [
@@ -165,14 +166,30 @@ export const CookingTemperatureGuide = () => {
         <div className="p-4">
           {/* Tab content */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              {activeTab === "meat" && <Beef className="h-5 w-5 text-red-500" />}
-              {activeTab === "poultry" && <Drumstick className="h-5 w-5 text-amber-500" />}
-              {activeTab === "seafood" && <Fish className="h-5 w-5 text-blue-500" />}
-              {activeTab === "oven" && <Flame className="h-5 w-5 text-orange-500" />}
-              <h3 className="text-lg font-bold text-gray-800">
-                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Temperatures
-              </h3>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {activeTab === "meat" && <Beef className="h-5 w-5 text-red-500" />}
+                {activeTab === "poultry" && <Drumstick className="h-5 w-5 text-amber-500" />}
+                {activeTab === "seafood" && <Fish className="h-5 w-5 text-blue-500" />}
+                {activeTab === "oven" && <Flame className="h-5 w-5 text-orange-500" />}
+                <h3 className="text-lg font-bold text-gray-800">
+                  {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Temperatures
+                </h3>
+              </div>
+              
+              <ToggleGroup 
+                type="single" 
+                value={tempUnit} 
+                onValueChange={(value) => value && setTempUnit(value as "F" | "C")}
+                className="border border-gray-200 rounded-full overflow-hidden h-7"
+              >
+                <ToggleGroupItem value="F" className="px-2 py-0 text-xs data-[state=on]:bg-primary data-[state=on]:text-white">
+                  °F
+                </ToggleGroupItem>
+                <ToggleGroupItem value="C" className="px-2 py-0 text-xs data-[state=on]:bg-primary data-[state=on]:text-white">
+                  °C
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             <div className="overflow-x-auto">
@@ -180,8 +197,9 @@ export const CookingTemperatureGuide = () => {
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="px-2 py-2 text-left font-medium text-gray-600">Food</th>
-                    <th className="px-2 py-2 text-left font-medium text-gray-600">°F</th>
-                    <th className="px-2 py-2 text-left font-medium text-gray-600">°C</th>
+                    <th className="px-2 py-2 text-left font-medium text-gray-600">
+                      Temperature
+                    </th>
                     <th className="px-2 py-2 text-left font-medium text-gray-600">Notes</th>
                   </tr>
                 </thead>
@@ -195,10 +213,7 @@ export const CookingTemperatureGuide = () => {
                         {item.name}
                       </td>
                       <td className="px-2 py-2.5">
-                        {item.fahrenheit}
-                      </td>
-                      <td className="px-2 py-2.5">
-                        {item.celsius}
+                        {tempUnit === "F" ? item.fahrenheit : item.celsius}
                       </td>
                       <td className="px-2 py-2.5 text-gray-600">
                         {item.description}
