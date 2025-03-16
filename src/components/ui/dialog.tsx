@@ -28,12 +28,14 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+  scrollable?: boolean
+  maxHeight?: string
+}
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
-    scrollable?: boolean
-    maxHeight?: string
-  }
+  DialogContentProps
 >(({ className, children, scrollable = false, maxHeight = "80vh", ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />

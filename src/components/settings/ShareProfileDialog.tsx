@@ -50,9 +50,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         .from('profiles')
         .select('id')
         .eq('email', partnerEmail)
-        .single();
+        .maybeSingle();
         
-      if (userError && userError.code !== 'PGRST116') {
+      if (userError) {
         throw userError;
       }
       
