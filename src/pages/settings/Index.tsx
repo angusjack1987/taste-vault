@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -12,7 +11,8 @@ import {
   HelpCircle,
   Info,
   Palette,
-  PlayCircle
+  PlayCircle,
+  Share
 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,6 +50,12 @@ const Settings = () => {
           label: "Profile",
           path: "/profile",
           bgColor: "bg-blue-100",
+        },
+        {
+          icon: <Share className="h-5 w-5 text-indigo-500" />,
+          label: "Sync with Others",
+          path: "/settings/sync",
+          bgColor: "bg-indigo-100",
         },
       ]
     },

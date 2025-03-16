@@ -19,6 +19,7 @@ import MealPlan from "./pages/meal-plan/Index";
 import ShoppingListPage from "./pages/shopping/Index";
 import FridgePage from "./pages/fridge/Index";
 import Settings from "./pages/settings/Index";
+import SyncSettings from "./pages/settings/SyncSettings";
 import Profile from "./pages/settings/Profile";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
@@ -102,6 +103,11 @@ function App() {
                 <Route path="/settings" element={
                   <AuthGuard>
                     <Settings />
+                  </AuthGuard>
+                } />
+                <Route path="/settings/sync" element={
+                  <AuthGuard>
+                    <SyncSettings />
                   </AuthGuard>
                 } />
                 <Route path="/settings/food-preferences" element={
