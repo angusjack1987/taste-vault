@@ -33,13 +33,7 @@ const ManageProfileSharingCard = () => {
       // Get connections where the current user is user_id_1
       const { data: connections1, error: error1 } = await supabase
         .from('profile_sharing')
-        .select(`
-          id,
-          user_id_1,
-          user_id_2,
-          created_at,
-          profiles:user_id_2(first_name)
-        `)
+        .select('id, user_id_1, user_id_2, created_at')
         .eq('user_id_1', user.id);
 
       if (error1) throw error1;
@@ -47,38 +41,38 @@ const ManageProfileSharingCard = () => {
       // Get connections where current user is user_id_2
       const { data: connections2, error: error2 } = await supabase
         .from('profile_sharing')
-        .select(`
-          id,
-          user_id_1,
-          user_id_2,
-          created_at,
-          profiles:user_id_1(first_name)
-        `)
+        .select('id, user_id_1, user_id_2, created_at')
         .eq('user_id_2', user.id);
 
       if (error2) throw error2;
       
-      // Process and combine the results
-      const processedConnections1 = (connections1 || []).map(conn => ({
-        id: conn.id,
-        user_id_1: conn.user_id_1,
-        user_id_2: conn.user_id_2,
-        created_at: conn.created_at,
-        connectedUserName: conn.profiles?.first_name || 'Unknown User'
-      }));
+      // Process the data into a single array
+      const combinedConnections = [...(connections1 || []), ...(connections2 || [])];
       
-      const processedConnections2 = (connections2 || []).map(conn => ({
-        id: conn.id,
-        user_id_1: conn.user_id_1,
-        user_id_2: conn.user_id_2,
-        created_at: conn.created_at,
-        connectedUserName: conn.profiles?.first_name || 'Unknown User'
-      }));
+      // Get the other user's ID for each connection
+      const processedConnections = await Promise.all(
+        combinedConnections.map(async (conn) => {
+          const otherUserId = conn.user_id_1 === user.id ? conn.user_id_2 : conn.user_id_1;
+          
+          // Fetch the profile information separately
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('first_name')
+            .eq('id', otherUserId)
+            .single();
+            
+          return {
+            id: conn.id,
+            user_id_1: conn.user_id_1,
+            user_id_2: conn.user_id_2,
+            created_at: conn.created_at,
+            connectedUserName: profileData?.first_name || 'Unknown User'
+          };
+        })
+      );
       
-      // Combine results
-      const allProfiles = [...processedConnections1, ...processedConnections2];
-      console.log("Fetched synced profiles:", allProfiles);
-      setSyncedProfiles(allProfiles);
+      console.log("Fetched synced profiles:", processedConnections);
+      setSyncedProfiles(processedConnections);
     } catch (error) {
       console.error("Error fetching synced profiles:", error);
       toast({
