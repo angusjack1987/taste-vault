@@ -102,10 +102,10 @@ export const TourProvider = ({ children }: TourProviderProps) => {
   };
 
   const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status, type } = data;
+    const { status } = data;
     
-    // Tour is finished or skipped
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    // Tour is finished or skipped - use the STATUS enum for comparison
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setIsActive(false);
       toast({
         title: "Tour completed",
