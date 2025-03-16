@@ -50,6 +50,7 @@ import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog"
 import InstructionsWithTooltips from "@/components/recipes/InstructionsWithTooltips";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ShareRecipeDialog from "@/components/recipes/ShareRecipeDialog";
+import SelectIngredientsDialog from "@/components/recipes/SelectIngredientsDialog";
 
 interface EnhancedInstruction {
   step: string;
@@ -77,6 +78,7 @@ const RecipeDetail = () => {
   const [enhancedInstructions, setEnhancedInstructions] = useState<EnhancedInstruction[]>([]);
   const [isEnhancingInstructions, setIsEnhancingInstructions] = useState(false);
   const [isInstructionsEnhanced, setIsInstructionsEnhanced] = useState(false);
+  const [selectIngredientsDialogOpen, setSelectIngredientsDialogOpen] = useState(false);
   
   const { useRecipe, useDeleteRecipe } = useRecipes();
   const { useAddManyShoppingListItems } = useShoppingList();
@@ -112,13 +114,15 @@ const RecipeDetail = () => {
     }
   };
 
-  const handleAddToShoppingList = async () => {
+  const handleAddToShoppingList = async (selectedIngredients: string[] = []) => {
     if (!recipe) return;
     
     setAddingToShoppingList(true);
     
     try {
-      const shoppingItems: ShoppingListItemInput[] = recipe.ingredients.map(ingredient => ({
+      const ingredientsToAdd = selectedIngredients.length > 0 ? selectedIngredients : recipe.ingredients;
+      
+      const shoppingItems: ShoppingListItemInput[] = ingredientsToAdd.map(ingredient => ({
         recipe_id: recipe.id,
         ingredient,
         category: categorizeIngredient(ingredient),
@@ -127,7 +131,8 @@ const RecipeDetail = () => {
       }));
       
       await addToShoppingList(shoppingItems);
-      toast.success("Added to shopping list");
+      toast.success(`${ingredientsToAdd.length} items added to shopping list`);
+      setSelectIngredientsDialogOpen(false);
     } catch (error) {
       console.error("Error adding to shopping list:", error);
       toast.error("Failed to add to shopping list");
@@ -135,7 +140,7 @@ const RecipeDetail = () => {
       setAddingToShoppingList(false);
     }
   };
-  
+
   const handleDeleteRecipe = async () => {
     if (!recipe || !id) return;
     
@@ -308,6 +313,39 @@ const RecipeDetail = () => {
       default:
         break;
     }
+  };
+
+  const getPastelColorForTag = (tag: string): string => {
+    const tagLower = tag.toLowerCase();
+    
+    if (tagLower.includes('breakfast')) return 'bg-[#FEF7CD] text-black';
+    if (tagLower.includes('lunch')) return 'bg-[#D3E4FD] text-black';
+    if (tagLower.includes('dinner')) return 'bg-[#E5DEFF] text-black';
+    if (tagLower.includes('dessert')) return 'bg-[#FFDEE2] text-black';
+    if (tagLower.includes('snack')) return 'bg-[#FDE1D3] text-black';
+    
+    if (tagLower.includes('italian')) return 'bg-[#F2FCE2] text-black';
+    if (tagLower.includes('mexican')) return 'bg-[#FEC6A1] text-black';
+    if (tagLower.includes('asian') || tagLower.includes('chinese') || tagLower.includes('japanese')) return 'bg-[#F2FCE2] text-black';
+    if (tagLower.includes('american')) return 'bg-[#FEF7CD] text-black';
+    
+    const colors = [
+      'bg-[#F2FCE2] text-black',
+      'bg-[#FEF7CD] text-black',
+      'bg-[#FEC6A1] text-black',
+      'bg-[#E5DEFF] text-black',
+      'bg-[#FFDEE2] text-black',
+      'bg-[#FDE1D3] text-black',
+      'bg-[#D3E4FD] text-black',
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+      hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
   };
 
   if (isLoading) {
@@ -551,7 +589,7 @@ const RecipeDetail = () => {
                 {recipe.tags.map((tag) => (
                   <span 
                     key={tag} 
-                    className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm"
+                    className={`px-3 py-1 rounded-full text-sm border-2 border-black font-medium ${getPastelColorForTag(tag)}`}
                   >
                     {tag}
                   </span>
@@ -560,11 +598,11 @@ const RecipeDetail = () => {
             </div>
           )}
           
-          <div className="mt-8 flex gap-3 justify-center">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button 
               variant="outline" 
-              className="flex-1 max-w-40"
-              onClick={handleAddToShoppingList}
+              className="w-full"
+              onClick={handleOpenSelectIngredientsDialog}
               disabled={addingToShoppingList}
             >
               {addingToShoppingList ? (
@@ -575,7 +613,7 @@ const RecipeDetail = () => {
               Add to Shopping List
             </Button>
             <Button 
-              className="flex-1 max-w-40"
+              className="w-full"
               onClick={() => navigate("/meal-plan")}
             >
               Add to Meal Plan
@@ -614,6 +652,14 @@ const RecipeDetail = () => {
         onOpenChange={setShareDialogOpen}
         recipeName={recipe.title}
         onShare={handleShareRecipe}
+      />
+
+      <SelectIngredientsDialog
+        open={selectIngredientsDialogOpen}
+        onOpenChange={setSelectIngredientsDialogOpen}
+        ingredients={recipe?.ingredients || []}
+        onConfirm={handleAddToShoppingList}
+        isLoading={addingToShoppingList}
       />
     </MainLayout>
   );
