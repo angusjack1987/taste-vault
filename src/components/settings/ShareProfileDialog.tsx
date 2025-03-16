@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Copy, Check, Share2, RefreshCw, Loader2, Users, Link } from "lucide-react";
+import { Copy, Check, Share2, RefreshCw, Loader2, Users, Link, UserPlus2, DownloadCloud } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 import { v4 as uuidv4 } from 'uuid';
@@ -22,10 +23,13 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const { 
     useConnectWithUser,
     useConnectedUsersQuery,
-    useRemoveConnection
+    useRemoveConnection,
+    useSyncData
   } = useSync();
+  
   const connectWithUserMutation = useConnectWithUser();
   const removeConnectionMutation = useRemoveConnection();
+  const syncDataMutation = useSyncData();
   const { data: connectedUsers, isLoading: isLoadingConnections, refetch: refetchConnections } = useConnectedUsersQuery();
   
   const [copied, setCopied] = useState(false);
@@ -37,16 +41,20 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("share");
+  const [isSyncing, setIsSyncing] = useState<Record<string, boolean>>({});
   
   useEffect(() => {
     if (open && user) {
       setIsLoading(true);
       fetchShareToken();
-      if (activeTab === "connections") {
-        refetchConnections();
-      }
     }
-  }, [open, user, activeTab]);
+  }, [open, user]);
+  
+  useEffect(() => {
+    if (open && activeTab === "connections" && user) {
+      refetchConnections();
+    }
+  }, [open, activeTab, refetchConnections, user]);
   
   const fetchShareToken = async () => {
     if (!user) return;
@@ -245,6 +253,25 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     }
   };
   
+  const handleSyncWithUser = async (userId: string, userName: string) => {
+    setIsSyncing(prev => ({ ...prev, [userId]: true }));
+    
+    try {
+      const success = await syncDataMutation.mutateAsync(userId);
+      
+      if (success) {
+        toast.success(`Successfully synchronized data with ${userName}`);
+      } else {
+        toast.error(`Failed to sync with ${userName}`);
+      }
+    } catch (error) {
+      console.error('Error syncing with user:', error);
+      toast.error(`Failed to sync with ${userName}: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSyncing(prev => ({ ...prev, [userId]: false }));
+    }
+  };
+  
   if (isLoading && !shareToken) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -391,21 +418,44 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                   Users you are connected with:
                 </p>
                 {connectedUsers.map(user => (
-                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-md">
-                    <div className="flex items-center">
-                      <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
-                        {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
+                  <div key={user.id} className="flex flex-col p-3 border rounded-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
+                          {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
+                        </div>
+                        <span className="ml-3 font-medium">{user.first_name || 'Unknown User'}</span>
                       </div>
-                      <span className="ml-3 font-medium">{user.first_name || 'Unknown User'}</span>
+                      <Button 
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveConnection(user.id, user.first_name || 'User')}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        Remove
+                      </Button>
                     </div>
-                    <Button 
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveConnection(user.id, user.first_name || 'User')}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      Remove
-                    </Button>
+                    <div className="mt-2 flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSyncWithUser(user.id, user.first_name || 'User')}
+                        disabled={isSyncing[user.id]}
+                        className="text-xs"
+                      >
+                        {isSyncing[user.id] ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                            Syncing...
+                          </>
+                        ) : (
+                          <>
+                            <DownloadCloud className="h-3 w-3 mr-1" />
+                            Sync Data
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -417,6 +467,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                   Connect with others to share your recipes and meal plans
                 </p>
                 <Button onClick={() => setActiveTab("share")}>
+                  <UserPlus2 className="h-4 w-4 mr-2" />
                   Connect with Someone
                 </Button>
               </div>
