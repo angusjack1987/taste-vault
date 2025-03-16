@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -11,13 +10,15 @@ import {
   Lock,
   HelpCircle,
   Info,
-  Palette
+  Palette,
+  Share2
 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import ManageProfileSharingCard from "@/components/settings/ManageProfileSharingCard";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -31,6 +32,13 @@ const Settings = () => {
           label: "Profile",
           path: "/profile",
           bgColor: "bg-blue-100",
+        },
+        {
+          icon: <Share2 className="h-5 w-5 text-purple-600" />,
+          label: "Profile Sharing",
+          path: "/settings",
+          bgColor: "bg-purple-100",
+          isActive: true,
         },
       ]
     },
@@ -107,7 +115,7 @@ const Settings = () => {
                   <React.Fragment key={itemIndex}>
                     <Link 
                       to={item.path}
-                      className={`flex items-center justify-between p-6 hover:${item.bgColor} transition-colors`}
+                      className={`flex items-center justify-between p-6 ${item.isActive ? item.bgColor : `hover:${item.bgColor}`} transition-colors`}
                     >
                       <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
                         <div className="bg-white p-2 rounded-md border-2 border-black">
@@ -124,6 +132,8 @@ const Settings = () => {
             </CardContent>
           </Card>
         ))}
+        
+        <ManageProfileSharingCard />
         
         <Button
           onClick={() => signOut()}
