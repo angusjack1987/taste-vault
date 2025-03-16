@@ -133,12 +133,42 @@ export const useSync = () => {
         if (error) throw error;
       }
       
+      // Automatically sync with all connected users after preferences update
+      await syncWithAllConnectedUsers();
+      
       return sharingPrefs;
     } catch (err) {
       console.error("Error in updateSharingPreferences:", err);
       throw err;
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const syncWithAllConnectedUsers = async (): Promise<void> => {
+    if (!user) return;
+    
+    try {
+      const { data: connections } = await supabase
+        .from('profile_sharing')
+        .select('user_id_1, user_id_2')
+        .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
+      
+      if (!connections || connections.length === 0) return;
+      
+      const otherUserIds = connections.map(conn => 
+        conn.user_id_1 === user.id ? conn.user_id_2 : conn.user_id_1
+      );
+      
+      console.log("Syncing with all connected users:", otherUserIds);
+      
+      // Sync with all connected users in parallel
+      await Promise.allSettled(
+        otherUserIds.map(userId => syncData(userId))
+      );
+      
+    } catch (err) {
+      console.error("Error syncing with all connected users:", err);
     }
   };
 
@@ -191,7 +221,8 @@ export const useSync = () => {
             id: profile.id,
             first_name: profile.first_name || 'Connected User',
             share_token: null,
-            created_at: profile.created_at
+            created_at: profile.created_at,
+            avatar_url: profile.avatar_url
           });
         });
       }
@@ -202,11 +233,13 @@ export const useSync = () => {
         if (profile) {
           return profile;
         } else {
+          // Fallback information for users without profiles
           return {
             id,
             first_name: 'Connected User',
             share_token: null,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            avatar_url: null
           };
         }
       });
@@ -462,7 +495,7 @@ export const useSync = () => {
         if (!existingRecipe) {
           // Create a clean recipe object with only the needed fields
           const newRecipe = {
-            title: recipe.title,
+            title: recipe.title || '',
             description: recipe.description || '',
             ingredients: recipe.ingredients || [],
             instructions: recipe.instructions || [],

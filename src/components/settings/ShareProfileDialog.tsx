@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import useSync from "@/hooks/useSync";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type ShareProfileDialogProps = {
   open: boolean;
@@ -423,9 +424,14 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                   <div key={user.id} className="flex flex-col p-3 border rounded-md">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
-                          {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
-                        </div>
+                        <Avatar className="h-8 w-8">
+                          {user.avatar_url ? (
+                            <AvatarImage src={user.avatar_url} alt={user.first_name || "User"} />
+                          ) : null}
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
+                          </AvatarFallback>
+                        </Avatar>
                         <span className="ml-3 font-medium">{user.first_name || 'Connected User'}</span>
                       </div>
                       <Button 

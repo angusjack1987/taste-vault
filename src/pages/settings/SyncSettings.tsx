@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share, ArrowLeft, Copy, Check, RefreshCw } from "lucide-react";
@@ -13,6 +14,7 @@ import useAuth from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import useSync, { SharingPreferences } from "@/hooks/useSync";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const SyncSettings = () => {
   const { user } = useAuth();
@@ -222,8 +224,21 @@ const SyncSettings = () => {
             <CardContent>
               <ul className="space-y-2">
                 {connectedUsers.map(user => (
-                  <li key={user.id} className="p-2 border rounded flex justify-between items-center">
-                    <span>{user.first_name || 'Unknown user'}</span>
+                  <li key={user.id} className="p-3 border rounded flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Avatar className="h-8 w-8 mr-3">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.first_name || "User"} />
+                        ) : null}
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{user.first_name || 'Connected User'}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Connected since {new Date(user.created_at).toLocaleDateString()}
+                    </span>
                   </li>
                 ))}
               </ul>
