@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -27,7 +26,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   } = useSync();
   const connectWithUserMutation = useConnectWithUser();
   const removeConnectionMutation = useRemoveConnection();
-  const { data: connectedUsers, isLoading: isLoadingConnections } = useConnectedUsersQuery();
+  const { data: connectedUsers, isLoading: isLoadingConnections, refetch: refetchConnections } = useConnectedUsersQuery();
   
   const [copied, setCopied] = useState(false);
   const [partnerEmail, setPartnerEmail] = useState("");
@@ -39,13 +38,15 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("share");
   
-  // Fetch share token when dialog opens
   useEffect(() => {
     if (open && user) {
       setIsLoading(true);
       fetchShareToken();
+      if (activeTab === "connections") {
+        refetchConnections();
+      }
     }
-  }, [open, user]);
+  }, [open, user, activeTab]);
   
   const fetchShareToken = async () => {
     if (!user) return;
@@ -69,7 +70,6 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       if (data?.token) {
         setShareToken(data.token);
       } else {
-        // Generate a token if none exists
         generateShareToken();
       }
     } catch (error) {
@@ -85,10 +85,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     
     try {
       setIsGenerating(true);
-      const newToken = uuidv4().substring(0, 12); // Using shorter token for better usability
+      const newToken = uuidv4().substring(0, 12);
       console.log("Generating new share token:", newToken);
       
-      // First check if there's an existing token to update
       const { data: existingToken, error: checkError } = await supabase
         .from('share_tokens')
         .select('id')
@@ -98,7 +97,6 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       let result;
       
       if (existingToken) {
-        // Update existing token
         result = await supabase
           .from('share_tokens')
           .update({ token: newToken, updated_at: new Date().toISOString() })
@@ -106,7 +104,6 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
           .select('token')
           .single();
       } else {
-        // Insert new token
         result = await supabase
           .from('share_tokens')
           .insert({ user_id: user.id, token: newToken })
@@ -167,9 +164,6 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setIsSharing(true);
     
     try {
-      // In a full implementation, this would send an email to the partner
-      // For now, we'll just show a success message
-      
       toast.success(`Invitation sent to ${partnerEmail}`);
       setPartnerEmail("");
       onOpenChange(false);
@@ -192,7 +186,6 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     try {
       console.log("Attempting to connect with token:", connectToken);
       
-      // First check if this token exists in the new share_tokens table
       const { data: tokenCheck, error: tokenCheckError } = await supabase
         .from('share_tokens')
         .select('user_id')
@@ -213,7 +206,6 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         return;
       }
       
-      // Now get the user's name for better feedback
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('first_name')
@@ -228,6 +220,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         toast.success(`Successfully connected with ${username}`);
         setConnectToken("");
         setActiveTab("connections");
+        refetchConnections();
       }
     } catch (error) {
       console.error('Error connecting with token:', error);
@@ -243,6 +236,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         const success = await removeConnectionMutation.mutateAsync(userId);
         if (success) {
           toast.success(`Connection with ${userName} removed`);
+          refetchConnections();
         }
       } catch (error) {
         console.error('Error removing connection:', error);
@@ -255,6 +249,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Connect & Share</DialogTitle>
+          </DialogHeader>
           <div className="py-8 flex justify-center items-center">
             <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
             <span className="ml-2">Loading your share token...</span>
@@ -280,7 +277,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </TabsTrigger>
-            <TabsTrigger value="connections">
+            <TabsTrigger value="connections" onClick={() => refetchConnections()}>
               <Users className="h-4 w-4 mr-2" />
               Connections
               {connectedUsers && connectedUsers.length > 0 && (
@@ -399,7 +396,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                       <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
                         {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
                       </div>
-                      <span className="ml-3 font-medium">{user.first_name || 'User'}</span>
+                      <span className="ml-3 font-medium">{user.first_name || 'Unknown User'}</span>
                     </div>
                     <Button 
                       variant="ghost"

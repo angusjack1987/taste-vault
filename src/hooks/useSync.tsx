@@ -145,6 +145,8 @@ export const useSync = () => {
     if (!user) return [];
     
     try {
+      console.log("Fetching connections for user:", user.id);
+      
       const { data: connections, error } = await supabase
         .from('profile_sharing')
         .select('user_id_1, user_id_2')
@@ -165,9 +167,11 @@ export const useSync = () => {
       
       console.log("Found connected user IDs:", otherUserIds);
       
+      if (otherUserIds.length === 0) return [];
+      
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, share_token, created_at')
+        .select('id, first_name, avatar_url, created_at')
         .in('id', otherUserIds);
         
       if (profilesError) {
@@ -177,7 +181,14 @@ export const useSync = () => {
       
       console.log("Fetched connected profiles:", profiles);
       
-      return profiles || [];
+      const connectedUsers: ConnectedUser[] = profiles?.map(profile => ({
+        id: profile.id,
+        first_name: profile.first_name || 'Unknown User',
+        share_token: null,
+        created_at: profile.created_at
+      })) || [];
+      
+      return connectedUsers;
     } catch (err) {
       console.error("Error in fetchConnectedUsers:", err);
       return [];
