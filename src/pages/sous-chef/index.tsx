@@ -1,3 +1,3 @@
 
-import SousChefPage from './Index';
-export default SousChefPage;
+import SousChefContent from './SousChefContent';
+export default SousChefContent;

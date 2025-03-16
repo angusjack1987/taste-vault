@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { CookingTemperatureGuide } from "@/components/sous-chef/CookingTemperatureGuide";
 import { Separator } from "@/components/ui/separator";
 
-const SousChefPage = () => {
+const SousChefContent = () => {
   useEffect(() => {
     document.title = "Sous Chef | Cooking Helper";
   }, []);
@@ -68,4 +68,4 @@ const SousChefPage = () => {
   );
 };
 
-export default SousChefPage;
+export default SousChefContent;
