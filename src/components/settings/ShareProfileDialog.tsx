@@ -44,7 +44,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       // Save the token to the user's profile
       const { error } = await supabase
         .from('profiles')
-        .update({ share_token: newToken })
+        .update({ 
+          share_token: newToken // This field is now in the database
+        })
         .eq('id', user.id);
       
       if (error) throw error;
