@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,8 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import AuthGuard from "@/components/AuthGuard";
-import MainLayout from "@/components/MainLayout";
-import SousChefPage from "@/pages/sous-chef/SousChefPage";
+import MainLayout from "@/components/layout/MainLayout";
+import SousChefPage from "@/pages/sous-chef";
 
 // Import pages
 import Dashboard from "./pages/dashboard/Index";
@@ -130,7 +131,13 @@ function App() {
                 </AuthGuard>
               } />
               {/* Add the new route for Sous Chef */}
-              <Route path="/sous-chef" element={<MainLayout><SousChefPage /></MainLayout>} />
+              <Route path="/sous-chef" element={
+                <AuthGuard>
+                  <MainLayout title="Sous Chef" hideNavigation={false}>
+                    <SousChefPage />
+                  </MainLayout>
+                </AuthGuard>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
