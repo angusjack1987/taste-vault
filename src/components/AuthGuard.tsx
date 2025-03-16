@@ -36,6 +36,10 @@ const AuthGuard = ({
           .eq('user_id', user.id)
           .single();
         
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error checking onboarding status:", error);
+        }
+        
         setHasCompletedOnboarding(!!data);
       } catch (error) {
         console.error("Error checking onboarding status:", error);
@@ -65,8 +69,9 @@ const AuthGuard = ({
       } else if (!requireAuth && isAuthenticated) {
         // User is logged in but the page is only for non-authenticated users
         navigate("/");
-      } else if (isAuthenticated && !isOnboardingRoute && hasCompletedOnboarding === false && location.pathname !== '/auth/login' && location.pathname !== '/auth/register') {
-        // User is authenticated but hasn't completed onboarding and isn't on the onboarding page
+      } else if (isAuthenticated && !isOnboardingRoute && hasCompletedOnboarding === false && 
+                location.pathname !== '/auth/login' && location.pathname !== '/auth/register') {
+        // User is authenticated but hasn't completed onboarding and isn't on the onboarding or auth pages
         navigate("/onboarding");
       } else if (isAuthenticated && isOnboardingRoute && hasCompletedOnboarding === true) {
         // User is on the onboarding page but has already completed onboarding
@@ -84,7 +89,7 @@ const AuthGuard = ({
   // 1. We require auth and user is authenticated (and has completed onboarding if that's required), OR
   // 2. We don't require auth and user is not authenticated
   const shouldRender = 
-    (requireAuth && !!user && (hasCompletedOnboarding !== false || location.pathname === '/onboarding')) || 
+    (requireAuth && !!user && (!requireOnboarding || hasCompletedOnboarding !== false || location.pathname === '/onboarding')) || 
     (!requireAuth && !user);
 
   // If conditions aren't met, render nothing (navigation will happen via useEffect)

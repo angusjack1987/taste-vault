@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -302,8 +301,33 @@ const OnboardingPage = () => {
   };
 
   // Handle completion and navigate to dashboard
-  const finishOnboarding = () => {
-    navigate("/");
+  const finishOnboarding = async () => {
+    try {
+      // Force refresh the onboarding status before navigating
+      if (user) {
+        // This ensures the AuthGuard component will have the updated status
+        const { data } = await supabase
+          .from('user_preferences')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (data) {
+          // Successfully completed onboarding
+          toast({
+            title: "Onboarding complete!",
+            description: "Your preferences have been saved.",
+          });
+        }
+      }
+      
+      // Navigate to dashboard
+      navigate("/");
+    } catch (error) {
+      console.error("Error finishing onboarding:", error);
+      // Still navigate to dashboard even if the check fails
+      navigate("/");
+    }
   };
 
   // Welcome step content
