@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Book, Plus, Calendar, Settings, BookPlus, ShoppingCart, Refrigerator, Baby } from "lucide-react";
+import { Home, Book, Plus, Calendar, Settings, BookPlus, ShoppingCart, Refrigerator, Baby, ChefHat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,6 +121,12 @@ const BottomNav = () => {
                 <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
                   <ShoppingCart className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
                   Shopping List
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/sous-chef">
+                <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
+                  <ChefHat className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
+                  Sous Chef
                 </DropdownMenuItem>
               </Link>
               {babyFoodEnabled && 

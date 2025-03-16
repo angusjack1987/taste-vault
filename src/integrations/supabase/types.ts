@@ -216,26 +216,23 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          owner_id: string
-          shared_with_email: string
-          status: string
           updated_at: string
+          user_id_1: string
+          user_id_2: string
         }
         Insert: {
           created_at?: string
           id?: string
-          owner_id: string
-          shared_with_email: string
-          status?: string
           updated_at?: string
+          user_id_1: string
+          user_id_2: string
         }
         Update: {
           created_at?: string
           id?: string
-          owner_id?: string
-          shared_with_email?: string
-          status?: string
           updated_at?: string
+          user_id_1?: string
+          user_id_2?: string
         }
         Relationships: []
       }
@@ -246,6 +243,7 @@ export type Database = {
           created_at: string
           first_name: string | null
           id: string
+          share_token: string | null
           updated_at: string
         }
         Insert: {
@@ -254,6 +252,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id: string
+          share_token?: string | null
           updated_at?: string
         }
         Update: {
@@ -262,6 +261,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id?: string
+          share_token?: string | null
           updated_at?: string
         }
         Relationships: []
