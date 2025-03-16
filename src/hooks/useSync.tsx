@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -169,6 +170,7 @@ export const useSync = () => {
       
       if (otherUserIds.length === 0) return [];
       
+      // Check if profiles exist with matching IDs
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, avatar_url, created_at')
@@ -181,14 +183,23 @@ export const useSync = () => {
       
       console.log("Fetched connected profiles:", profiles);
       
-      const connectedUsers: ConnectedUser[] = profiles?.map(profile => ({
-        id: profile.id,
-        first_name: profile.first_name || 'Unknown User',
-        share_token: null,
-        created_at: profile.created_at
-      })) || [];
-      
-      return connectedUsers;
+      // Use profile data if available, otherwise create placeholder profiles for connected users
+      if (profiles && profiles.length > 0) {
+        return profiles.map(profile => ({
+          id: profile.id,
+          first_name: profile.first_name || 'Unknown User',
+          share_token: null,
+          created_at: profile.created_at
+        }));
+      } else {
+        // Create placeholder profiles for connected users if no profile data is found
+        return otherUserIds.map(id => ({
+          id,
+          first_name: 'Connected User',
+          share_token: null,
+          created_at: new Date().toISOString()
+        }));
+      }
     } catch (err) {
       console.error("Error in fetchConnectedUsers:", err);
       return [];
@@ -296,6 +307,7 @@ export const useSync = () => {
       
       console.log("Successfully created connection:", data);
       
+      // After creating the connection, try to sync data
       await syncData(targetUserId);
       
       const firstName = targetUser?.first_name || 'user';
@@ -340,6 +352,7 @@ export const useSync = () => {
     
     try {
       setIsProcessing(true);
+      console.log(`Starting data sync from user ${fromUserId} to ${user.id}`);
       
       const { data: prefsData, error: prefsError } = await supabase
         .from('user_preferences')
@@ -347,35 +360,60 @@ export const useSync = () => {
         .eq('user_id', fromUserId)
         .maybeSingle();
         
-      if (prefsError && prefsError.code !== 'PGRST116') throw prefsError;
+      if (prefsError && prefsError.code !== 'PGRST116') {
+        console.error("Error fetching preferences:", prefsError);
+        throw prefsError;
+      }
       
       const sharingPrefs = getSharingPreferences(prefsData?.preferences || null);
+      console.log("Sharing preferences:", sharingPrefs);
+      
+      // Create an array of promises for each syncing operation
+      const syncPromises = [];
       
       if (sharingPrefs.recipes) {
-        await syncRecipes(fromUserId);
+        syncPromises.push(syncRecipes(fromUserId));
       }
       
       if (sharingPrefs.babyRecipes) {
-        await syncBabyRecipes(fromUserId);
+        syncPromises.push(syncBabyRecipes(fromUserId));
       }
       
       if (sharingPrefs.fridgeItems) {
-        await syncFridgeItems(fromUserId);
+        syncPromises.push(syncFridgeItems(fromUserId));
       }
       
       if (sharingPrefs.shoppingList) {
-        await syncShoppingList(fromUserId);
+        syncPromises.push(syncShoppingList(fromUserId));
       }
       
       if (sharingPrefs.mealPlan) {
-        await syncMealPlans(fromUserId);
+        syncPromises.push(syncMealPlans(fromUserId));
       }
       
-      toast.success("Data sync completed successfully!");
+      // Wait for all promises to complete, even if some fail
+      const results = await Promise.allSettled(syncPromises);
+      
+      // Check if any operations failed
+      const failedOperations = results.filter(r => r.status === 'rejected');
+      if (failedOperations.length > 0) {
+        console.error("Some sync operations failed:", failedOperations);
+        if (failedOperations.length === syncPromises.length) {
+          // All operations failed
+          toast.error("Data sync failed. Please try again.");
+          return false;
+        } else {
+          // Some operations failed, but not all
+          toast.warning("Some data couldn't be synced. Try again later.");
+        }
+      } else {
+        toast.success("Data sync completed successfully!");
+      }
+      
       return true;
     } catch (err) {
       console.error("Error in syncData:", err);
-      toast.error("Failed to sync data");
+      toast.error("Failed to sync data: " + (err instanceof Error ? err.message : String(err)));
       return false;
     } finally {
       setIsProcessing(false);
@@ -383,96 +421,155 @@ export const useSync = () => {
   };
 
   const syncRecipes = async (fromUserId: string): Promise<void> => {
-    const { data: recipes, error } = await supabase
-      .from('recipes')
-      .select('*')
-      .eq('user_id', fromUserId);
-      
-    if (error) throw error;
-    
-    if (!recipes || recipes.length === 0) return;
-    
-    for (const recipe of recipes) {
-      const { data: existingRecipe } = await supabase
+    console.log(`Syncing recipes from user ${fromUserId}`);
+    try {
+      const { data: recipes, error } = await supabase
         .from('recipes')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('title', recipe.title)
-        .maybeSingle();
+        .select('*')
+        .eq('user_id', fromUserId);
         
-      if (!existingRecipe) {
-        const newRecipe = {
-          ...recipe,
-          id: undefined,
-          user_id: user!.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        await supabase.from('recipes').insert([newRecipe]);
+      if (error) {
+        console.error("Error fetching recipes:", error);
+        throw error;
       }
-    }
-    
-    queryClient.invalidateQueries({ queryKey: ['recipes'] });
-  };
-
-  const syncBabyRecipes = async (fromUserId: string): Promise<void> => {
-    const { data: babyRecipes, error } = await supabase
-      .from('baby_food_recipes')
-      .select('*')
-      .eq('user_id', fromUserId);
       
-    if (error) throw error;
-    
-    if (!babyRecipes || babyRecipes.length === 0) return;
-    
-    for (const recipe of babyRecipes) {
-      const { data: existingRecipe } = await supabase
-        .from('baby_food_recipes')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('title', recipe.title)
-        .maybeSingle();
-        
-      if (!existingRecipe) {
-        const newRecipe = {
-          ...recipe,
-          id: undefined,
-          user_id: user!.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        await supabase.from('baby_food_recipes').insert([newRecipe]);
-      }
-    }
-    
-    const { data: babyProfiles, error: profilesError } = await supabase
-      .from('baby_profiles')
-      .select('*')
-      .eq('user_id', fromUserId);
+      console.log(`Found ${recipes?.length || 0} recipes to sync`);
       
-    if (!profilesError && babyProfiles && babyProfiles.length > 0) {
-      for (const profile of babyProfiles) {
-        const { data: existingProfile } = await supabase
-          .from('baby_profiles')
+      if (!recipes || recipes.length === 0) return;
+      
+      let syncedCount = 0;
+      
+      for (const recipe of recipes) {
+        const { data: existingRecipe } = await supabase
+          .from('recipes')
           .select('id')
           .eq('user_id', user!.id)
-          .eq('name', profile.name)
+          .eq('title', recipe.title)
           .maybeSingle();
           
-        if (!existingProfile) {
-          const newProfile = {
-            ...profile,
-            id: undefined,
+        if (!existingRecipe) {
+          const newRecipe = {
+            ...recipe,
+            id: undefined, // Remove id so a new one is generated
             user_id: user!.id,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
           
-          await supabase.from('baby_profiles').insert([newProfile]);
+          const { error: insertError } = await supabase
+            .from('recipes')
+            .insert([newRecipe]);
+            
+          if (insertError) {
+            console.error(`Error syncing recipe "${recipe.title}":`, insertError);
+          } else {
+            syncedCount++;
+          }
         }
       }
+      
+      console.log(`Successfully synced ${syncedCount} recipes`);
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    } catch (err) {
+      console.error("Error in syncRecipes:", err);
+      throw err;
+    }
+  };
+
+  const syncBabyRecipes = async (fromUserId: string): Promise<void> => {
+    console.log(`Syncing baby recipes from user ${fromUserId}`);
+    try {
+      const { data: babyRecipes, error } = await supabase
+        .from('baby_food_recipes')
+        .select('*')
+        .eq('user_id', fromUserId);
+        
+      if (error) {
+        console.error("Error fetching baby recipes:", error);
+        throw error;
+      }
+      
+      console.log(`Found ${babyRecipes?.length || 0} baby recipes to sync`);
+      
+      if (!babyRecipes || babyRecipes.length === 0) return;
+      
+      let syncedCount = 0;
+      
+      for (const recipe of babyRecipes) {
+        const { data: existingRecipe } = await supabase
+          .from('baby_food_recipes')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('title', recipe.title)
+          .maybeSingle();
+          
+        if (!existingRecipe) {
+          const newRecipe = {
+            ...recipe,
+            id: undefined, // Remove id so a new one is generated
+            user_id: user!.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          
+          const { error: insertError } = await supabase
+            .from('baby_food_recipes')
+            .insert([newRecipe]);
+            
+          if (insertError) {
+            console.error(`Error syncing baby recipe "${recipe.title}":`, insertError);
+          } else {
+            syncedCount++;
+          }
+        }
+      }
+      
+      console.log(`Successfully synced ${syncedCount} baby recipes`);
+      
+      // Also sync baby profiles
+      const { data: babyProfiles, error: profilesError } = await supabase
+        .from('baby_profiles')
+        .select('*')
+        .eq('user_id', fromUserId);
+        
+      if (!profilesError && babyProfiles && babyProfiles.length > 0) {
+        console.log(`Found ${babyProfiles.length} baby profiles to sync`);
+        let syncedProfileCount = 0;
+        
+        for (const profile of babyProfiles) {
+          const { data: existingProfile } = await supabase
+            .from('baby_profiles')
+            .select('id')
+            .eq('user_id', user!.id)
+            .eq('name', profile.name)
+            .maybeSingle();
+            
+          if (!existingProfile) {
+            const newProfile = {
+              ...profile,
+              id: undefined, // Remove id so a new one is generated
+              user_id: user!.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            
+            const { error: insertError } = await supabase
+              .from('baby_profiles')
+              .insert([newProfile]);
+              
+            if (insertError) {
+              console.error(`Error syncing baby profile "${profile.name}":`, insertError);
+            } else {
+              syncedProfileCount++;
+            }
+          }
+        }
+        
+        console.log(`Successfully synced ${syncedProfileCount} baby profiles`);
+      }
+    } catch (err) {
+      console.error("Error in syncBabyRecipes:", err);
+      throw err;
     }
   };
 
@@ -545,38 +642,60 @@ export const useSync = () => {
   };
 
   const syncMealPlans = async (fromUserId: string): Promise<void> => {
-    const { data: mealPlans, error } = await supabase
-      .from('meal_plans')
-      .select('*')
-      .eq('user_id', fromUserId);
-      
-    if (error) throw error;
-    
-    if (!mealPlans || mealPlans.length === 0) return;
-    
-    for (const plan of mealPlans) {
-      const { data: existingPlan } = await supabase
+    console.log(`Syncing meal plans from user ${fromUserId}`);
+    try {
+      const { data: mealPlans, error } = await supabase
         .from('meal_plans')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('date', plan.date)
-        .eq('meal_type', plan.meal_type)
-        .maybeSingle();
+        .select('*')
+        .eq('user_id', fromUserId);
         
-      if (!existingPlan) {
-        const newPlan = {
-          ...plan,
-          id: undefined,
-          user_id: user!.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        await supabase.from('meal_plans').insert([newPlan]);
+      if (error) {
+        console.error("Error fetching meal plans:", error);
+        throw error;
       }
+      
+      console.log(`Found ${mealPlans?.length || 0} meal plans to sync`);
+      
+      if (!mealPlans || mealPlans.length === 0) return;
+      
+      let syncedCount = 0;
+      
+      for (const plan of mealPlans) {
+        const { data: existingPlan } = await supabase
+          .from('meal_plans')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('date', plan.date)
+          .eq('meal_type', plan.meal_type)
+          .maybeSingle();
+          
+        if (!existingPlan) {
+          const newPlan = {
+            ...plan,
+            id: undefined, // Remove id so a new one is generated
+            user_id: user!.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          
+          const { error: insertError } = await supabase
+            .from('meal_plans')
+            .insert([newPlan]);
+            
+          if (insertError) {
+            console.error(`Error syncing meal plan for ${plan.date}, ${plan.meal_type}:`, insertError);
+          } else {
+            syncedCount++;
+          }
+        }
+      }
+      
+      console.log(`Successfully synced ${syncedCount} meal plans`);
+      queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
+    } catch (err) {
+      console.error("Error in syncMealPlans:", err);
+      throw err;
     }
-    
-    queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
   };
 
   const useSharingPreferencesQuery = () => {

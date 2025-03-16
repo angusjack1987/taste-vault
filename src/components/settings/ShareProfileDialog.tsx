@@ -228,6 +228,8 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         toast.success(`Successfully connected with ${username}`);
         setConnectToken("");
         setActiveTab("connections");
+        // Perform an immediate data sync
+        await syncDataMutation.mutateAsync(tokenCheck.user_id);
         refetchConnections();
       }
     } catch (error) {
@@ -424,7 +426,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                         <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
                           {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
                         </div>
-                        <span className="ml-3 font-medium">{user.first_name || 'Unknown User'}</span>
+                        <span className="ml-3 font-medium">{user.first_name || 'Connected User'}</span>
                       </div>
                       <Button 
                         variant="ghost"

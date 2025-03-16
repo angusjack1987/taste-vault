@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,15 +12,17 @@ import {
   Mail, 
   Twitter,
   Facebook,
-  MessageCircle
+  MessageCircle,
+  Check 
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ShareRecipeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipeName: string;
-  onShare: (method: string) => void;
+  onShare?: (method: string) => void;
 }
 
 const ShareRecipeDialog = ({
@@ -30,6 +32,29 @@ const ShareRecipeDialog = ({
   onShare
 }: ShareRecipeDialogProps) => {
   const isMobile = useIsMobile();
+  const [copied, setCopied] = useState(false);
+  
+  const handleShare = (method: string) => {
+    if (method === 'copy') {
+      navigator.clipboard.writeText(`Check out this recipe: ${recipeName}`)
+        .then(() => {
+          setCopied(true);
+          toast.success("Link copied to clipboard");
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch((err) => {
+          console.error('Error copying to clipboard:', err);
+          toast.error("Failed to copy to clipboard");
+        });
+    } else {
+      if (onShare) {
+        onShare(method);
+      } else {
+        toast.success(`Shared recipe via ${method}`);
+      }
+      onOpenChange(false);
+    }
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,16 +67,16 @@ const ShareRecipeDialog = ({
           <Button 
             variant="outline" 
             className="flex flex-col items-center justify-center h-20 gap-2"
-            onClick={() => onShare('copy')}
+            onClick={() => handleShare('copy')}
           >
-            <Copy className="h-5 w-5" />
-            <span className="text-sm">Copy Link</span>
+            {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+            <span className="text-sm">{copied ? 'Copied!' : 'Copy Link'}</span>
           </Button>
           
           <Button 
             variant="outline" 
             className="flex flex-col items-center justify-center h-20 gap-2"
-            onClick={() => onShare('email')}
+            onClick={() => handleShare('email')}
           >
             <Mail className="h-5 w-5" />
             <span className="text-sm">Email</span>
@@ -60,7 +85,7 @@ const ShareRecipeDialog = ({
           <Button 
             variant="outline" 
             className="flex flex-col items-center justify-center h-20 gap-2"
-            onClick={() => onShare('whatsapp')}
+            onClick={() => handleShare('whatsapp')}
           >
             <MessageCircle className="h-5 w-5" />
             <span className="text-sm">WhatsApp</span>
@@ -69,7 +94,7 @@ const ShareRecipeDialog = ({
           <Button 
             variant="outline" 
             className="flex flex-col items-center justify-center h-20 gap-2"
-            onClick={() => onShare('twitter')}
+            onClick={() => handleShare('twitter')}
           >
             <Twitter className="h-5 w-5" />
             <span className="text-sm">Twitter</span>
@@ -78,7 +103,7 @@ const ShareRecipeDialog = ({
           <Button 
             variant="outline" 
             className="flex flex-col items-center justify-center h-20 gap-2 col-span-2"
-            onClick={() => onShare('facebook')}
+            onClick={() => handleShare('facebook')}
           >
             <Facebook className="h-5 w-5" />
             <span className="text-sm">Facebook</span>
