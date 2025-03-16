@@ -8,6 +8,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
+import { Json } from "@/integrations/supabase/types";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,20 @@ const itemVariants = {
     opacity: 1,
     transition: { duration: 0.5 }
   }
+};
+
+// Type for user preferences
+type UserPreferences = {
+  food?: {
+    favoriteCuisines?: string;
+    ingredientsToAvoid?: string;
+    dietaryNotes?: string;
+    babyFoodEnabled?: boolean;
+    babyAge?: string;
+    babyLedWeaning?: boolean;
+    suitableBabyIngredients?: string;
+    babyFoodPreferences?: string;
+  };
 };
 
 const OnboardingPage = () => {
@@ -185,17 +200,19 @@ const OnboardingPage = () => {
         .eq("user_id", user.id)
         .single();
 
-      const updatedPreferences = {
+      const updatedPreferences: UserPreferences = {
         food: foodPreferences,
       };
 
       if (existingPrefs) {
         // Update existing preferences
+        const existingPrefsObj = existingPrefs.preferences as Record<string, any> || {};
+        
         const { error } = await supabase
           .from("user_preferences")
           .update({ 
             preferences: {
-              ...existingPrefs.preferences,
+              ...existingPrefsObj,
               food: foodPreferences
             }
           })
@@ -254,13 +271,16 @@ const OnboardingPage = () => {
       };
 
       // Update existing preferences
+      const existingPrefsObj = existingPrefs.preferences as Record<string, any> || {};
+      const existingFoodPrefs = existingPrefsObj.food || {};
+      
       const { error } = await supabase
         .from("user_preferences")
         .update({ 
           preferences: {
-            ...existingPrefs.preferences,
+            ...existingPrefsObj,
             food: {
-              ...(existingPrefs.preferences?.food || {}),
+              ...existingFoodPrefs,
               ...babyFoodPreferences
             }
           }

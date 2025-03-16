@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,18 +12,20 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogin = async (values: z.infer<typeof formSchema>) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     setAuthError(null);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
+        email,
+        password,
       });
 
       if (error) {
@@ -40,11 +43,14 @@ const Login = () => {
       if (isNewUser) {
         navigate("/onboarding");
       } else {
-        const returnUrl = location.state?.returnUrl || "/";
+        const returnUrl = location.state && (location.state as any).returnUrl || "/";
         navigate(returnUrl);
       }
       
-      toast.success("Successfully logged in");
+      toast({
+        title: "Success",
+        description: "Successfully logged in"
+      });
     } catch (error: any) {
       console.error("Login error:", error);
       setAuthError(error.message || "Failed to login");
@@ -95,6 +101,12 @@ const Login = () => {
               </div>
             </div>
           </div>
+
+          {authError && (
+            <div className="text-sm text-red-500 font-medium">
+              {authError}
+            </div>
+          )}
 
           <Button
             type="submit"
