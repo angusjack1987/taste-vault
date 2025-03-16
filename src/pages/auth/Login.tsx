@@ -17,6 +17,9 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Extract returnUrl from state if available
+  const returnUrl = location.state?.returnUrl || "/";
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -43,7 +46,7 @@ const Login = () => {
       if (isNewUser) {
         navigate("/onboarding");
       } else {
-        const returnUrl = location.state && (location.state as any).returnUrl || "/";
+        // Use the returnUrl from state to redirect the user back to where they came from
         navigate(returnUrl);
       }
       
@@ -64,7 +67,11 @@ const Login = () => {
       <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-primary">Welcome Back!</h1>
-          <p className="mt-2 text-muted-foreground">Sign in to access your delicious recipes</p>
+          <p className="mt-2 text-muted-foreground">
+            {returnUrl.includes('connect-profile') 
+              ? "Sign in to connect with this profile" 
+              : "Sign in to access your delicious recipes"}
+          </p>
         </div>
 
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
