@@ -45,6 +45,7 @@ export const useProfileConnection = (
 
       try {
         console.log("Checking connection for owner:", ownerId);
+        console.log("Current user:", user?.id);
         
         // First, verify the token is valid for this owner by fetching the profile
         const { data: ownerProfile, error: profileError } = await supabase
@@ -80,11 +81,12 @@ export const useProfileConnection = (
 
         // If logged in, check if already connected
         if (user) {
-          // Check for any existing connection between these users (in either direction)
+          // Check for existing connection between the owner and current user
           const { data: existingConnection, error: connectionError } = await supabase
             .from('profile_sharing')
             .select('status')
-            .or(`and(owner_id.eq.${ownerId},shared_with_email.eq.${user.email}),and(owner_id.eq.${user.id},shared_with_email.eq.${user.email})`)
+            .eq('owner_id', ownerId)
+            .eq('shared_with_email', user.email)
             .maybeSingle();
 
           console.log("Existing connection:", existingConnection, "Error:", connectionError);
@@ -131,6 +133,16 @@ export const useProfileConnection = (
       toast({
         title: "Invalid Link",
         description: "This sharing link is invalid or has expired.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Prevent connecting to your own profile
+    if (user.id === ownerId) {
+      toast({
+        title: "Cannot connect",
+        description: "You cannot connect to your own profile.",
         variant: "destructive",
       });
       return;

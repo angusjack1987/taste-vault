@@ -33,7 +33,8 @@ const ConnectProfile = () => {
     // Log status changes
     console.log("ConnectProfile - Connection status:", connectionStatus);
     console.log("ConnectProfile - Connection loading:", connectionLoading);
-  }, [connectionStatus, connectionLoading]);
+    console.log("ConnectProfile - Owner name:", ownerName);
+  }, [connectionStatus, connectionLoading, ownerName]);
 
   // Show loading while waiting for auth to initialize
   if (authLoading) {
@@ -42,7 +43,7 @@ const ConnectProfile = () => {
 
   const renderContent = () => {
     if (connectionLoading) {
-      return <LoadingState />;
+      return <LoadingState message="Checking connection status..." />;
     }
 
     if (connectionStatus === 'invalid_token') {
@@ -88,7 +89,7 @@ const ConnectProfile = () => {
       return (
         <ProfileConnectionCard
           title="Profiles Connected!"
-          description={`You are connected with ${ownerName}'s profile. You can now share recipes, meal plans, and shopping lists.`}
+          description={`You are now connected with ${ownerName}'s profile. You can now share recipes, meal plans, and shopping lists.`}
           primaryButtonProps={{
             label: "Manage Profile Sharing",
             onClick: () => navigate('/settings/profile-sharing')
