@@ -46,7 +46,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     
     try {
       // Check if user exists with that email
-      const { data: existingUsers, error: userError } = await supabase
+      const { error: userError } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', partnerEmail)
