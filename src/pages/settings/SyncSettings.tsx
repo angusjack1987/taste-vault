@@ -26,7 +26,7 @@ const SyncSettings = () => {
   } = useSync();
   
   const { data: sharingPreferences } = useSharingPreferencesQuery();
-  const { data: connectedUsers } = useConnectedUsersQuery();
+  const { data: connectedUsers, isLoading: isLoadingConnections } = useConnectedUsersQuery();
   const updateSharingPrefsMutation = useUpdateSharingPreferences();
   const connectWithUserMutation = useConnectWithUser();
   
@@ -92,7 +92,7 @@ const SyncSettings = () => {
     if (!user) return;
     try {
       setIsGenerating(true);
-      const newToken = uuidv4();
+      const newToken = uuidv4().substring(0, 12); // Generate a shorter token for easier sharing
       console.log('Generating new share token:', newToken);
       
       const { data, error } = await supabase
@@ -140,7 +140,10 @@ const SyncSettings = () => {
 
   // Connect with another user via token
   const connectWithToken = async () => {
-    if (!user || !recipientToken) return;
+    if (!user || !recipientToken) {
+      toast.error("Please enter a valid token");
+      return;
+    }
     
     console.log('Attempting to connect with token:', recipientToken);
     
@@ -149,8 +152,6 @@ const SyncSettings = () => {
         if (successful) {
           toast.success("Successfully connected with user");
           setRecipientToken("");
-        } else {
-          toast.error("Failed to connect with user");
         }
       },
       onError: (error) => {
@@ -197,7 +198,13 @@ const SyncSettings = () => {
           Back to Settings
         </Button>
         
-        {connectedUsers && connectedUsers.length > 0 && (
+        {isLoadingConnections ? (
+          <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+            <CardContent className="pt-6">
+              <p className="text-center">Loading connected users...</p>
+            </CardContent>
+          </Card>
+        ) : connectedUsers && connectedUsers.length > 0 ? (
           <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
             <CardHeader>
               <CardTitle className="text-xl">Connected Users</CardTitle>
@@ -213,6 +220,20 @@ const SyncSettings = () => {
                   </li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+            <CardHeader>
+              <CardTitle className="text-xl">Connected Users</CardTitle>
+              <CardDescription>
+                You aren't connected with any users yet
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Generate a share token below and share it with someone, or use someone else's token to connect with them.
+              </p>
             </CardContent>
           </Card>
         )}
@@ -409,6 +430,11 @@ const SyncSettings = () => {
                       {connectWithUserMutation.isPending ? "Connecting..." : "Connect"}
                     </Button>
                   </div>
+                  {connectWithUserMutation.isError && (
+                    <p className="text-sm text-red-500 mt-1">
+                      Failed to connect. Please check the token and try again.
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>

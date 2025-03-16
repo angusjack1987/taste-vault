@@ -9,6 +9,7 @@ import { Copy, Check, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import useAuth from "@/hooks/useAuth";
 import { v4 as uuidv4 } from 'uuid';
+import useSync from "@/hooks/useSync";
 
 type ShareProfileDialogProps = {
   open: boolean;
@@ -17,11 +18,15 @@ type ShareProfileDialogProps = {
 
 const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => {
   const { user } = useAuth();
+  const { useConnectWithUser } = useSync();
+  const connectWithUserMutation = useConnectWithUser();
+  
   const [copied, setCopied] = useState(false);
   const [partnerEmail, setPartnerEmail] = useState("");
   const [isSharing, setIsSharing] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [connectToken, setConnectToken] = useState("");
   
   // Fetch share token when dialog opens
   useEffect(() => {
@@ -39,7 +44,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         .from('profiles')
         .select('share_token')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
         
       if (error) {
         console.error('Error fetching share token:', error);
@@ -66,7 +71,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     
     try {
       setIsGenerating(true);
-      const newToken = uuidv4();
+      const newToken = uuidv4().substring(0, 12); // Using shorter token for better usability
       console.log("Generating new share token:", newToken);
       
       const { data, error } = await supabase
@@ -141,6 +146,27 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     }
   };
   
+  const handleConnectWithToken = async () => {
+    if (!connectToken) {
+      toast.error("Please enter a valid token");
+      return;
+    }
+    
+    connectWithUserMutation.mutate(connectToken, {
+      onSuccess: (successful) => {
+        if (successful) {
+          toast.success("Successfully connected with user");
+          setConnectToken("");
+          onOpenChange(false);
+        }
+      },
+      onError: (error) => {
+        console.error('Error connecting with token:', error);
+        toast.error("Failed to connect with user: " + (error instanceof Error ? error.message : String(error)));
+      }
+    });
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -189,6 +215,27 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
           </div>
           
           <div className="space-y-2">
+            <Label htmlFor="connect-token">Or connect with someone's token</Label>
+            <div className="flex space-x-2">
+              <Input
+                id="connect-token"
+                type="text"
+                placeholder="Enter share token"
+                value={connectToken}
+                onChange={(e) => setConnectToken(e.target.value)}
+                className="font-mono"
+              />
+              <Button 
+                type="button" 
+                onClick={handleConnectWithToken}
+                disabled={!connectToken || connectWithUserMutation.isPending}
+              >
+                {connectWithUserMutation.isPending ? "Connecting..." : "Connect"}
+              </Button>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
             <Label htmlFor="partner-email">Or invite a partner directly</Label>
             <Input
               id="partner-email"
@@ -204,7 +251,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
           <Button
             type="button"
             onClick={handleInvitePartner}
-            disabled={isSharing || !shareToken || isGenerating}
+            disabled={isSharing || !shareToken || isGenerating || !partnerEmail}
             className="w-full sm:w-auto"
           >
             <Share2 className="mr-2 h-4 w-4" />

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,7 +166,12 @@ export const useSync = () => {
         .select('user_id_1, user_id_2')
         .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching connections:", error);
+        throw error;
+      }
+      
+      console.log("Fetched connections:", connections);
       
       if (!connections || connections.length === 0) return [];
       
@@ -174,13 +180,20 @@ export const useSync = () => {
         conn.user_id_1 === user.id ? conn.user_id_2 : conn.user_id_1
       );
       
+      console.log("Found connected user IDs:", otherUserIds);
+      
       // Fetch profiles for connected users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, share_token, created_at')
         .in('id', otherUserIds);
         
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+      
+      console.log("Fetched connected profiles:", profiles);
       
       return profiles || [];
     } catch (err) {
@@ -198,11 +211,17 @@ export const useSync = () => {
       
       console.log("Attempting to connect with token:", shareToken);
       
-      // Find user with the given token
+      if (!shareToken || shareToken.trim() === '') {
+        console.error("Empty share token provided");
+        toast.error("Please enter a valid share token");
+        return false;
+      }
+      
+      // Find user with the given token - FIXED QUERY
       const { data: targetUser, error: lookupError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('share_token', shareToken)
+        .eq('share_token', shareToken.trim())
         .maybeSingle();
       
       console.log("Target user lookup result:", targetUser, lookupError);
@@ -243,7 +262,7 @@ export const useSync = () => {
         return true;
       }
       
-      // Create a new connection
+      // Create a new connection - FIXED INSERT
       const { data: newConnection, error: createConnError } = await supabase
         .from('profile_sharing')
         .insert({
