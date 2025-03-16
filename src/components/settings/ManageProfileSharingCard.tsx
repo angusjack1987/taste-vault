@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,8 @@ type SyncedProfile = {
   id: string;
   user_id_1: string;
   user_id_2: string;
-  profile: {
-    first_name: string | null;
-  } | null;
   created_at: string;
+  connectedUserName: string;
 };
 
 const ManageProfileSharingCard = () => {
@@ -31,36 +30,53 @@ const ManageProfileSharingCard = () => {
     try {
       console.log("Fetching synced profiles for user", user.id);
       
-      // Get connections where the current user is either user_id_1 or user_id_2
-      const { data, error } = await supabase
+      // Get connections where the current user is user_id_1
+      const { data: connections1, error: error1 } = await supabase
         .from('profile_sharing')
         .select(`
-          *,
-          profile:profiles!profile_sharing_user_id_2_fkey (
-            first_name
-          )
+          id,
+          user_id_1,
+          user_id_2,
+          created_at,
+          profiles:user_id_2(first_name)
         `)
-        .eq('user_id_1', user.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id_1', user.id);
 
-      if (error) throw error;
+      if (error1) throw error1;
       
-      // Also get connections where current user is user_id_2
-      const { data: data2, error: error2 } = await supabase
+      // Get connections where current user is user_id_2
+      const { data: connections2, error: error2 } = await supabase
         .from('profile_sharing')
         .select(`
-          *,
-          profile:profiles!profile_sharing_user_id_1_fkey (
-            first_name
-          )
+          id,
+          user_id_1,
+          user_id_2,
+          created_at,
+          profiles:user_id_1(first_name)
         `)
-        .eq('user_id_2', user.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id_2', user.id);
 
       if (error2) throw error2;
       
+      // Process and combine the results
+      const processedConnections1 = (connections1 || []).map(conn => ({
+        id: conn.id,
+        user_id_1: conn.user_id_1,
+        user_id_2: conn.user_id_2,
+        created_at: conn.created_at,
+        connectedUserName: conn.profiles?.first_name || 'Unknown User'
+      }));
+      
+      const processedConnections2 = (connections2 || []).map(conn => ({
+        id: conn.id,
+        user_id_1: conn.user_id_1,
+        user_id_2: conn.user_id_2,
+        created_at: conn.created_at,
+        connectedUserName: conn.profiles?.first_name || 'Unknown User'
+      }));
+      
       // Combine results
-      const allProfiles = [...(data || []), ...(data2 || [])];
+      const allProfiles = [...processedConnections1, ...processedConnections2];
       console.log("Fetched synced profiles:", allProfiles);
       setSyncedProfiles(allProfiles);
     } catch (error) {
@@ -120,16 +136,6 @@ const ManageProfileSharingCard = () => {
     });
   };
 
-  const getProfileName = (syncedProfile: SyncedProfile) => {
-    // If current user is user_id_1, show name of user_id_2's profile
-    // Otherwise show name of user_id_1's profile
-    if (user?.id === syncedProfile.user_id_1) {
-      return syncedProfile.profile?.first_name || 'Unknown User';
-    } else {
-      return syncedProfile.profile?.first_name || 'Unknown User';
-    }
-  };
-
   return (
     <Card className="border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
       <CardContent className="p-6">
@@ -169,7 +175,7 @@ const ManageProfileSharingCard = () => {
               <TableBody>
                 {syncedProfiles.map((profile) => (
                   <TableRow key={profile.id}>
-                    <TableCell>{getProfileName(profile)}</TableCell>
+                    <TableCell>{profile.connectedUserName}</TableCell>
                     <TableCell>{formatDate(profile.created_at)}</TableCell>
                     <TableCell>
                       <Button

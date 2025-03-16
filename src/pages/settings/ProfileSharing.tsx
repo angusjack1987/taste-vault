@@ -22,7 +22,7 @@ const ProfileSharing = () => {
           
           <Alert className="border-2 border-amber-500 bg-amber-50">
             <Info className="h-4 w-4 text-amber-500" />
-            <AlertTitle>Sharing Note</AlertTitle>
+            <AlertTitle>Syncing Note</AlertTitle>
             <AlertDescription>
               Share the link with someone you want to sync profiles with. After connecting, all your recipes and meal plans
               will be automatically shared between both accounts.

@@ -82,11 +82,11 @@ export const useProfileConnection = (
           const { data: existingConnection, error: connectionError } = await supabase
             .from('profile_sharing')
             .select('*')
-            .or(`user_id_1.eq.${ownerId},user_id_2.eq.${ownerId}`)
             .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`)
+            .or(`user_id_1.eq.${ownerId},user_id_2.eq.${ownerId}`)
             .maybeSingle();
 
-          console.log("Existing connection:", existingConnection, "Error:", connectionError);
+          console.log("Existing connection check:", existingConnection, "Error:", connectionError);
 
           if (existingConnection) {
             setConnectionStatus('connected');
@@ -143,8 +143,7 @@ export const useProfileConnection = (
       const { data: existingConnection } = await supabase
         .from('profile_sharing')
         .select('*')
-        .or(`user_id_1.eq.${ownerId},user_id_2.eq.${ownerId}`)
-        .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`)
+        .or(`and(user_id_1.eq.${user.id},user_id_2.eq.${ownerId}),and(user_id_1.eq.${ownerId},user_id_2.eq.${user.id})`)
         .maybeSingle();
 
       if (existingConnection) {
@@ -152,19 +151,18 @@ export const useProfileConnection = (
         setConnectionStatus('connected');
         toast({
           title: "Already connected",
-          description: `You are already connected with ${ownerName}'s profile.`,
+          description: `You are already synced with ${ownerName}'s profile.`,
         });
       } else {
         console.log("Creating new bidirectional connection");
         // Create a new bidirectional connection
-        // We store both users in the same row to represent a bidirectional connection
         const { error: insertError } = await supabase
           .from('profile_sharing')
-          .insert([{
+          .insert({
             user_id_1: user.id,
             user_id_2: ownerId,
             created_at: new Date().toISOString()
-          }]);
+          });
 
         if (insertError) throw insertError;
 
