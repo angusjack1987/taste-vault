@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,7 @@ export const useSync = () => {
         .from('user_preferences')
         .select('preferences')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
         
       if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
         console.error("Error fetching sharing preferences:", error);
@@ -98,7 +99,7 @@ export const useSync = () => {
         .from('user_preferences')
         .select('id, preferences')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       // Create a JSON-compatible preferences object
       let newPreferences: Record<string, any> = {};
@@ -194,15 +195,26 @@ export const useSync = () => {
     try {
       setIsProcessing(true);
       
+      console.log("Attempting to connect with token:", shareToken);
+      
       // Find user with the given token
       const { data: targetUser, error: lookupError } = await supabase
         .from('profiles')
         .select('id')
         .eq('share_token', shareToken)
-        .single();
+        .maybeSingle();
+      
+      console.log("Target user lookup result:", targetUser, lookupError);
 
-      if (lookupError || !targetUser) {
-        toast.error("Invalid share token or user not found");
+      if (lookupError) {
+        console.error("Error looking up user by token:", lookupError);
+        toast.error("Invalid share token");
+        return false;
+      }
+      
+      if (!targetUser || !targetUser.id) {
+        console.error("No user found with the provided token");
+        toast.error("No user found with this share token");
         return false;
       }
 
@@ -229,12 +241,15 @@ export const useSync = () => {
       // Create a new connection
       const { error: createConnError } = await supabase
         .from('profile_sharing')
-        .insert([{
+        .insert({
           user_id_1: user.id,
           user_id_2: targetUser.id
-        }]);
+        });
         
-      if (createConnError) throw createConnError;
+      if (createConnError) {
+        console.error("Error creating connection:", createConnError);
+        throw createConnError;
+      }
       
       // Sync data from target user
       await syncData(targetUser.id);
@@ -287,7 +302,7 @@ export const useSync = () => {
         .from('user_preferences')
         .select('preferences')
         .eq('user_id', fromUserId)
-        .single();
+        .maybeSingle();
         
       if (prefsError && prefsError.code !== 'PGRST116') throw prefsError;
       

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share, ArrowLeft, Copy, Check } from "lucide-react";
@@ -12,13 +13,22 @@ import { toast } from "sonner";
 import useAuth from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
-import { SharingPreferences } from "@/hooks/useSync";
+import useSync, { SharingPreferences } from "@/hooks/useSync";
 import { Json } from "@/integrations/supabase/types";
+
 const SyncSettings = () => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { 
+    useSharingPreferencesQuery,
+    useUpdateSharingPreferences,
+    useConnectWithUser
+  } = useSync();
+  
+  const { data: sharingPreferences } = useSharingPreferencesQuery();
+  const updateSharingPrefsMutation = useUpdateSharingPreferences();
+  const connectWithUserMutation = useConnectWithUser();
+  
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [targetEmail, setTargetEmail] = useState("");
   const [recipientToken, setRecipientToken] = useState("");
@@ -38,12 +48,22 @@ const SyncSettings = () => {
       fetchShareToken();
     }
   }, [user]);
+
+  // Set initial sharing preferences from the query
+  useEffect(() => {
+    if (sharingPreferences) {
+      setSharingPrefs(sharingPreferences);
+    }
+  }, [sharingPreferences]);
+
   const fetchShareToken = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('share_token').eq('id', user?.id).single();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('share_token')
+        .eq('id', user?.id)
+        .single();
+        
       if (error) throw error;
       if (data?.share_token) {
         setShareToken(data.share_token);
@@ -59,11 +79,11 @@ const SyncSettings = () => {
     try {
       setIsProcessing(true);
       const newToken = uuidv4();
-      const {
-        error
-      } = await supabase.from('profiles').update({
-        share_token: newToken
-      }).eq('id', user.id);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ share_token: newToken })
+        .eq('id', user.id);
+        
       if (error) throw error;
       setShareToken(newToken);
       toast.success("Share token generated successfully");
@@ -79,99 +99,39 @@ const SyncSettings = () => {
   const savePreferences = async () => {
     if (!user) return;
     try {
-      setIsProcessing(true);
-
-      // First get existing preferences
-      const {
-        data: existingData
-      } = await supabase.from('user_preferences').select('id, preferences').eq('user_id', user.id).single();
-
-      // Create a JSON-compatible preferences object
-      let newPreferences: Record<string, any> = {};
-      if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
-        // Copy existing preferences
-        const existingPrefs = existingData.preferences as Record<string, any>;
-        Object.keys(existingPrefs).forEach(key => {
-          newPreferences[key] = existingPrefs[key];
-        });
-      }
-
-      // Add sharing preferences
-      newPreferences = {
-        ...newPreferences,
-        sharing: {
-          recipes: sharingPrefs.recipes,
-          babyRecipes: sharingPrefs.babyRecipes,
-          fridgeItems: sharingPrefs.fridgeItems,
-          shoppingList: sharingPrefs.shoppingList,
-          mealPlan: sharingPrefs.mealPlan
+      updateSharingPrefsMutation.mutate(sharingPrefs, {
+        onSuccess: () => {
+          toast.success("Sharing preferences saved");
+        },
+        onError: (error) => {
+          console.error('Error saving preferences:', error);
+          toast.error("Failed to save preferences");
         }
-      };
-      if (existingData) {
-        // Update existing preferences
-        const {
-          error
-        } = await supabase.from('user_preferences').update({
-          preferences: newPreferences as Json
-        }).eq('id', existingData.id);
-        if (error) throw error;
-      } else {
-        // Create new preferences
-        const {
-          error
-        } = await supabase.from('user_preferences').insert({
-          user_id: user.id,
-          preferences: newPreferences as Json
-        });
-        if (error) throw error;
-      }
-      toast.success("Sharing preferences saved");
+      });
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast.error("Failed to save preferences");
-    } finally {
-      setIsProcessing(false);
     }
   };
 
   // Connect with another user via token
   const connectWithToken = async () => {
     if (!user || !recipientToken) return;
-    try {
-      setIsProcessing(true);
-
-      // Find user with the given token
-      const {
-        data: targetUser,
-        error: lookupError
-      } = await supabase.from('profiles').select('id').eq('share_token', recipientToken).single();
-      if (lookupError) {
-        toast.error("Invalid share token");
-        return;
+    
+    connectWithUserMutation.mutate(recipientToken, {
+      onSuccess: (successful) => {
+        if (successful) {
+          toast.success("Successfully connected with user");
+          setRecipientToken("");
+        } else {
+          toast.error("Failed to connect with user");
+        }
+      },
+      onError: (error) => {
+        console.error('Error connecting with token:', error);
+        toast.error("Failed to connect with user");
       }
-      if (!targetUser) {
-        toast.error("User not found");
-        return;
-      }
-
-      // Create a synchronization relationship
-      const {
-        error: syncError
-      } = await supabase.from('profile_sharing').upsert([{
-        user_id_1: user.id,
-        user_id_2: targetUser.id
-      }]);
-      if (syncError) throw syncError;
-      toast.success("Successfully connected with user");
-
-      // Trigger the sync process
-      await syncData(targetUser.id);
-    } catch (error) {
-      console.error('Error connecting with token:', error);
-      toast.error("Failed to connect with user");
-    } finally {
-      setIsProcessing(false);
-    }
+    });
   };
 
   // Send invitation by email
@@ -204,26 +164,6 @@ const SyncSettings = () => {
     });
   };
 
-  // Sync data from another user
-  const syncData = async (fromUserId: string) => {
-    if (!user) return;
-    try {
-      // We need to sync data based on the preferences of the other user
-      // This would make a series of database operations to copy data
-
-      toast.success("Data sync started. This may take a moment...");
-
-      // In a real implementation, you would fetch the other user's preferences
-      // and then sync the appropriate data types
-
-      setTimeout(() => {
-        toast.success("Data sync completed successfully!");
-      }, 2000);
-    } catch (error) {
-      console.error('Error syncing data:', error);
-      toast.error("Failed to sync data");
-    }
-  };
   return <MainLayout title="Sync with Others">
       <div className="container max-w-4xl pb-8">
         <Button variant="ghost" className="mb-4" onClick={() => navigate('/settings')}>
@@ -318,7 +258,13 @@ const SyncSettings = () => {
                 </div>
               </div>
 
-              <Button onClick={savePreferences} disabled={isProcessing} className="w-full mt-4">SAVE PREFERENCES</Button>
+              <Button 
+                onClick={savePreferences} 
+                disabled={updateSharingPrefsMutation.isPending} 
+                className="w-full mt-4"
+              >
+                {updateSharingPrefsMutation.isPending ? "SAVING..." : "SAVE PREFERENCES"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -333,27 +279,46 @@ const SyncSettings = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {shareToken ? <div className="flex space-x-2">
+                {shareToken ? (
+                  <div className="flex space-x-2">
                     <Input readOnly value={shareToken} className="font-mono text-sm" />
                     <Button onClick={copyShareToken} variant="outline" size="icon">
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
-                  </div> : <Button onClick={generateShareToken} disabled={isProcessing} className="w-full">
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={generateShareToken} 
+                    disabled={isProcessing} 
+                    className="w-full"
+                  >
                     Generate Share Token
-                  </Button>}
+                  </Button>
+                )}
 
-                {shareToken && <>
+                {shareToken && (
+                  <>
                     <Separator />
                     <div className="space-y-2">
                       <Label htmlFor="email">Invite by Email</Label>
                       <div className="flex space-x-2">
-                        <Input id="email" placeholder="friend@example.com" type="email" value={targetEmail} onChange={e => setTargetEmail(e.target.value)} />
-                        <Button onClick={sendInvitation} disabled={!targetEmail || isProcessing}>
+                        <Input 
+                          id="email" 
+                          placeholder="friend@example.com" 
+                          type="email" 
+                          value={targetEmail} 
+                          onChange={e => setTargetEmail(e.target.value)} 
+                        />
+                        <Button 
+                          onClick={sendInvitation} 
+                          disabled={!targetEmail || isProcessing}
+                        >
                           Send
                         </Button>
                       </div>
                     </div>
-                  </>}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -370,9 +335,18 @@ const SyncSettings = () => {
                 <div className="space-y-2">
                   <Label htmlFor="token">Share Token</Label>
                   <div className="flex space-x-2">
-                    <Input id="token" placeholder="Paste share token here" value={recipientToken} onChange={e => setRecipientToken(e.target.value)} className="font-mono" />
-                    <Button onClick={connectWithToken} disabled={!recipientToken || isProcessing}>
-                      Connect
+                    <Input 
+                      id="token" 
+                      placeholder="Paste share token here" 
+                      value={recipientToken} 
+                      onChange={e => setRecipientToken(e.target.value)} 
+                      className="font-mono" 
+                    />
+                    <Button 
+                      onClick={connectWithToken} 
+                      disabled={!recipientToken || connectWithUserMutation.isPending}
+                    >
+                      {connectWithUserMutation.isPending ? "Connecting..." : "Connect"}
                     </Button>
                   </div>
                 </div>
@@ -383,4 +357,5 @@ const SyncSettings = () => {
       </div>
     </MainLayout>;
 };
+
 export default SyncSettings;
