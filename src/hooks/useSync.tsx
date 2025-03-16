@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,11 +101,14 @@ export const useSync = () => {
         .single();
       
       // Create a JSON-compatible preferences object
-      let newPreferences: Json = {};
+      let newPreferences: Record<string, any> = {};
       
       if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
         // Use type assertion to safely copy existing preferences
-        newPreferences = existingData.preferences as Json;
+        const existingPrefs = existingData.preferences as Record<string, any>;
+        Object.keys(existingPrefs).forEach(key => {
+          newPreferences[key] = existingPrefs[key];
+        });
       }
       
       // Add sharing preferences
@@ -125,7 +127,7 @@ export const useSync = () => {
         // Update existing preferences
         const { error } = await supabase
           .from('user_preferences')
-          .update({ preferences: newPreferences })
+          .update({ preferences: newPreferences as Json })
           .eq('id', existingData.id);
         
         if (error) throw error;
@@ -135,7 +137,7 @@ export const useSync = () => {
           .from('user_preferences')
           .insert({
             user_id: user.id,
-            preferences: newPreferences
+            preferences: newPreferences as Json
           });
         
         if (error) throw error;
