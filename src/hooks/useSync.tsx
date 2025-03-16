@@ -107,6 +107,8 @@ export const useSync = () => {
       if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
         // Use type assertion to safely copy existing preferences
         const existingPrefs = existingData.preferences as Record<string, any>;
+        
+        // Manually copy properties instead of using spread operator
         Object.keys(existingPrefs).forEach(key => {
           newPreferences[key] = existingPrefs[key];
         });
@@ -208,13 +210,13 @@ export const useSync = () => {
 
       if (lookupError) {
         console.error("Error looking up user by token:", lookupError);
-        toast.error("Invalid share token");
+        toast.error("Error looking up user: " + lookupError.message);
         return false;
       }
       
       if (!targetUser || !targetUser.id) {
-        console.error("No user found with the provided token");
-        toast.error("No user found with this share token");
+        console.error("No user found with the provided token:", shareToken);
+        toast.error("Invalid share token. No user found with this token.");
         return false;
       }
 
@@ -248,7 +250,8 @@ export const useSync = () => {
         
       if (createConnError) {
         console.error("Error creating connection:", createConnError);
-        throw createConnError;
+        toast.error("Error creating connection: " + createConnError.message);
+        return false;
       }
       
       // Sync data from target user
@@ -258,7 +261,7 @@ export const useSync = () => {
       return true;
     } catch (err) {
       console.error("Error in connectWithUser:", err);
-      toast.error("Failed to connect with user");
+      toast.error("Failed to connect with user: " + (err instanceof Error ? err.message : String(err)));
       return false;
     } finally {
       setIsProcessing(false);
@@ -596,8 +599,10 @@ export const useSync = () => {
   const useConnectWithUser = () => {
     return useMutation({
       mutationFn: connectWithUser,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['connected-users'] });
+      onSuccess: (success) => {
+        if (success) {
+          queryClient.invalidateQueries({ queryKey: ['connected-users'] });
+        }
       },
     });
   };

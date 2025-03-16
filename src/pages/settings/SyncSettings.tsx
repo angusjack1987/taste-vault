@@ -64,9 +64,16 @@ const SyncSettings = () => {
         .eq('id', user?.id)
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching share token:', error);
+        return;
+      }
+      
       if (data?.share_token) {
+        console.log('Found existing share token:', data.share_token);
         setShareToken(data.share_token);
+      } else {
+        console.log('No share token found for user');
       }
     } catch (error) {
       console.error('Error fetching share token:', error);
@@ -79,12 +86,19 @@ const SyncSettings = () => {
     try {
       setIsProcessing(true);
       const newToken = uuidv4();
+      console.log('Generating new share token:', newToken);
+      
       const { error } = await supabase
         .from('profiles')
         .update({ share_token: newToken })
         .eq('id', user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating share token:', error);
+        toast.error("Failed to generate share token: " + error.message);
+        return;
+      }
+      
       setShareToken(newToken);
       toast.success("Share token generated successfully");
     } catch (error) {
@@ -118,6 +132,8 @@ const SyncSettings = () => {
   const connectWithToken = async () => {
     if (!user || !recipientToken) return;
     
+    console.log('Attempting to connect with token:', recipientToken);
+    
     connectWithUserMutation.mutate(recipientToken, {
       onSuccess: (successful) => {
         if (successful) {
@@ -129,7 +145,7 @@ const SyncSettings = () => {
       },
       onError: (error) => {
         console.error('Error connecting with token:', error);
-        toast.error("Failed to connect with user");
+        toast.error("Failed to connect with user: " + (error instanceof Error ? error.message : String(error)));
       }
     });
   };
