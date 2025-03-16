@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share, ArrowLeft, Copy, Check } from "lucide-react";
@@ -97,11 +98,11 @@ const SyncSettings = () => {
         .single();
       
       // Create a properly typed preferences object
-      let newPreferences: Record<string, any> = {};
+      let newPreferences: Record<string, unknown> = {};
       
       if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
-        // Copy existing preferences
-        newPreferences = { ...existingData.preferences as Record<string, any> };
+        // Copy existing preferences using type assertion
+        newPreferences = { ...(existingData.preferences as Record<string, unknown>) };
       }
       
       // Add sharing preferences
@@ -125,10 +126,10 @@ const SyncSettings = () => {
         // Create new preferences
         const { error } = await supabase
           .from('user_preferences')
-          .insert({
+          .insert([{
             user_id: user.id,
             preferences: newPreferences
-          });
+          }]);
         
         if (error) throw error;
       }

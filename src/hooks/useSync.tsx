@@ -25,16 +25,20 @@ interface ConnectedUser {
 const getSharingPreferences = (preferences: Json | null): SharingPreferences => {
   if (!preferences) return getDefaultSharingPreferences();
   
+  // Handle object-type Json
   if (typeof preferences === 'object' && preferences !== null && !Array.isArray(preferences)) {
-    const sharing = preferences.sharing;
+    // Type assertion to access the 'sharing' property
+    const prefsObject = preferences as Record<string, Json>;
+    const sharing = prefsObject.sharing;
     
     if (sharing && typeof sharing === 'object' && !Array.isArray(sharing)) {
+      const sharingObj = sharing as Record<string, Json>;
       return {
-        recipes: !!sharing.recipes,
-        babyRecipes: !!sharing.babyRecipes,
-        fridgeItems: !!sharing.fridgeItems,
-        shoppingList: !!sharing.shoppingList,
-        mealPlan: !!sharing.mealPlan
+        recipes: Boolean(sharingObj.recipes),
+        babyRecipes: Boolean(sharingObj.babyRecipes),
+        fridgeItems: Boolean(sharingObj.fridgeItems),
+        shoppingList: Boolean(sharingObj.shoppingList),
+        mealPlan: Boolean(sharingObj.mealPlan)
       };
     }
   }
@@ -98,11 +102,11 @@ export const useSync = () => {
         .single();
       
       // Create a properly typed preferences object
-      let newPreferences: Record<string, any> = {};
+      let newPreferences: Record<string, unknown> = {};
       
       if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
-        // Copy existing preferences
-        newPreferences = { ...existingData.preferences as Record<string, any> };
+        // Use type assertion to safely copy existing preferences
+        newPreferences = { ...(existingData.preferences as Record<string, unknown>) };
       }
       
       // Add sharing preferences
