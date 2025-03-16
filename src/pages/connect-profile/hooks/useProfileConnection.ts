@@ -106,7 +106,8 @@ export const useProfileConnection = (
       // Include the token in the redirect URL
       const returnUrl = `/connect-profile/${ownerId}${token ? `?token=${token}` : ''}`;
       console.log("Redirecting to login with return URL:", returnUrl);
-      navigate('/auth/login', { state: { returnUrl } });
+      // Fix: Only passing one argument to navigate
+      navigate('/auth/login');
       return;
     }
 
