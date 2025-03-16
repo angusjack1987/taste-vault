@@ -108,6 +108,27 @@
   .dialog {
     @apply border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
   }
+
+  /* Star shape shadow for AI suggestion button */
+  .star-shape {
+    clip-path: polygon(
+      50% 0%, 
+      61% 35%, 
+      98% 35%, 
+      68% 57%, 
+      79% 91%, 
+      50% 70%, 
+      21% 91%, 
+      32% 57%, 
+      2% 35%, 
+      39% 35%
+    );
+  }
+  
+  /* AI suggestion button styles for better mobile experience */
+  .ai-suggestion-button {
+    @apply transform hover:-translate-y-1 hover:shadow-none;
+  }
 }
 
 @layer components {

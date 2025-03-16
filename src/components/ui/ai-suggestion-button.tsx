@@ -11,7 +11,7 @@ interface AiSuggestionButtonProps {
   size?: "default" | "sm" | "lg" | "icon" | "xs" | "xl";
   isLoading?: boolean;
   children?: React.ReactNode;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "clean" | "menu" | "tomato" | "lettuce" | "cheese" | "bread" | "blueberry";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "clean" | "menu" | "tomato" | "lettuce" | "cheese" | "bread" | "blueberry" | "grape" | "orange" | "mint";
 }
 
 const AiSuggestionButton = ({
@@ -27,7 +27,9 @@ const AiSuggestionButton = ({
     <Button
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden font-medium uppercase bg-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all active:translate-x-0 active:translate-y-0 active:shadow-none rounded-xl",
+        "ai-suggestion-button relative overflow-hidden font-medium uppercase bg-white border-2 border-black rounded-xl",
+        "transition-all active:translate-x-0 active:translate-y-0 active:shadow-none",
+        "before:content-[''] before:absolute before:-z-10 before:top-2 before:left-2 before:w-full before:h-full before:bg-black before:rounded-xl before:star-shape",
         className
       )}
       size={size}
@@ -47,7 +49,8 @@ const AiSuggestionButton = ({
         children || (
           <>
             <Sparkles className="h-4 w-4 mr-2 animate-neo-pulse" strokeWidth={2} />
-            {label}
+            <span className="sm:inline hidden">{label}</span>
+            <span className="sm:hidden inline">AI</span>
           </>
         )
       )}
