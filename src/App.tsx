@@ -50,7 +50,7 @@ const App = () => (
               </AuthGuard>
             } />
             
-            {/* Profile connection route - doesn't require authentication initially */}
+            {/* Profile connection route - special handling for authentication */}
             <Route path="/connect-profile/:ownerId" element={<ConnectProfile />} />
             
             {/* Onboarding route - requires authentication */}

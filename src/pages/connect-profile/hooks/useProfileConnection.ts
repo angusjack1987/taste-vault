@@ -103,12 +103,13 @@ export const useProfileConnection = (
 
   const handleConnect = async () => {
     if (!user || !ownerId) {
-      // Include the token in the redirect URL to return to after login
+      // Construct the full return URL with token
       const returnUrl = `/connect-profile/${ownerId}${token ? `?token=${token}` : ''}`;
       console.log("Redirecting to login with return URL:", returnUrl);
       
-      // Fix: Properly use navigate with state object
-      navigate('/auth/login', { state: { returnUrl } });
+      navigate('/auth/login', { 
+        state: { returnUrl } 
+      });
       return;
     }
 
