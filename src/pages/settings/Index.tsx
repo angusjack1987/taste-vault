@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   User, 
   UtensilsCrossed, 
@@ -11,16 +11,27 @@ import {
   Lock,
   HelpCircle,
   Info,
-  Palette
+  Palette,
+  LayoutGrid
 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  
+  const simulateOnboarding = () => {
+    toast({
+      title: "Onboarding Simulation",
+      description: "Opening onboarding in simulation mode.",
+    });
+    navigate("/onboarding?simulation=true");
+  };
   
   const settingsGroups = [
     {
@@ -91,6 +102,17 @@ const Settings = () => {
         },
       ]
     },
+    {
+      title: "Developer",
+      items: [
+        {
+          icon: <LayoutGrid className="h-5 w-5 text-indigo-500" />,
+          label: "Simulate Onboarding",
+          action: simulateOnboarding,
+          bgColor: "bg-indigo-100",
+        },
+      ]
+    },
   ];
   
   return (
@@ -105,18 +127,33 @@ const Settings = () => {
               <div>
                 {group.items.map((item, itemIndex) => (
                   <React.Fragment key={itemIndex}>
-                    <Link 
-                      to={item.path}
-                      className={`flex items-center justify-between p-6 hover:${item.bgColor} transition-colors`}
-                    >
-                      <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
-                        <div className="bg-white p-2 rounded-md border-2 border-black">
-                          {item.icon}
+                    {item.path ? (
+                      <Link 
+                        to={item.path}
+                        className={`flex items-center justify-between p-6 hover:${item.bgColor} transition-colors`}
+                      >
+                        <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
+                          <div className="bg-white p-2 rounded-md border-2 border-black">
+                            {item.icon}
+                          </div>
+                          <span className="font-medium">{item.label}</span>
                         </div>
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </Link>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </Link>
+                    ) : (
+                      <button 
+                        onClick={item.action}
+                        className={`flex items-center justify-between p-6 w-full text-left hover:${item.bgColor} transition-colors`}
+                      >
+                        <div className={`flex items-center gap-4 ${item.bgColor} px-3 py-1 rounded-lg`}>
+                          <div className="bg-white p-2 rounded-md border-2 border-black">
+                            {item.icon}
+                          </div>
+                          <span className="font-medium">{item.label}</span>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </button>
+                    )}
                     {itemIndex < group.items.length - 1 && <Separator className="bg-black/10" />}
                   </React.Fragment>
                 ))}

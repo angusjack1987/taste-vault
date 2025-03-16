@@ -20,6 +20,10 @@ const AuthGuard = ({
   const location = useLocation();
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  
+  // Check if we're in simulation mode for onboarding
+  const isOnboardingRoute = location.pathname === '/onboarding';
+  const isOnboardingSimulation = isOnboardingRoute && location.search.includes('simulation=true');
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -32,7 +36,7 @@ const AuthGuard = ({
         // Check if user has preferences set, which indicates completed onboarding
         const { data, error } = await supabase
           .from('user_preferences')
-          .select('id')
+          .select('preferences')
           .eq('user_id', user.id)
           .single();
         
@@ -40,7 +44,9 @@ const AuthGuard = ({
           console.error("Error checking onboarding status:", error);
         }
         
-        setHasCompletedOnboarding(!!data);
+        // Check if onboarding has been completed in the preferences
+        const onboardingCompleted = data?.preferences?.onboarding_completed || false;
+        setHasCompletedOnboarding(onboardingCompleted);
       } catch (error) {
         console.error("Error checking onboarding status:", error);
         setHasCompletedOnboarding(false);
@@ -58,13 +64,17 @@ const AuthGuard = ({
 
   useEffect(() => {
     if (!isLoading && !checkingOnboarding) {
+      // Allow onboarding simulation without authentication
+      if (isOnboardingSimulation) {
+        return;
+      }
+      
       const isAuthenticated = !!user;
-      const isOnboardingRoute = location.pathname === '/onboarding';
       
       if (requireAuth && !isAuthenticated) {
         // User needs to be logged in but isn't
         navigate("/auth/login", { 
-          state: { returnUrl: location.pathname } 
+          state: { returnUrl: location.pathname + location.search } 
         });
       } else if (!requireAuth && isAuthenticated) {
         // User is logged in but the page is only for non-authenticated users
@@ -78,11 +88,16 @@ const AuthGuard = ({
         navigate("/");
       }
     }
-  }, [user, isLoading, navigate, requireAuth, location.pathname, hasCompletedOnboarding, checkingOnboarding]);
+  }, [user, isLoading, navigate, requireAuth, location.pathname, location.search, hasCompletedOnboarding, checkingOnboarding, isOnboardingRoute, isOnboardingSimulation]);
 
   // Show loading state while checking authentication or onboarding status
-  if (isLoading || (requireAuth && user && checkingOnboarding)) {
+  if (isLoading || (requireAuth && user && checkingOnboarding && !isOnboardingSimulation)) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  // Allow access to onboarding in simulation mode without authentication
+  if (isOnboardingSimulation) {
+    return <>{children}</>;
   }
 
   // Only render children if:
