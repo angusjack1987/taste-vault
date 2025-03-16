@@ -1,9 +1,10 @@
 
 import { useEffect } from "react";
-import { ChefHat, Thermometer, CakeSlice, Soup, Flame } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChefHat, Thermometer, CakeSlice, Soup } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CookingTemperatureGuide } from "@/components/sous-chef/CookingTemperatureGuide";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 const SousChefContent = () => {
   useEffect(() => {
@@ -11,25 +12,25 @@ const SousChefContent = () => {
   }, []);
 
   return (
-    <div className="container max-w-4xl pb-24 px-4 space-y-6">
-      <header className="flex items-center justify-between pt-6 pb-4">
-        <div className="flex items-center gap-3">
-          <ChefHat className="h-8 w-8 text-primary" strokeWidth={2} />
-          <h1 className="text-2xl md:text-3xl font-bold">Sous Chef</h1>
+    <div className="container max-w-4xl pb-20 px-4 pt-4 space-y-5">
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ChefHat className="h-7 w-7 text-primary" strokeWidth={2} />
+          <h1 className="text-2xl font-bold">Sous Chef</h1>
         </div>
       </header>
       
-      <p className="text-base md:text-lg text-muted-foreground">
+      <p className="text-base text-muted-foreground">
         Your personal cooking assistant with helpful guides and tools.
       </p>
       
-      <Separator className="my-4" />
+      <Separator className="my-2" />
       
-      <div className="grid gap-6">
+      <div className="space-y-6">
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Thermometer className="h-6 w-6 text-primary" />
-            <h2 className="text-xl md:text-2xl font-bold">Temperature Guide</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <Thermometer className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold">Temperature Guide</h2>
           </div>
           <CookingTemperatureGuide />
         </section>
@@ -37,29 +38,31 @@ const SousChefContent = () => {
         <Separator className="my-2" />
         
         <section className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-          <Card className="border border-gray-200 shadow-sm">
+          <Card className="border border-gray-100 shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <CakeSlice className="h-5 w-5 text-primary" />
-                <CardTitle className="text-base md:text-lg">Coming Soon</CardTitle>
+                <CardTitle className="text-base">Baking Conversion</CardTitle>
               </div>
-              <CardDescription>Baking Conversion Charts</CardDescription>
+              <CardDescription>Metric to imperial conversions</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm">Easily convert between different measurement units for baking.</p>
+            <CardContent className="pb-4">
+              <p className="text-sm text-gray-600 mb-3">Convert measurements for baking recipes.</p>
+              <Button variant="outline" size="sm" className="w-full">Coming Soon</Button>
             </CardContent>
           </Card>
           
-          <Card className="border border-gray-200 shadow-sm">
+          <Card className="border border-gray-100 shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <Soup className="h-5 w-5 text-primary" />
-                <CardTitle className="text-base md:text-lg">Coming Soon</CardTitle>
+                <CardTitle className="text-base">Cooking Techniques</CardTitle>
               </div>
-              <CardDescription>Cooking Techniques</CardDescription>
+              <CardDescription>Step-by-step guides</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm">Step-by-step guides for various cooking techniques.</p>
+            <CardContent className="pb-4">
+              <p className="text-sm text-gray-600 mb-3">Learn essential cooking methods and techniques.</p>
+              <Button variant="outline" size="sm" className="w-full">Coming Soon</Button>
             </CardContent>
           </Card>
         </section>

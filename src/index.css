@@ -93,41 +93,6 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  
-  /* Neo-brutalism base styles */
-  button, 
-  .btn, 
-  input, 
-  textarea, 
-  select,
-  .card,
-  .dialog {
-    @apply border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
-  }
-  
-  /* Neo AI Button Container & Styles */
-  .ai-btn-container {
-    @apply inline-block;
-  }
-  
-  .ai-btn {
-    @apply relative z-10 bg-white hover:shadow-none;
-  }
-  
-  .neo-star-shadow {
-    @apply transition-all duration-300;
-  }
-  
-  /* When button is hovered, move the shadow */
-  .ai-btn-container:hover .neo-star-shadow {
-    @apply top-2 left-2;
-  }
-}
-
 @layer components {
   /* Neo-brutalist recipe card */
   .recipe-card {
@@ -331,7 +296,7 @@
   }
   
   .no-scrollbar {
-    -ms-overflow-x: hidden;
+    -ms-overflow-style: none;
     scrollbar-width: none;
   }
 }

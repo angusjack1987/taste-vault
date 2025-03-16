@@ -79,86 +79,143 @@ export const CookingTemperatureGuide = () => {
   };
 
   return (
-    <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]">
+    <Card className="border border-gray-100 shadow-sm">
       <CardContent className="p-0">
         {/* Scrollable tabs with buttons */}
         <div className="relative">
           <button 
             onClick={() => scroll("left")} 
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-r-full p-1 shadow-md"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-r-full p-1 shadow-sm"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4 text-gray-500" />
           </button>
           
           <div 
             ref={scrollContainerRef}
-            className="flex overflow-x-auto scrollbar-hide py-3 px-8 border-b border-gray-200 gap-2 no-scrollbar"
+            className="flex overflow-x-auto py-3 px-8 gap-2 no-scrollbar scroll-smooth"
           >
             <TabButton 
               active={activeTab === "meat"} 
               onClick={() => setActiveTab("meat")}
               icon={<Beef className="w-4 h-4" />}
               label="Meat"
-              color="bg-red-400"
+              color="bg-red-200 hover:bg-red-300"
+              activeColor="bg-red-400"
             />
             <TabButton 
               active={activeTab === "poultry"} 
               onClick={() => setActiveTab("poultry")}
               icon={<Drumstick className="w-4 h-4" />}
               label="Poultry"
-              color="bg-amber-200"
+              color="bg-amber-100 hover:bg-amber-200"
+              activeColor="bg-amber-300"
             />
             <TabButton 
               active={activeTab === "seafood"} 
               onClick={() => setActiveTab("seafood")}
               icon={<Fish className="w-4 h-4" />}
               label="Seafood"
-              color="bg-blue-400"
+              color="bg-blue-100 hover:bg-blue-200"
+              activeColor="bg-blue-300"
             />
             <TabButton 
               active={activeTab === "oven"} 
               onClick={() => setActiveTab("oven")}
               icon={<Flame className="w-4 h-4" />}
               label="Oven"
-              color="bg-orange-400"
+              color="bg-orange-100 hover:bg-orange-200"
+              activeColor="bg-orange-300"
+            />
+            <TabButton 
+              active={activeTab === "grill"} 
+              onClick={() => setActiveTab("meat")}
+              icon={<Flame className="w-4 h-4" />}
+              label="Grill"
+              color="bg-purple-100 hover:bg-purple-200"
+              activeColor="bg-purple-300"
+            />
+            <TabButton 
+              active={activeTab === "sous-vide"} 
+              onClick={() => setActiveTab("meat")}
+              icon={<Thermometer className="w-4 h-4" />}
+              label="Sous Vide"
+              color="bg-green-100 hover:bg-green-200"
+              activeColor="bg-green-300"
+            />
+            <TabButton 
+              active={activeTab === "desserts"} 
+              onClick={() => setActiveTab("oven")}
+              icon={<Flame className="w-4 h-4" />}
+              label="Desserts"
+              color="bg-pink-100 hover:bg-pink-200"
+              activeColor="bg-pink-300"
             />
           </div>
           
           <button 
             onClick={() => scroll("right")} 
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-l-full p-1 shadow-md"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-l-full p-1 shadow-sm"
             aria-label="Scroll right"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4 text-gray-500" />
           </button>
         </div>
           
         <div className="p-4">
           {/* Tab content */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 mb-2">
               {activeTab === "meat" && <Beef className="h-5 w-5 text-red-500" />}
               {activeTab === "poultry" && <Drumstick className="h-5 w-5 text-amber-500" />}
               {activeTab === "seafood" && <Fish className="h-5 w-5 text-blue-500" />}
               {activeTab === "oven" && <Flame className="h-5 w-5 text-orange-500" />}
-              <h3 className="text-lg font-bold">
-                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Internal Temperatures
+              <h3 className="text-lg font-bold text-gray-800">
+                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Temperatures
               </h3>
             </div>
 
-            <TemperatureTable items={getTemperatures(activeTab)} />
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="px-2 py-2 text-left font-medium text-gray-600">Food</th>
+                    <th className="px-2 py-2 text-left font-medium text-gray-600">°F</th>
+                    <th className="px-2 py-2 text-left font-medium text-gray-600">°C</th>
+                    <th className="px-2 py-2 text-left font-medium text-gray-600">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getTemperatures(activeTab).map((item, index) => (
+                    <tr 
+                      key={index}
+                      className="border-b border-gray-100"
+                    >
+                      <td className="px-2 py-2.5 font-medium">
+                        {item.name}
+                      </td>
+                      <td className="px-2 py-2.5">
+                        {item.fahrenheit}
+                      </td>
+                      <td className="px-2 py-2.5">
+                        {item.celsius}
+                      </td>
+                      <td className="px-2 py-2.5 text-gray-600">
+                        {item.description}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-3 border-t border-gray-100">
               <div className="flex items-start gap-2">
-                <Thermometer className="h-5 w-5 text-primary mt-0.5" />
-                <div className="space-y-2 text-sm">
-                  <h4 className="font-medium">Temperature Tips</h4>
-                  <p>• Always use a reliable meat thermometer to check internal temperatures.</p>
-                  <p>• Insert the thermometer into the thickest part of the meat, away from bone.</p>
-                  <p>• Allow large roasts to rest for 15-20 minutes after cooking.</p>
-                  <p>• Temperature will rise 5-10°F during rest time (carryover cooking).</p>
-                  <p>• For safety, ground meats should always be cooked to higher temperatures than whole cuts.</p>
+                <Thermometer className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="space-y-1.5 text-sm text-gray-600">
+                  <p>• Always use a reliable meat thermometer</p>
+                  <p>• Insert into the thickest part away from bone</p>
+                  <p>• Allow large roasts to rest 15-20 minutes after cooking</p>
                 </div>
               </div>
             </div>
@@ -175,75 +232,21 @@ interface TabButtonProps {
   icon: React.ReactNode;
   label: string;
   color: string;
+  activeColor: string;
 }
 
-const TabButton = ({ active, onClick, icon, label, color }: TabButtonProps) => {
+const TabButton = ({ active, onClick, icon, label, color, activeColor }: TabButtonProps) => {
   return (
     <button 
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap transition-all text-xs ${
         active 
-          ? `${color} text-black font-medium border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)]` 
-          : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'
+          ? `${activeColor} text-black font-medium shadow-sm` 
+          : `${color} text-gray-700`
       }`}
     >
       {icon}
-      <span className="text-sm">{label}</span>
+      <span>{label}</span>
     </button>
-  );
-};
-
-interface TemperatureTableProps {
-  items: {
-    name: string;
-    fahrenheit: string;
-    celsius: string;
-    description: string;
-  }[];
-}
-
-const TemperatureTable = ({ items }: TemperatureTableProps) => {
-  return (
-    <div className="relative overflow-x-auto rounded-lg border border-gray-200">
-      <table className="w-full text-sm">
-        <thead className="text-xs uppercase bg-gray-50">
-          <tr>
-            <th scope="col" className="px-4 py-3 text-left font-medium text-gray-700 border-b border-gray-200">
-              Food
-            </th>
-            <th scope="col" className="px-4 py-3 text-left font-medium text-gray-700 border-b border-gray-200">
-              °F
-            </th>
-            <th scope="col" className="px-4 py-3 text-left font-medium text-gray-700 border-b border-gray-200">
-              °C
-            </th>
-            <th scope="col" className="px-4 py-3 text-left font-medium text-gray-700 border-b border-gray-200">
-              Notes
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, index) => (
-            <tr 
-              key={index}
-              className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-100 last:border-0`}
-            >
-              <td className="px-4 py-2.5 font-medium">
-                {item.name}
-              </td>
-              <td className="px-4 py-2.5">
-                {item.fahrenheit}
-              </td>
-              <td className="px-4 py-2.5">
-                {item.celsius}
-              </td>
-              <td className="px-4 py-2.5">
-                {item.description}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 };
