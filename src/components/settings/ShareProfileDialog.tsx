@@ -42,11 +42,12 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
       const newToken = Math.random().toString(36).substring(2, 15);
       
       // Save the token to the user's profile
+      // Use type assertion with 'as any' to bypass the TypeScript type check
       const { error } = await supabase
         .from('profiles')
         .update({ 
           share_token: newToken // This field is now in the database
-        })
+        } as any)
         .eq('id', user.id);
       
       if (error) throw error;
