@@ -212,6 +212,33 @@ export type Database = {
           },
         ]
       }
+      profile_sharing: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          shared_with_email: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          shared_with_email: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          shared_with_email?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
