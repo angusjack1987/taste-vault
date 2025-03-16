@@ -1,12 +1,11 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, UserPlus, X } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { UserPlus, X } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
+import { useProfileConnection } from "./hooks/useProfileConnection";
+import LoadingState from "./components/LoadingState";
+import ProfileConnectionCard from "./components/ProfileConnectionCard";
 
 const ConnectProfile = () => {
   const { ownerId } = useParams<{ ownerId: string }>();
@@ -15,305 +14,107 @@ const ConnectProfile = () => {
   const token = searchParams.get('token');
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [ownerName, setOwnerName] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'not_connected' | 'pending' | 'connected' | 'self' | 'not_found' | 'invalid_token'>('not_connected');
-  const [validToken, setValidToken] = useState(false);
   
   console.log("ConnectProfile - Current path:", location.pathname + location.search);
   console.log("ConnectProfile - Token:", token);
   console.log("ConnectProfile - Owner ID:", ownerId);
 
-  useEffect(() => {
-    const checkConnection = async () => {
-      if (!ownerId) {
-        setConnectionStatus('not_found');
-        setIsLoading(false);
-        return;
-      }
-
-      if (user?.id === ownerId) {
-        setConnectionStatus('self');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // First, verify the token is valid for this owner
-        const { data: ownerProfile, error: tokenError } = await supabase
-          .from('profiles')
-          .select('first_name, share_token')
-          .eq('id', ownerId)
-          .single();
-        
-        console.log("Owner profile data:", ownerProfile);
-        console.log("Token provided:", token);
-        console.log("Token in DB:", ownerProfile?.share_token);
-
-        // If we can't find the profile or the token doesn't match
-        if (!ownerProfile) {
-          console.log('Profile not found');
-          setConnectionStatus('not_found');
-          setIsLoading(false);
-          return;
-        }
-        
-        // If token is required but doesn't match
-        if (token && ownerProfile.share_token !== token) {
-          console.log('Token validation failed:', { provided: token, stored: ownerProfile?.share_token });
-          setConnectionStatus('invalid_token');
-          setIsLoading(false);
-          return;
-        }
-
-        // Token is valid or not required
-        setValidToken(true);
-        setOwnerName(ownerProfile.first_name || 'User');
-
-        // If logged in, check if already connected
-        if (user) {
-          const { data: existingConnection } = await supabase
-            .from('profile_sharing')
-            .select('status')
-            .or(`owner_id.eq.${ownerId},shared_with_id.eq.${ownerId}`)
-            .or(`owner_id.eq.${user.id},shared_with_id.eq.${user.id}`)
-            .single();
-
-          if (existingConnection) {
-            setConnectionStatus(existingConnection.status === 'active' ? 'connected' : 'pending');
-          }
-        }
-      } catch (error) {
-        console.error('Error checking connection:', error);
-        toast({
-          title: "Error",
-          description: "Could not check connection status. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkConnection();
-  }, [ownerId, user, token]);
-
-  const handleConnect = async () => {
-    if (!user || !ownerId) {
-      // Include the token in the redirect URL
-      const returnUrl = `/connect-profile/${ownerId}${token ? `?token=${token}` : ''}`;
-      console.log("Redirecting to login with return URL:", returnUrl);
-      navigate('/auth/login', { state: { returnUrl } });
-      return;
-    }
-
-    if (!validToken) {
-      toast({
-        title: "Invalid Link",
-        description: "This sharing link is invalid or has expired.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsConnecting(true);
-
-    try {
-      // Update an existing invitation if the current user was invited
-      const { data: existingInvitation } = await supabase
-        .from('profile_sharing')
-        .select('*')
-        .eq('owner_id', ownerId)
-        .eq('shared_with_email', user.email)
-        .single();
-
-      if (existingInvitation) {
-        // Update the existing invitation with the user's ID and set status to active
-        const { error: updateError } = await supabase
-          .from('profile_sharing')
-          .update({
-            shared_with_id: user.id,
-            status: 'active',
-          })
-          .eq('id', existingInvitation.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create a new connection if no invitation exists
-        const { error: insertError } = await supabase
-          .from('profile_sharing')
-          .insert([{
-            owner_id: ownerId,
-            shared_with_id: user.id,
-            shared_with_email: user.email,
-            status: 'active'
-          }]);
-
-        if (insertError) throw insertError;
-      }
-
-      setConnectionStatus('connected');
-      toast({
-        title: "Connected successfully!",
-        description: `You are now connected with ${ownerName}'s profile.`,
-      });
-    } catch (error) {
-      console.error('Error connecting profiles:', error);
-      toast({
-        title: "Connection failed",
-        description: "Could not connect profiles. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
+  const {
+    connectionStatus,
+    ownerName,
+    isLoading,
+    isConnecting,
+    handleConnect
+  } = useProfileConnection(ownerId, token, user, navigate);
 
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <div className="flex flex-col items-center justify-center p-8">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Checking connection status...</p>
-        </div>
-      );
+      return <LoadingState />;
     }
 
     if (connectionStatus === 'invalid_token') {
       return (
-        <Card className="w-full max-w-md border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-          <CardHeader>
-            <CardTitle className="text-xl">Invalid or Expired Link</CardTitle>
-            <CardDescription>
-              The sharing link you're using is invalid or has expired. Please ask for a new link.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              onClick={() => navigate('/')}
-              className="w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-            >
-              Go Home
-            </Button>
-          </CardFooter>
-        </Card>
+        <ProfileConnectionCard
+          title="Invalid or Expired Link"
+          description="The sharing link you're using is invalid or has expired. Please ask for a new link."
+          primaryButtonProps={{
+            label: "Go Home",
+            onClick: () => navigate('/')
+          }}
+        />
       );
     }
 
     if (connectionStatus === 'not_found') {
       return (
-        <Card className="w-full max-w-md border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-          <CardHeader>
-            <CardTitle className="text-xl">Profile Not Found</CardTitle>
-            <CardDescription>
-              The profile you're trying to connect with doesn't exist or has been removed.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              onClick={() => navigate('/')}
-              className="w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-            >
-              Go Home
-            </Button>
-          </CardFooter>
-        </Card>
+        <ProfileConnectionCard
+          title="Profile Not Found"
+          description="The profile you're trying to connect with doesn't exist or has been removed."
+          primaryButtonProps={{
+            label: "Go Home",
+            onClick: () => navigate('/')
+          }}
+        />
       );
     }
 
     if (connectionStatus === 'self') {
       return (
-        <Card className="w-full max-w-md border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-          <CardHeader>
-            <CardTitle className="text-xl">This is Your Profile</CardTitle>
-            <CardDescription>
-              You can't connect with your own profile. Share this link with someone else to connect with them.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              onClick={() => navigate('/settings/profile-sharing')}
-              className="w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-            >
-              Manage Profile Sharing
-            </Button>
-          </CardFooter>
-        </Card>
+        <ProfileConnectionCard
+          title="This is Your Profile"
+          description="You can't connect with your own profile. Share this link with someone else to connect with them."
+          primaryButtonProps={{
+            label: "Manage Profile Sharing",
+            onClick: () => navigate('/settings/profile-sharing')
+          }}
+        />
       );
     }
 
     if (connectionStatus === 'connected') {
       return (
-        <Card className="w-full max-w-md border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-          <CardHeader>
-            <CardTitle className="text-xl">Profiles Connected!</CardTitle>
-            <CardDescription>
-              You are connected with {ownerName}'s profile. You can now share recipes, meal plans, and shopping lists.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              onClick={() => navigate('/settings/profile-sharing')}
-              className="w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-            >
-              Manage Profile Sharing
-            </Button>
-          </CardFooter>
-        </Card>
+        <ProfileConnectionCard
+          title="Profiles Connected!"
+          description={`You are connected with ${ownerName}'s profile. You can now share recipes, meal plans, and shopping lists.`}
+          primaryButtonProps={{
+            label: "Manage Profile Sharing",
+            onClick: () => navigate('/settings/profile-sharing')
+          }}
+        />
       );
     }
 
     if (connectionStatus === 'pending') {
       return (
-        <Card className="w-full max-w-md border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-          <CardHeader>
-            <CardTitle className="text-xl">Pending Connection</CardTitle>
-            <CardDescription>
-              Your connection with {ownerName}'s profile is pending. Please wait for them to approve it.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              onClick={() => navigate('/settings/profile-sharing')}
-              className="w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-            >
-              View Status
-            </Button>
-          </CardFooter>
-        </Card>
+        <ProfileConnectionCard
+          title="Pending Connection"
+          description={`Your connection with ${ownerName}'s profile is pending. Please wait for them to approve it.`}
+          primaryButtonProps={{
+            label: "View Status",
+            onClick: () => navigate('/settings/profile-sharing')
+          }}
+        />
       );
     }
 
     return (
-      <Card className="w-full max-w-md border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-        <CardHeader>
-          <CardTitle className="text-xl">Connect with {ownerName}</CardTitle>
-          <CardDescription>
-            {!user 
-              ? "Sign in or create an account to connect with this profile." 
-              : `Connect with ${ownerName}'s profile to share recipes, meal plans, and shopping lists.`}
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="flex flex-col sm:flex-row gap-3">
-          <Button 
-            onClick={handleConnect}
-            disabled={isConnecting}
-            className="w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-          >
-            {isConnecting 
-              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</>
-              : <><UserPlus className="mr-2 h-4 w-4" /> {user ? "Connect" : "Sign In"}</>}
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="w-full sm:w-auto rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-1 hover:-translate-y-1 transition-all"
-          >
-            <X className="mr-2 h-4 w-4" /> Cancel
-          </Button>
-        </CardFooter>
-      </Card>
+      <ProfileConnectionCard
+        title={`Connect with ${ownerName}`}
+        description={!user 
+          ? "Sign in or create an account to connect with this profile." 
+          : `Connect with ${ownerName}'s profile to share recipes, meal plans, and shopping lists.`}
+        primaryButtonProps={{
+          label: user ? "Connect" : "Sign In",
+          onClick: handleConnect,
+          isLoading: isConnecting,
+          icon: <UserPlus className="mr-2 h-4 w-4" />
+        }}
+        secondaryButtonProps={{
+          label: "Cancel",
+          onClick: () => navigate('/'),
+          icon: <X className="mr-2 h-4 w-4" />
+        }}
+      />
     );
   };
 
