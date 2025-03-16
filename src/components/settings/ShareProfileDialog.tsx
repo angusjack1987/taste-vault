@@ -5,6 +5,7 @@ import useAuth from "@/hooks/useAuth";
 import ShareLinkSection from "./share/ShareLinkSection";
 import ShareButton from "./share/ShareButton";
 import { useShareToken } from "@/hooks/useShareToken";
+import { toast } from "@/hooks/use-toast";
 
 type ShareProfileDialogProps = {
   open: boolean;
@@ -21,10 +22,22 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setCanShare(!!navigator.share);
   }, []);
   
+  // Regenerate token if needed when dialog opens
+  useEffect(() => {
+    if (open && user && !shareUrl) {
+      console.log("ShareProfileDialog: No share URL available, generating token");
+      generateShareToken();
+    }
+  }, [open, user, shareUrl]);
+  
   const handleCopyToClipboard = () => {
     const copyButton = document.getElementById("share-link-copy-btn");
     if (copyButton) {
       (copyButton as HTMLButtonElement).click();
+      toast({
+        title: "Share link copied",
+        description: "Now send this link to someone you want to connect with."
+      });
     }
   };
   

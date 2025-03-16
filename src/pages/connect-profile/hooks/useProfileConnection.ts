@@ -75,11 +75,11 @@ export const useProfileConnection = (
 
         // If logged in, check if already connected
         if (user) {
+          // Check for any existing connection between these users (in either direction)
           const { data: existingConnection } = await supabase
             .from('profile_sharing')
-            .select('status')
-            .or(`owner_id.eq.${ownerId},shared_with_id.eq.${ownerId}`)
-            .or(`owner_id.eq.${user.id},shared_with_id.eq.${user.id}`)
+            .select('*')
+            .or(`and(owner_id.eq.${ownerId},shared_with_id.eq.${user.id}),and(owner_id.eq.${user.id},shared_with_id.eq.${ownerId})`)
             .single();
 
           if (existingConnection) {
@@ -125,7 +125,7 @@ export const useProfileConnection = (
     setIsConnecting(true);
 
     try {
-      // Update an existing invitation if the current user was invited
+      // Check for existing invitations by email
       const { data: existingInvitation } = await supabase
         .from('profile_sharing')
         .select('*')
@@ -134,6 +134,7 @@ export const useProfileConnection = (
         .single();
 
       if (existingInvitation) {
+        console.log("Updating existing invitation:", existingInvitation);
         // Update the existing invitation with the user's ID and set status to active
         const { error: updateError } = await supabase
           .from('profile_sharing')
@@ -145,6 +146,7 @@ export const useProfileConnection = (
 
         if (updateError) throw updateError;
       } else {
+        console.log("Creating new connection");
         // Create a new connection if no invitation exists
         const { error: insertError } = await supabase
           .from('profile_sharing')

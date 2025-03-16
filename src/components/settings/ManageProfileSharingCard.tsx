@@ -27,6 +27,9 @@ const ManageProfileSharingCard = () => {
 
     setIsLoading(true);
     try {
+      console.log("Fetching sharing invites for user", user.id);
+      
+      // Get connections where the current user is the owner
       const { data, error } = await supabase
         .from('profile_sharing')
         .select('*')
@@ -34,6 +37,8 @@ const ManageProfileSharingCard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log("Fetched invites:", data);
       setInvites(data || []);
     } catch (error) {
       console.error("Error fetching sharing invites:", error);
@@ -52,6 +57,7 @@ const ManageProfileSharingCard = () => {
 
     setIsRevoking(prev => ({ ...prev, [inviteId]: true }));
     try {
+      console.log("Revoking invite", inviteId);
       const { error } = await supabase
         .from('profile_sharing')
         .delete()
@@ -79,7 +85,9 @@ const ManageProfileSharingCard = () => {
   };
 
   useEffect(() => {
-    fetchInvites();
+    if (user) {
+      fetchInvites();
+    }
   }, [user]);
 
   const formatDate = (dateString: string) => {
@@ -92,8 +100,8 @@ const ManageProfileSharingCard = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'accepted':
-        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">Accepted</span>;
+      case 'active':
+        return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">Active</span>;
       case 'rejected':
         return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">Rejected</span>;
       case 'pending':

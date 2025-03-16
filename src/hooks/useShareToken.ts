@@ -7,21 +7,27 @@ import { User } from "@supabase/supabase-js";
 export function useShareToken(user: User | null, dialogOpen: boolean) {
   const [shareToken, setShareToken] = useState<string>("");
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Generate a share URL that includes the user's ID and a token
-  const shareUrl = user ? `${window.location.origin}/connect-profile/${user.id}?token=${shareToken}` : '';
+  const shareUrl = user && shareToken ? `${window.location.origin}/connect-profile/${user.id}?token=${shareToken}` : '';
   
   // Fetch the existing token when the dialog opens
   useEffect(() => {
     if (dialogOpen && user) {
+      setIsLoading(true);
       fetchShareToken();
     }
   }, [dialogOpen, user]);
   
   const fetchShareToken = async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
+      console.log("Fetching share token for user", user.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('share_token')
@@ -34,16 +40,21 @@ export function useShareToken(user: User | null, dialogOpen: boolean) {
         return;
       }
       
+      console.log("Share token data:", data);
+      
       if (data && data.share_token) {
         setShareToken(data.share_token);
       } else {
         // No token exists yet, generate one
+        console.log("No existing token found, generating new one");
         generateShareToken();
       }
     } catch (error) {
       console.error("Error fetching share token:", error);
       // If there's an error, try to generate a new token
       generateShareToken();
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -55,6 +66,7 @@ export function useShareToken(user: User | null, dialogOpen: boolean) {
     try {
       // Generate a random token
       const newToken = Math.random().toString(36).substring(2, 15);
+      console.log("Generated new share token:", newToken);
       
       // Save the token to the user's profile
       const { error } = await supabase
@@ -90,6 +102,7 @@ export function useShareToken(user: User | null, dialogOpen: boolean) {
     shareToken,
     shareUrl,
     isRegenerating,
+    isLoading,
     generateShareToken,
     fetchShareToken
   };

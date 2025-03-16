@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { UserPlus, X } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
@@ -18,6 +18,7 @@ const ConnectProfile = () => {
   console.log("ConnectProfile - Current path:", location.pathname + location.search);
   console.log("ConnectProfile - Token:", token);
   console.log("ConnectProfile - Owner ID:", ownerId);
+  console.log("ConnectProfile - User:", user?.id || "Not logged in");
 
   const {
     connectionStatus,
@@ -26,6 +27,11 @@ const ConnectProfile = () => {
     isConnecting,
     handleConnect
   } = useProfileConnection(ownerId, token, user, navigate);
+
+  useEffect(() => {
+    // Log status changes
+    console.log("ConnectProfile - Connection status:", connectionStatus);
+  }, [connectionStatus]);
 
   const renderContent = () => {
     if (isLoading) {
