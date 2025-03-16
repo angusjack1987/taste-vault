@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -12,7 +13,15 @@ import {
   ShoppingBag,
   Check,
   Trash2,
-  Wand2
+  Wand2,
+  // Add missing food-related icons
+  Beef,
+  Fish,
+  Apple,
+  Egg,
+  Wheat,
+  Carrot,
+  Utensils
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
