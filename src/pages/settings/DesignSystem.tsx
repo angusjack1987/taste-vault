@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -141,6 +140,12 @@ const DesignSystem = () => {
   
   const buttonSizes = ["xs", "sm", "default", "lg", "xl"];
 
+  const aiComponents = [
+    { name: "AiSuggestionButton", description: "Button with AI styling", component: <AiSuggestionButton onClick={() => {}} label="AI Button" /> },
+    { name: "AiSuggestionButton (loading)", description: "Loading state", component: <AiSuggestionButton onClick={() => {}} isLoading={true} /> },
+    { name: "AiSuggestionButton (variant)", description: "Different variants", component: <AiSuggestionButton onClick={() => {}} variant="tomato" /> },
+  ];
+
   return (
     <MainLayout title="Design System">
       <div className="mb-6">
@@ -152,6 +157,7 @@ const DesignSystem = () => {
           <ScrollArea className="max-w-full pb-2">
             <TabsList className="flex w-full mb-6 p-1 h-auto flex-nowrap overflow-x-auto">
               <TabsTrigger value="components" className="flex-shrink-0">Components</TabsTrigger>
+              <TabsTrigger value="ai-components" className="flex-shrink-0">AI Components</TabsTrigger>
               <TabsTrigger value="colors" className="flex-shrink-0">Colors</TabsTrigger>
               <TabsTrigger value="typography" className="flex-shrink-0">Typography</TabsTrigger>
               <TabsTrigger value="animations" className="flex-shrink-0">Animations</TabsTrigger>
@@ -170,51 +176,41 @@ const DesignSystem = () => {
                       <CardTitle className="text-base">Button Variants</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {buttonVariants.map((variant) => (
-                          <div key={variant} className="flex flex-col items-center">
-                            <Button 
-                              variant={variant as any} 
-                              className="mb-2 w-full"
-                              onClick={() => copyToClipboard(`variant="${variant}"`)}
-                            >
-                              {variant}
-                            </Button>
-                            <code className="text-xs bg-muted px-1 py-0.5 rounded">{variant}</code>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <Separator className="my-6" />
-                      
-                      <div>
-                        <h4 className="font-bold mb-4">Button Sizes</h4>
-                        <div className="flex flex-wrap gap-4">
-                          {buttonSizes.map((size) => (
-                            <div key={size} className="flex items-center gap-2">
+                      <ScrollArea className="h-[400px] pr-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {buttonVariants.map((variant) => (
+                            <div key={variant} className="flex flex-col items-center">
                               <Button 
-                                size={size as any}
-                                onClick={() => copyToClipboard(`size="${size}"`)}
+                                variant={variant as any} 
+                                className="mb-2 w-full"
+                                onClick={() => copyToClipboard(`variant="${variant}"`)}
                               >
-                                {size}
+                                {variant}
                               </Button>
-                              <code className="text-xs bg-muted px-1 py-0.5 rounded">size="{size}"</code>
+                              <code className="text-xs bg-muted px-1 py-0.5 rounded">{variant}</code>
                             </div>
                           ))}
                         </div>
-                      </div>
-                      
-                      <Separator className="my-6" />
-                      
-                      <div>
-                        <h4 className="font-bold mb-4">Special Buttons</h4>
-                        <div className="flex flex-col gap-4">
-                          <div className="flex items-center gap-4">
-                            <AiSuggestionButton onClick={() => copyToClipboard("<AiSuggestionButton />")} />
-                            <code className="text-xs bg-muted px-1 py-0.5 rounded">AiSuggestionButton</code>
+                        
+                        <Separator className="my-6" />
+                        
+                        <div>
+                          <h4 className="font-bold mb-4">Button Sizes</h4>
+                          <div className="flex flex-wrap gap-4">
+                            {buttonSizes.map((size) => (
+                              <div key={size} className="flex items-center gap-2">
+                                <Button 
+                                  size={size as any}
+                                  onClick={() => copyToClipboard(`size="${size}"`)}
+                                >
+                                  {size}
+                                </Button>
+                                <code className="text-xs bg-muted px-1 py-0.5 rounded">size="{size}"</code>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      </div>
+                      </ScrollArea>
                     </CardContent>
                   </Card>
                 </AccordionContent>
@@ -361,6 +357,49 @@ const DesignSystem = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+          </TabsContent>
+          
+          <TabsContent value="ai-components" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Components</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="font-bold text-lg mb-4">AI Suggestion Button</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      {aiComponents.map((item, index) => (
+                        <div key={index} className="flex flex-col gap-2 items-center p-4 border-2 border-dashed border-muted rounded-xl">
+                          <div className="mb-4">{item.component}</div>
+                          <p className="font-medium text-sm">{item.description}</p>
+                          <code 
+                            className="text-xs bg-muted px-1 py-0.5 rounded cursor-pointer"
+                            onClick={() => copyToClipboard(`<${item.name} />`)}
+                          >
+                            &lt;{item.name} /&gt;
+                          </code>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="mt-8 p-4 bg-muted rounded-xl">
+                      <h4 className="font-bold mb-2">Usage</h4>
+                      <pre className="text-sm overflow-x-auto p-3 bg-black text-white rounded-md cursor-pointer" onClick={() => copyToClipboard(`import AiSuggestionButton from "@/components/ui/ai-suggestion-button";\n\n<AiSuggestionButton\n  onClick={handleClick}\n  label="AI Suggestions"\n  variant="cheese"\n  isLoading={false}\n/>`)}>
+{`import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
+
+<AiSuggestionButton
+  onClick={handleClick}
+  label="AI Suggestions"
+  variant="cheese"
+  isLoading={false}
+/>`}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="colors" className="space-y-6">
@@ -584,7 +623,7 @@ const DesignSystem = () => {
                       Show Toast Example
                     </Button>
                     <code className="text-xs bg-muted px-1 py-0.5 rounded ml-2">
-                      toast(&#123; title: "Title", description: "Description" &#125;)
+                      toast(&#123; title: \"Title\", description: \"Description\" &#125;)
                     </code>
                   </div>
                 </div>

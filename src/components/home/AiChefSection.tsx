@@ -36,7 +36,7 @@ const AiChefSection = ({ onOpenSuggestDialog }: AiChefSectionProps) => {
         <AiSuggestionButton
           onClick={onOpenSuggestDialog}
           label="Get Recipe Ideas"
-          className="font-bold text-lg uppercase border-2 border-black px-6 py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)]"
+          className="font-bold text-lg uppercase"
           variant="cheese"
         />
       </div>

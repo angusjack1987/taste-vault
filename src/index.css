@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -109,28 +110,22 @@
     @apply border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
   }
   
-  /* Neo AI Button Animations */
-  .neo-ai-button {
-    @apply relative hover:-translate-y-1 hover:-translate-x-1 hover:shadow-none;
+  /* Neo AI Button Container & Styles */
+  .ai-btn-container {
+    @apply inline-block;
   }
   
-  .neo-shadow {
-    clip-path: polygon(
-      50% 0%, 
-      65% 35%, 
-      100% 35%, 
-      72% 57%, 
-      85% 100%, 
-      50% 70%, 
-      15% 100%, 
-      28% 57%, 
-      0% 35%, 
-      35% 35%
-    );
+  .ai-btn {
+    @apply relative z-10 bg-white hover:shadow-none;
   }
   
-  .ai-sparkle {
-    filter: blur(1px);
+  .neo-star-shadow {
+    @apply transition-all duration-300;
+  }
+  
+  /* When button is hovered, move the shadow */
+  .ai-btn-container:hover .neo-star-shadow {
+    @apply top-2 left-2;
   }
 }
 
@@ -306,11 +301,11 @@
   @keyframes neo-pulse {
     0%, 100% {
       transform: scale(1);
-      box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+      opacity: 0.8;
     }
     50% {
-      transform: scale(1.05);
-      box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+      transform: scale(1.1);
+      opacity: 1;
     }
   }
   
@@ -321,11 +316,9 @@
   @keyframes neo-float {
     0%, 100% {
       transform: translateY(0);
-      box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
     }
     50% {
-      transform: translateY(-10px);
-      box-shadow: 10px 15px 0px 0px rgba(0,0,0,1);
+      transform: translateY(-8px);
     }
   }
   
