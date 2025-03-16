@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -63,39 +64,41 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              placeholder="m@example.com"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                placeholder="m@example.com"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            {errorMessage && (
+              <p className="text-red-500 text-sm">{errorMessage}</p>
+            )}
+            <Button type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? "Logging in..." : "Sign in"}
+            </Button>
+          </form>
+          <div className="text-center">
+            <Link to="/auth/register" className="text-sm text-muted-foreground hover:text-primary">
+              Don't have an account? Sign up
+            </Link>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          {errorMessage && (
-            <p className="text-red-500 text-sm">{errorMessage}</p>
-          )}
-          <Button disabled={isLoading} onClick={handleSubmit}>
-            {isLoading ? "Logging in..." : "Sign in"}
-          </Button>
         </CardContent>
-        <div className="p-6 pt-0 text-center">
-          <Link to="/auth/register" className="text-sm text-muted-foreground hover:text-primary">
-            Don't have an account? Sign up
-          </Link>
-        </div>
       </Card>
     </div>
   );
