@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
@@ -45,7 +44,17 @@ const AuthGuard = ({
         }
         
         // Check if onboarding has been completed in the preferences
-        const onboardingCompleted = data?.preferences?.onboarding_completed || false;
+        let onboardingCompleted = false;
+        
+        if (data?.preferences && 
+            typeof data.preferences === 'object' && 
+            !Array.isArray(data.preferences)) {
+          // Access the onboarding_completed property safely
+          onboardingCompleted = 
+            'onboarding_completed' in data.preferences && 
+            Boolean(data.preferences.onboarding_completed);
+        }
+        
         setHasCompletedOnboarding(onboardingCompleted);
       } catch (error) {
         console.error("Error checking onboarding status:", error);
