@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +18,7 @@ interface ConnectedUser {
   first_name: string | null;
   share_token: string | null;
   created_at: string;
+  avatar_url: string | null;
 }
 
 const getSharingPreferences = (preferences: Json | null): SharingPreferences => {
@@ -133,7 +133,6 @@ export const useSync = () => {
         if (error) throw error;
       }
       
-      // Automatically sync with all connected users after preferences update
       await syncWithAllConnectedUsers();
       
       return sharingPrefs;
@@ -162,7 +161,6 @@ export const useSync = () => {
       
       console.log("Syncing with all connected users:", otherUserIds);
       
-      // Sync with all connected users in parallel
       await Promise.allSettled(
         otherUserIds.map(userId => syncData(userId))
       );
@@ -200,7 +198,6 @@ export const useSync = () => {
       
       if (otherUserIds.length === 0) return [];
       
-      // Check if profiles exist with matching IDs
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, avatar_url, created_at')
@@ -213,7 +210,6 @@ export const useSync = () => {
       
       console.log("Fetched connected profiles:", profiles);
       
-      // Create a map of profiles by ID for easier lookup
       const profileMap = new Map();
       if (profiles && profiles.length > 0) {
         profiles.forEach(profile => {
@@ -227,13 +223,11 @@ export const useSync = () => {
         });
       }
       
-      // Create result array with profile data if available, or fallback to defaults
       return otherUserIds.map(id => {
         const profile = profileMap.get(id);
         if (profile) {
           return profile;
         } else {
-          // Fallback information for users without profiles
           return {
             id,
             first_name: 'Connected User',
@@ -350,7 +344,6 @@ export const useSync = () => {
       
       console.log("Successfully created connection:", data);
       
-      // After creating the connection, try to sync data
       await syncData(targetUserId);
       
       const firstName = targetUser?.first_name || 'user';
@@ -411,7 +404,6 @@ export const useSync = () => {
       const sharingPrefs = getSharingPreferences(prefsData?.preferences || null);
       console.log("Sharing preferences:", sharingPrefs);
       
-      // Create an array of promises for each syncing operation
       const syncPromises = [];
       
       if (sharingPrefs.recipes) {
@@ -434,19 +426,15 @@ export const useSync = () => {
         syncPromises.push(syncMealPlans(fromUserId));
       }
       
-      // Wait for all promises to complete, even if some fail
       const results = await Promise.allSettled(syncPromises);
       
-      // Check if any operations failed
       const failedOperations = results.filter(r => r.status === 'rejected');
       if (failedOperations.length > 0) {
         console.error("Some sync operations failed:", failedOperations);
         if (failedOperations.length === syncPromises.length) {
-          // All operations failed
           toast.error("Data sync failed. Please try again.");
           return false;
         } else {
-          // Some operations failed, but not all
           toast.warning("Some data couldn't be synced. Try again later.");
         }
       } else if (results.length > 0) {
@@ -493,7 +481,6 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingRecipe) {
-          // Create a clean recipe object with only the needed fields
           const newRecipe = {
             title: recipe.title || '',
             description: recipe.description || '',
@@ -504,6 +491,7 @@ export const useSync = () => {
             servings: recipe.servings || null,
             time: recipe.time || null,
             difficulty: recipe.difficulty || null,
+            image: recipe.image || null,
             images: recipe.images || [],
             rating: recipe.rating || null
           };
@@ -556,7 +544,6 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingRecipe) {
-          // Create a clean baby recipe object with only the needed fields
           const newRecipe = {
             title: recipe.title,
             description: recipe.description || '',
@@ -583,7 +570,6 @@ export const useSync = () => {
       
       console.log(`Successfully synced ${syncedCount} baby recipes`);
       
-      // Also sync baby profiles
       const { data: babyProfiles, error: profilesError } = await supabase
         .from('baby_profiles')
         .select('*')
@@ -602,7 +588,6 @@ export const useSync = () => {
             .maybeSingle();
             
           if (!existingProfile) {
-            // Create a clean baby profile object
             const newProfile = {
               name: profile.name,
               age_in_months: profile.age_in_months,
@@ -655,7 +640,6 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingItem) {
-          // Create clean fridge item object
           const newItem = {
             name: item.name,
             quantity: item.quantity || null,
@@ -710,13 +694,12 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingItem) {
-          // Create clean shopping list item object
           const newItem = {
             ingredient: item.ingredient,
             quantity: item.quantity || null,
             category: item.category || null,
             is_checked: item.is_checked || false,
-            recipe_id: null, // Don't copy recipe_id as it may not exist in the user's recipes
+            recipe_id: null,
             user_id: user!.id
           };
           
@@ -769,12 +752,11 @@ export const useSync = () => {
           .maybeSingle();
           
         if (!existingPlan) {
-          // Create clean meal plan object
           const newPlan = {
             date: plan.date,
             meal_type: plan.meal_type,
             note: plan.note || null,
-            recipe_id: null, // Don't copy recipe_id as it may not exist in the user's recipes
+            recipe_id: null,
             user_id: user!.id
           };
           
@@ -796,6 +778,69 @@ export const useSync = () => {
       console.error("Error in syncMealPlans:", err);
       throw err;
     }
+  };
+
+  const setupDataSyncListeners = () => {
+    if (!user) return () => {};
+
+    const recipeSubscription = supabase
+      .channel('recipe-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'recipes',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Recipe updated, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    const mealPlanSubscription = supabase
+      .channel('meal-plan-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'meal_plans',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Meal plan updated, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    const fridgeSubscription = supabase
+      .channel('fridge-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'fridge_items',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Fridge item updated, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    const recipeInsertSubscription = supabase
+      .channel('recipe-inserts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'recipes',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Recipe inserted, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(recipeSubscription);
+      supabase.removeChannel(mealPlanSubscription);
+      supabase.removeChannel(fridgeSubscription);
+      supabase.removeChannel(recipeInsertSubscription);
+    };
   };
 
   const useSharingPreferencesQuery = () => {
@@ -857,6 +902,7 @@ export const useSync = () => {
     useConnectWithUser,
     useRemoveConnection,
     useSyncData,
+    setupDataSyncListeners
   };
 };
 
