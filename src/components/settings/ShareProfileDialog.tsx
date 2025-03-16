@@ -21,7 +21,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
   const [isSharing, setIsSharing] = useState(false);
   
   // Generate a share URL that includes the user's ID
-  const shareUrl = `${window.location.origin}/connect-profile/${user?.id}`;
+  const shareUrl = user ? `${window.location.origin}/connect-profile/${user.id}` : '';
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareUrl);
