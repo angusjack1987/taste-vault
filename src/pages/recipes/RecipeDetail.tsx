@@ -170,6 +170,10 @@ const RecipeDetail = () => {
     setShareDialogOpen(true);
   };
 
+  const handleOpenSelectIngredientsDialog = () => {
+    setSelectIngredientsDialogOpen(true);
+  };
+
   const handleGenerateVariation = async (type: string, preferences?: string) => {
     if (!recipe) return;
     
