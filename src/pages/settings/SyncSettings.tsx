@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share, ArrowLeft, Copy, Check } from "lucide-react";
@@ -13,15 +12,7 @@ import { toast } from "sonner";
 import useAuth from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
-
-// Interface for sharing preferences
-interface SharingPreferences {
-  recipes: boolean;
-  babyRecipes: boolean;
-  fridgeItems: boolean;
-  shoppingList: boolean;
-  mealPlan: boolean;
-}
+import { SharingPreferences } from "@/hooks/useSync";
 
 const SyncSettings = () => {
   const { user } = useAuth();
@@ -98,18 +89,49 @@ const SyncSettings = () => {
     try {
       setIsProcessing(true);
       
-      const { error } = await supabase
+      // First get existing preferences
+      const { data: existingData } = await supabase
         .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          preferences: {
-            sharing: sharingPrefs
-          }
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (error) throw error;
+        .select('id, preferences')
+        .eq('user_id', user.id)
+        .single();
+      
+      // Create a properly typed preferences object
+      let newPreferences: Record<string, any> = {};
+      
+      if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
+        // Copy existing preferences
+        newPreferences = { ...existingData.preferences as Record<string, any> };
+      }
+      
+      // Add sharing preferences
+      newPreferences.sharing = {
+        recipes: sharingPrefs.recipes,
+        babyRecipes: sharingPrefs.babyRecipes,
+        fridgeItems: sharingPrefs.fridgeItems,
+        shoppingList: sharingPrefs.shoppingList,
+        mealPlan: sharingPrefs.mealPlan
+      };
+      
+      if (existingData) {
+        // Update existing preferences
+        const { error } = await supabase
+          .from('user_preferences')
+          .update({ preferences: newPreferences })
+          .eq('id', existingData.id);
+        
+        if (error) throw error;
+      } else {
+        // Create new preferences
+        const { error } = await supabase
+          .from('user_preferences')
+          .insert({
+            user_id: user.id,
+            preferences: newPreferences
+          });
+        
+        if (error) throw error;
+      }
       
       toast.success("Sharing preferences saved");
     } catch (error) {

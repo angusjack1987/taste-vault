@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import useAuth from "@/hooks/useAuth";
+import { Json } from "@/integrations/supabase/types";
 
 export interface SharingPreferences {
   recipes: boolean;
@@ -19,6 +20,36 @@ interface ConnectedUser {
   share_token: string | null;
   created_at: string;
 }
+
+// Helper function to safely parse JSON preferences
+const getSharingPreferences = (preferences: Json | null): SharingPreferences => {
+  if (!preferences) return getDefaultSharingPreferences();
+  
+  if (typeof preferences === 'object' && preferences !== null && !Array.isArray(preferences)) {
+    const sharing = preferences.sharing;
+    
+    if (sharing && typeof sharing === 'object' && !Array.isArray(sharing)) {
+      return {
+        recipes: !!sharing.recipes,
+        babyRecipes: !!sharing.babyRecipes,
+        fridgeItems: !!sharing.fridgeItems,
+        shoppingList: !!sharing.shoppingList,
+        mealPlan: !!sharing.mealPlan
+      };
+    }
+  }
+  
+  return getDefaultSharingPreferences();
+};
+
+// Default sharing preferences
+const getDefaultSharingPreferences = (): SharingPreferences => ({
+  recipes: true,
+  babyRecipes: true,
+  fridgeItems: false,
+  shoppingList: false,
+  mealPlan: true
+});
 
 export const useSync = () => {
   const queryClient = useQueryClient();
@@ -41,14 +72,14 @@ export const useSync = () => {
         throw error;
       }
       
-      if (data?.preferences && typeof data.preferences === 'object') {
-        return data.preferences.sharing as SharingPreferences || null;
+      if (data?.preferences) {
+        return getSharingPreferences(data.preferences);
       }
       
-      return null;
+      return getDefaultSharingPreferences();
     } catch (err) {
       console.error("Error in fetchSharingPreferences:", err);
-      return null;
+      return getDefaultSharingPreferences();
     }
   };
 
@@ -66,16 +97,28 @@ export const useSync = () => {
         .eq('user_id', user.id)
         .single();
       
-      let updatedPreferences = {
-        ...(existingData?.preferences || {}),
-        sharing: sharingPrefs
+      // Create a properly typed preferences object
+      let newPreferences: Record<string, any> = {};
+      
+      if (existingData?.preferences && typeof existingData.preferences === 'object' && !Array.isArray(existingData.preferences)) {
+        // Copy existing preferences
+        newPreferences = { ...existingData.preferences as Record<string, any> };
+      }
+      
+      // Add sharing preferences
+      newPreferences.sharing = {
+        recipes: sharingPrefs.recipes,
+        babyRecipes: sharingPrefs.babyRecipes,
+        fridgeItems: sharingPrefs.fridgeItems,
+        shoppingList: sharingPrefs.shoppingList,
+        mealPlan: sharingPrefs.mealPlan
       };
       
       if (existingData) {
         // Update existing preferences
         const { error } = await supabase
           .from('user_preferences')
-          .update({ preferences: updatedPreferences })
+          .update({ preferences: newPreferences })
           .eq('id', existingData.id);
         
         if (error) throw error;
@@ -85,7 +128,7 @@ export const useSync = () => {
           .from('user_preferences')
           .insert([{ 
             user_id: user.id,
-            preferences: updatedPreferences
+            preferences: newPreferences
           }]);
         
         if (error) throw error;
@@ -239,13 +282,8 @@ export const useSync = () => {
         
       if (prefsError && prefsError.code !== 'PGRST116') throw prefsError;
       
-      const sharingPrefs = prefsData?.preferences?.sharing as SharingPreferences || {
-        recipes: true,
-        babyRecipes: true,
-        fridgeItems: false,
-        shoppingList: false,
-        mealPlan: true,
-      };
+      // Get sharing preferences or use defaults
+      const sharingPrefs = getSharingPreferences(prefsData?.preferences || null);
       
       // Sync recipes if allowed
       if (sharingPrefs.recipes) {
