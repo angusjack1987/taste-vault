@@ -219,40 +219,29 @@ async function extractRecipeWithAI(document: Document, url: string, apiKey: stri
     `;
     
     console.log("Calling OpenAI API...");
-    // Call OpenAI API with longer timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+    // Call OpenAI API
+    const aiResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo-1106",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.3,
+      response_format: { type: "json_object" }
+    });
     
-    try {
-      const aiResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo-1106",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      }, { signal: controller.signal });
-      
-      clearTimeout(timeoutId);
-      
-      // Parse the AI response
-      const content = aiResponse.choices[0]?.message?.content || "{}";
-      console.log("AI response received, parsing...");
-      
-      const recipeData = JSON.parse(content);
-      
-      // Add images to the recipe data
-      return {
-        ...recipeData,
-        images: images,
-        image: images.length > 0 ? images[0] : null
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.error("OpenAI API error:", error);
-      throw new Error(`OpenAI API error: ${error.message}`);
-    }
+    // Parse the AI response
+    const content = aiResponse.choices[0]?.message?.content || "{}";
+    console.log("AI response received, parsing...");
+    
+    const recipeData = JSON.parse(content);
+    
+    // Add images to the recipe data
+    return {
+      ...recipeData,
+      images: images,
+      image: images.length > 0 ? images[0] : null
+    };
   } catch (error) {
     console.error("Error in extractRecipeWithAI:", error);
     throw new Error(`AI extraction failed: ${error.message}`);

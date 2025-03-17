@@ -34,7 +34,7 @@ export const supabase = createClient<Database>(
 const originalInvoke = supabase.functions.invoke;
 supabase.functions.invoke = async function(
   functionName: string,
-  options?: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal }
+  options?: { body?: unknown; headers?: Record<string, string> }
 ) {
   try {
     console.log(`Invoking edge function: ${functionName}`);
