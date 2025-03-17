@@ -1,3 +1,4 @@
+
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
@@ -24,8 +25,16 @@ import AuthGuard from "./components/AuthGuard";
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/dashboard" replace />,
+    element: <Navigate to="/index" replace />,
     errorElement: <NotFound />,
+  },
+  {
+    path: "/index",
+    element: (
+      <AuthGuard>
+        <Index />
+      </AuthGuard>
+    ),
   },
   {
     path: "/auth/login",
