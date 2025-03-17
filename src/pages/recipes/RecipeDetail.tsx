@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -539,7 +539,9 @@ const RecipeDetail = () => {
                 <div className="whitespace-pre-line">
                   {typeof suggestedMeal.rawResponse === 'string' 
                     ? suggestedMeal.rawResponse 
-                    : String(suggestedMeal.rawResponse || 'No response data available')}
+                    : typeof suggestedMeal.rawResponse === 'object'
+                      ? JSON.stringify(suggestedMeal.rawResponse)
+                      : String(suggestedMeal.rawResponse || 'No response data available')}
                 </div>
               )}
               
