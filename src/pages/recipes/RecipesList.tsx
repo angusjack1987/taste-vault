@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,6 @@ const RecipesList = () => {
   
   const addRecipeMutation = useAddRecipe();
   
-  // Explicitly type the recipes variable to ensure it's always an array
   const recipes: Recipe[] = data as Recipe[] || [];
   
   useEffect(() => {
@@ -136,7 +134,24 @@ const RecipesList = () => {
         <ImportRecipeDialog
           open={isImportDialogOpen}
           onClose={() => setIsImportDialogOpen(false)}
-          onImport={handleImport}
+          onImport={(recipeData) => {
+            // First, close the dialog
+            setIsImportDialogOpen(false);
+            
+            // Then create the recipe with the imported data
+            console.log("Creating recipe from imported data:", recipeData);
+            addRecipeMutation.mutate(recipeData as RecipeFormData, {
+              onSuccess: (newRecipe) => {
+                toast.success("Recipe imported and saved successfully!");
+                // Optional: Navigate to the new recipe
+                navigate(`/recipes/${newRecipe.id}`);
+              },
+              onError: (error) => {
+                console.error("Error saving imported recipe:", error);
+                toast.error("Failed to save the imported recipe. Please try again.");
+              }
+            });
+          }}
         />
         
         <RecipePhotoCapture

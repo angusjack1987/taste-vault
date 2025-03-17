@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { X, Loader2, Link, Check, Save, Edit, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import { RecipeFormData } from "@/hooks/useRecipes";
 import { cleanIngredientString, parsePreparation, parseIngredientAmount, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import IngredientInput from "./IngredientInput";
 import { toast } from "sonner";
+import useRecipes from "@/hooks/useRecipes";
 
 interface ImportRecipeDialogProps {
   open: boolean;
@@ -32,9 +32,12 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
   const [editedRecipe, setEditedRecipe] = useState<Partial<RecipeFormData> | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { useScrapeRecipeMutation } = useScrapedRecipes();
+  const { useCreateRecipe } = useRecipes();
   const { mutate: scrapeRecipe, isPending, isError, error } = useScrapeRecipeMutation();
+  const { mutate: createRecipe, isPending: isCreating } = useCreateRecipe();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +58,9 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
           
           // Handle extracted images if any
           let extractedImages: string[] = [];
-          if (data.image) {
+          if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+            extractedImages = data.images;
+          } else if (data.image) {
             extractedImages = [data.image];
           }
           
@@ -121,13 +126,31 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
   
   const handleSaveRecipe = () => {
     if (editedRecipe) {
+      setIsSaving(true);
+      
       // Ensure the selected image is saved with the recipe
       if (images.length > 0 && selectedImageIndex >= 0 && selectedImageIndex < images.length) {
         editedRecipe.image = images[selectedImageIndex];
       }
       
-      onImport(editedRecipe);
-      resetDialog();
+      try {
+        // Call the onImport function with the edited recipe data
+        onImport(editedRecipe);
+        
+        // Log the recipe data being imported
+        console.log("Importing recipe:", editedRecipe);
+        
+        // Show success toast
+        toast.success("Recipe imported successfully");
+        
+        // Reset the dialog
+        resetDialog();
+      } catch (error) {
+        console.error("Error importing recipe:", error);
+        toast.error("Failed to import recipe. Please try again.");
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
   
@@ -138,6 +161,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
     setUrl("");
     setImages([]);
     setSelectedImageIndex(0);
+    setIsSaving(false);
     onClose();
   };
   
@@ -452,6 +476,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
             type="button"
             variant="outline"
             onClick={resetDialog}
+            disabled={isSaving}
           >
             Cancel
           </Button>
@@ -459,6 +484,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
             type="button"
             variant={editMode ? "outline" : "default"}
             onClick={() => setEditMode(!editMode)}
+            disabled={isSaving}
           >
             {editMode ? (
               <>
@@ -475,10 +501,19 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
           <Button 
             type="button"
             onClick={handleSaveRecipe}
-            disabled={editMode}
+            disabled={editMode || isSaving}
           >
-            <Save className="mr-2 h-4 w-4" />
-            Save Recipe
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Recipe
+              </>
+            )}
           </Button>
         </DialogFooter>
       </div>
