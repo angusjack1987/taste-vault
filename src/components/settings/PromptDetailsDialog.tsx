@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,11 +25,9 @@ const PromptDetailsDialog = ({
   promptId,
 }: PromptDetailsDialogProps) => {
   const { usePromptDetailsQuery } = useAISettings();
-  const { data: promptDetails, isLoading } = usePromptDetailsQuery(promptId, {
-    enabled: !!promptId && open, // Only fetch when promptId exists and dialog is open
-  });
+  const { data: promptDetails, isLoading } = usePromptDetailsQuery(promptId);
 
-  if (!promptId) {
+  if (!promptId || !open) {
     return null;
   }
 
