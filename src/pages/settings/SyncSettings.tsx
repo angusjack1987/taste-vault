@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share, ArrowLeft, Copy, Check, RefreshCw, UserPlus, Users } from "lucide-react";
@@ -13,7 +12,8 @@ import { toast } from "sonner";
 import useAuth from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
-import useSync, { SharingPreferences } from "@/hooks/useSync";
+import useSync from "@/hooks/useSync";
+import { SharingPreferences } from "@/hooks/recipes/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

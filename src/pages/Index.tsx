@@ -14,6 +14,20 @@ import HeroSection from '@/components/home/HeroSection';
 import MemoryInsightsSection from '@/components/home/MemoryInsightsSection';
 import TodaysMealsSection from '@/components/home/TodaysMealsSection';
 import AiChefSection from '@/components/home/AiChefSection';
+import { Recipe } from '@/hooks/recipes/types';
+import { RecipeCardProps } from '@/components/recipes/RecipeCard';
+
+// Helper function to convert Recipe objects to RecipeCardProps
+const mapRecipesToCardProps = (recipes: Recipe[]): RecipeCardProps[] => {
+  return recipes.map(recipe => ({
+    id: recipe.id,
+    title: recipe.title,
+    image: recipe.image || '', // Ensure image is always a string
+    time: recipe.time,
+    rating: recipe.rating,
+    isShared: recipe.isShared
+  }));
+};
 
 const IndexPage = () => {
   const { user } = useAuth();
@@ -33,8 +47,9 @@ const IndexPage = () => {
   const [additionalPreferences, setAdditionalPreferences] = useState("");
   const [memoryPreview, setMemoryPreview] = useState<string | null>(null);
 
-  const recentRecipes = recipes.slice(0, 4);
-  const popularRecipes = [...recipes].sort(() => 0.5 - Math.random()).slice(0, 4); // Random for demo
+  // Fix: Convert Recipe[] to RecipeCardProps[] using the helper function
+  const recentRecipeProps = mapRecipesToCardProps(recipes.slice(0, 4));
+  const popularRecipeProps = mapRecipesToCardProps([...recipes].sort(() => 0.5 - Math.random()).slice(0, 4));
   
   useEffect(() => {
     console.log("Memory enabled:", isMemoryEnabled);
@@ -133,7 +148,7 @@ const IndexPage = () => {
         {/* Recent Recipes Section */}
         <CategorySection 
           title="Recent Recipes" 
-          recipes={recentRecipes}
+          recipes={recentRecipeProps}
           viewAllLink="/recipes"
           emptyMessage="No recipes yet. Start adding some!"
         />
@@ -141,7 +156,7 @@ const IndexPage = () => {
         {/* Popular Recipes Section */}
         <CategorySection 
           title="Popular Recipes" 
-          recipes={popularRecipes}
+          recipes={popularRecipeProps}
           viewAllLink="/recipes"
           emptyMessage="Explore more recipes to see popular ones!"
         />

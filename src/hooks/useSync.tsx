@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -10,30 +9,135 @@ import { SharingPreferences } from './recipes/types';
 interface SyncContextType {
   isSyncing: boolean;
   syncWithAllConnectedUsers: () => Promise<void>;
-  // Add the missing hooks
-  useConnectWithUser: () => any;
-  useConnectedUsersQuery: () => any;
-  useRemoveConnection: () => any;
-  useSyncData: () => any;
-  useSharingPreferencesQuery: () => any;
-  useUpdateSharingPreferences: () => any;
-  useSyncWithAllUsers: () => any;
+  // Add explicit types for the hooks
+  useConnectWithUser: () => ReturnType<typeof useConnectWithUserHook>;
+  useConnectedUsersQuery: () => ReturnType<typeof useConnectedUsersQueryHook>;
+  useRemoveConnection: () => ReturnType<typeof useRemoveConnectionHook>;
+  useSyncData: () => ReturnType<typeof useSyncDataHook>;
+  useSharingPreferencesQuery: () => ReturnType<typeof useSharingPreferencesQueryHook>;
+  useUpdateSharingPreferences: () => ReturnType<typeof useUpdateSharingPreferencesHook>;
+  useSyncWithAllUsers: () => ReturnType<typeof useSyncWithAllUsersHook>;
 }
 
 const SyncContext = createContext<SyncContextType>({
   isSyncing: false,
   syncWithAllConnectedUsers: async () => {},
-  // Add stubs for the missing hooks
-  useConnectWithUser: () => ({}),
-  useConnectedUsersQuery: () => ({}),
-  useRemoveConnection: () => ({}),
-  useSyncData: () => ({}),
-  useSharingPreferencesQuery: () => ({}),
-  useUpdateSharingPreferences: () => ({}),
-  useSyncWithAllUsers: () => ({}),
+  // Add stubs for the hooks
+  useConnectWithUser: () => ({ mutateAsync: async () => true, isPending: false, isError: false }),
+  useConnectedUsersQuery: () => ({ data: [], isLoading: false }),
+  useRemoveConnection: () => ({ mutateAsync: async () => true, isPending: false }),
+  useSyncData: () => ({ mutateAsync: async () => true, isPending: false }),
+  useSharingPreferencesQuery: () => ({ data: null, isLoading: false }),
+  useUpdateSharingPreferences: () => ({ mutate: () => {}, isPending: false }),
+  useSyncWithAllUsers: () => ({ mutate: () => {}, isPending: false }),
 });
 
 export const useSyncContext = () => useContext(SyncContext);
+
+// Define the hook implementations
+const useConnectWithUserHook = () => {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (token: string) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      // Implement your connection logic here
+      console.log("Connecting with user via token:", token);
+      return true;
+    }
+  });
+};
+
+const useConnectedUsersQueryHook = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['connected-users', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      // Implement your fetching logic here
+      console.log("Fetching connected users for:", user.id);
+      return [];
+    },
+    enabled: !!user
+  });
+};
+
+const useRemoveConnectionHook = () => {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      // Implement your removal logic here
+      console.log("Removing connection with user:", userId);
+      return true;
+    }
+  });
+};
+
+const useSyncDataHook = () => {
+  const { user } = useAuth();
+  const syncContext = useSyncContext();
+  
+  return useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+      
+      await syncContext.syncWithAllConnectedUsers();
+      return true;
+    }
+  });
+};
+
+const useSharingPreferencesQueryHook = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['sharing-preferences', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      // Default preferences if none are set
+      const defaultPrefs: SharingPreferences = {
+        recipes: true,
+        babyRecipes: true,
+        fridgeItems: false,
+        shoppingList: false,
+        mealPlan: true
+      };
+      
+      return defaultPrefs;
+    },
+    enabled: !!user
+  });
+};
+
+const useUpdateSharingPreferencesHook = () => {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (prefs: SharingPreferences) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      // Implement your update logic here
+      console.log("Updating sharing preferences:", prefs);
+      return prefs;
+    }
+  });
+};
+
+const useSyncWithAllUsersHook = () => {
+  const { user } = useAuth();
+  const syncContext = useSyncContext();
+  
+  return useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+      
+      await syncContext.syncWithAllConnectedUsers();
+      return true;
+    }
+  });
+};
 
 export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
   const [isSyncing, setIsSyncing] = useState(false);
@@ -199,105 +303,23 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, recipes]);
 
-  // Implement hook to connect with another user
-  const useConnectWithUser = () => {
-    return useMutation({
-      mutationFn: async (token: string) => {
-        if (!user) throw new Error("User not authenticated");
-        
-        // Example implementation - you should implement your actual logic
-        console.log("Connecting with user via token:", token);
-        return true;
-      }
-    });
-  };
-
-  // Implement hook to get connected users
-  const useConnectedUsersQuery = () => {
-    return useQuery({
-      queryKey: ['connected-users', user?.id],
-      queryFn: async () => {
-        if (!user) return [];
-        
-        // Example implementation - you should implement your actual logic
-        console.log("Fetching connected users for:", user.id);
-        return [];
-      },
-      enabled: !!user
-    });
-  };
-
-  // Implement hook to remove a connection
-  const useRemoveConnection = () => {
-    return useMutation({
-      mutationFn: async (userId: string) => {
-        if (!user) throw new Error("User not authenticated");
-        
-        // Example implementation - you should implement your actual logic
-        console.log("Removing connection with user:", userId);
-        return true;
-      }
-    });
-  };
-
-  // Implement hook to sync data
-  const useSyncData = () => {
-    return useMutation({
-      mutationFn: async () => {
-        if (!user) throw new Error("User not authenticated");
-        
-        await syncWithAllConnectedUsers();
-        return true;
-      }
-    });
-  };
-
-  // Implement hook to get sharing preferences
-  const useSharingPreferencesQuery = () => {
-    return useQuery({
-      queryKey: ['sharing-preferences', user?.id],
-      queryFn: async () => {
-        if (!user) return null;
-        
-        // Example implementation - you should implement your actual logic
-        const defaultPrefs: SharingPreferences = {
-          recipes: true,
-          babyRecipes: true,
-          fridgeItems: false,
-          shoppingList: false,
-          mealPlan: true
-        };
-        
-        return defaultPrefs;
-      },
-      enabled: !!user
-    });
-  };
-
-  // Implement hook to update sharing preferences
-  const useUpdateSharingPreferences = () => {
-    return useMutation({
-      mutationFn: async (prefs: SharingPreferences) => {
-        if (!user) throw new Error("User not authenticated");
-        
-        // Example implementation - you should implement your actual logic
-        console.log("Updating sharing preferences:", prefs);
-        return prefs;
-      }
-    });
-  };
-
-  // Implement hook to sync with all users
-  const useSyncWithAllUsers = () => {
-    return useMutation({
-      mutationFn: async () => {
-        if (!user) throw new Error("User not authenticated");
-        
-        await syncWithAllConnectedUsers();
-        return true;
-      }
-    });
-  };
+  // Create and memoize hook instances
+  const connectWithUserHook = useConnectWithUserHook();
+  const connectedUsersQueryHook = useConnectedUsersQueryHook();
+  const removeConnectionHook = useRemoveConnectionHook();
+  const syncDataHook = useSyncDataHook();
+  const sharingPreferencesQueryHook = useSharingPreferencesQueryHook();
+  const updateSharingPreferencesHook = useUpdateSharingPreferencesHook();
+  const syncWithAllUsersHook = useSyncWithAllUsersHook();
+  
+  // Provide the hook functions
+  const useConnectWithUser = () => connectWithUserHook;
+  const useConnectedUsersQuery = () => connectedUsersQueryHook;
+  const useRemoveConnection = () => removeConnectionHook;
+  const useSyncData = () => syncDataHook;
+  const useSharingPreferencesQuery = () => sharingPreferencesQueryHook;
+  const useUpdateSharingPreferences = () => updateSharingPreferencesHook;
+  const useSyncWithAllUsers = () => syncWithAllUsersHook;
   
   return (
     <SyncContext.Provider value={{ 

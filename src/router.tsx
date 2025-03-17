@@ -1,3 +1,4 @@
+import { RouteObject } from "react-router-dom";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
@@ -21,7 +22,7 @@ import BabyFoodIndex from "./pages/baby-food/Index";
 import BabyFoodPage from "./pages/baby-food/BabyFoodPage";
 import AuthGuard from "./components/AuthGuard";
 
-export const router = createBrowserRouter([
+export const router: RouteObject[] = [
   {
     path: "/",
     element: <Navigate to="/index" replace />,
@@ -187,4 +188,6 @@ export const router = createBrowserRouter([
       </AuthGuard>
     ),
   },
-]);
+];
+
+export const browserRouter = createBrowserRouter(router);

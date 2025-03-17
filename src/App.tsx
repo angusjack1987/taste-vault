@@ -17,6 +17,7 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Fix: Using router as routes array instead of directly
   const Routes = useRoutes(router);
 
   return (
