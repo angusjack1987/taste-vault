@@ -179,7 +179,6 @@ const FridgePage = () => {
   };
   
   const handleAddToMealPlan = async (recipeId: string) => {
-    // Store selected recipe ID
     setSelectedMealPlanRecipeId(null);
     setSavePlanDialogOpen(true);
   };
@@ -193,12 +192,9 @@ const FridgePage = () => {
     try {
       const selected = generatedRecipes[selectedRecipeIndex];
       
-      // If no recipe is selected from the collection or the suggested one,
-      // save the generated recipe
       let recipeId = selectedMealPlanRecipeId;
       
       if (!recipeId) {
-        // Save the generated recipe to the recipe book first
         const savedRecipe = await createRecipe.mutateAsync({
           title: selected.title,
           description: selected.description,
@@ -233,6 +229,30 @@ const FridgePage = () => {
     }
   };
 
+  const handleRegenerateRecipe = async (index: number) => {
+    try {
+      setIsGeneratingRecipe(true);
+      
+      const availableIngredients = fridgeItems?.map(item => item.name) || [];
+      
+      const recipe = await generateRecipe({
+        ingredients: availableIngredients,
+        singleRecipe: true
+      });
+      
+      if (recipe && recipe.length > 0) {
+        const updatedRecipes = [...generatedRecipes];
+        updatedRecipes[index] = recipe[0];
+        setGeneratedRecipes(updatedRecipes);
+      }
+    } catch (error) {
+      console.error("Error regenerating recipe:", error);
+      toast.error("Failed to regenerate recipe. Please try again.");
+    } finally {
+      setIsGeneratingRecipe(false);
+    }
+  };
+  
   const categories = ["All", "Always Available", "Fridge", "Pantry", "Freezer"];
 
   const getFilteredItems = (category: string) => {
@@ -251,7 +271,6 @@ const FridgePage = () => {
     );
   };
   
-  // Convert recipes to GridRecipe format for selection
   const gridRecipes: GridRecipe[] = allRecipes.map(recipe => ({
     id: recipe.id,
     title: recipe.title,
@@ -260,14 +279,13 @@ const FridgePage = () => {
     rating: recipe.rating || undefined
   }));
   
-  // Get a suggested recipe if we saved one from the generated recipes
   let suggestedRecipe: GridRecipe | null = null;
   if (selectedRecipeIndex !== null && generatedRecipes[selectedRecipeIndex]) {
     const recipe = generatedRecipes[selectedRecipeIndex];
     suggestedRecipe = {
       id: "generated-recipe",
       title: recipe.title,
-      image: "", // Use a placeholder
+      image: "",
       time: recipe.time
     };
   }
@@ -350,6 +368,7 @@ const FridgePage = () => {
           onSelectRecipe={setSelectedRecipeIndex}
           onSaveToRecipeBook={handleSaveToRecipeBook}
           onAddToMealPlan={handleAddToMealPlan}
+          onRegenerateRecipe={handleRegenerateRecipe}
           recipes={gridRecipes}
         />
         
