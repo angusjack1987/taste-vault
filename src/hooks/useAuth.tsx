@@ -21,10 +21,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initializeAuth = async () => {
       setIsLoading(true);
       
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      try {
+        // Get the current session
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error("Error retrieving auth session:", error);
+        // Clear any invalid token data
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+      }
       
       // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
