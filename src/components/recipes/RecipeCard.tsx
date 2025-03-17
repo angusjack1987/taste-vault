@@ -1,5 +1,5 @@
 
-import { Clock, Star, Utensils } from "lucide-react";
+import { Clock, Star, Utensils, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,7 @@ export interface RecipeCardProps {
   image: string;
   time?: number; // in minutes
   rating?: number;
+  isShared?: boolean;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ const RecipeCard = ({
   image,
   time,
   rating,
+  isShared,
   className,
 }: RecipeCardProps) => {
   // Generate a random vibrant background color for placeholder images
@@ -46,6 +48,12 @@ const RecipeCard = ({
             <div className="absolute top-2 right-2 bg-yellow-400 text-black rounded-lg p-1 px-2 flex items-center text-xs font-medium uppercase border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)]">
               <Star className="w-3 h-3 mr-0.5 fill-current" />
               <span>{rating.toFixed(1)}</span>
+            </div>
+          )}
+          {isShared && (
+            <div className="absolute top-2 left-2 bg-purple-400 text-black rounded-lg p-1 px-2 flex items-center text-xs font-medium uppercase border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)]">
+              <Users className="w-3 h-3 mr-0.5" />
+              <span>Shared</span>
             </div>
           )}
         </div>
