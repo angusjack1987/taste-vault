@@ -8,7 +8,7 @@ import { RecipeFormData } from "./recipes/types";
 export const useScrapedRecipes = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Function to scrape recipe from URL
+  // Function to scrape recipe from URL with better error handling and retry logic
   const scrapeRecipe = async (url: string): Promise<Partial<RecipeFormData>> => {
     setIsLoading(true);
     
