@@ -88,7 +88,8 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
           
           if (error.message.includes("Failed to fetch") || 
               error.message.includes("Network") || 
-              error.message.includes("connect")) {
+              error.message.includes("connect") ||
+              error.message.includes("offline")) {
             setNetworkError("Network error. Please check your internet connection and try again.");
           }
         }

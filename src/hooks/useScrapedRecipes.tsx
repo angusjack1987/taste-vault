@@ -1,46 +1,47 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { supabase, handleSupabaseRequest } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RecipeFormData } from "./recipes/types";
 
 export const useScrapedRecipes = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Function to scrape recipe using OpenAI
-  const scrapeRecipeWithAI = async (url: string): Promise<Partial<RecipeFormData>> => {
+  // Function to scrape recipe from URL
+  const scrapeRecipe = async (url: string): Promise<Partial<RecipeFormData>> => {
     setIsLoading(true);
     
     try {
-      console.log("Calling scrape-recipe edge function with URL:", url);
+      // Check for network connectivity first
+      if (!navigator.onLine) {
+        throw new Error("You are offline. Please check your internet connection.");
+      }
       
-      // Call scrape-recipe edge function
+      console.log("Scraping recipe from URL:", url);
+      
+      // Call edge function to scrape recipe
       const { data, error } = await supabase.functions.invoke("scrape-recipe", {
         body: { url }
       });
       
       if (error) {
         console.error("Edge function error:", error);
-        throw new Error(`Edge function error: ${error.message}`);
+        throw new Error(error.message || "Failed to scrape recipe");
       }
       
-      if (!data) {
-        throw new Error("No data received from edge function");
+      if (!data || data.error) {
+        throw new Error(data?.error || "No recipe data found");
       }
       
       // Process the scraped recipe data
       console.log("Scraped recipe data:", data);
       
-      // Extract multiple images if available
-      const extractedImages = Array.isArray(data.images) ? data.images : 
-                            (data.image ? [data.image] : []);
-      
       // Format the data for the form
       const recipeData: Partial<RecipeFormData> = {
         title: data.title || "Untitled Recipe",
-        image: extractedImages.length > 0 ? extractedImages[0] : null,
-        images: extractedImages,
+        image: data.image || null,
+        images: Array.isArray(data.images) ? data.images : [],
         time: data.time || 30,
         servings: data.servings || 2,
         difficulty: data.difficulty || "Medium",
@@ -54,67 +55,20 @@ export const useScrapedRecipes = () => {
       return recipeData;
     } catch (error) {
       console.error("Error scraping recipe:", error);
-      toast.error(`Failed to scrape recipe: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Provide user-friendly error message
+      const errorMessage = error instanceof Error 
+        ? error.message
+        : "Failed to scrape recipe";
+        
+      toast.error(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fallback function that tries AI parser if the main scraper fails
-  const scrapeRecipeWithFallback = async (url: string): Promise<Partial<RecipeFormData>> => {
-    try {
-      // First try the main scraper
-      return await scrapeRecipeWithAI(url);
-    } catch (error) {
-      console.log("Primary scraper failed, trying ai-recipe-parser as fallback");
-      
-      try {
-        // Call ai-recipe-parser as a fallback
-        const { data, error } = await supabase.functions.invoke("ai-recipe-parser", {
-          body: { url }
-        });
-        
-        if (error) {
-          throw new Error(`Fallback parser error: ${error.message}`);
-        }
-        
-        if (!data || !data.data) {
-          throw new Error("No data received from fallback parser");
-        }
-        
-        const parsedData = data.data;
-        console.log("Fallback parser data:", parsedData);
-        
-        // Format the data for the form
-        const recipeData: Partial<RecipeFormData> = {
-          title: parsedData.title || "Untitled Recipe",
-          image: parsedData.image || null,
-          images: parsedData.image ? [parsedData.image] : [],
-          time: parsedData.time || 30,
-          servings: parsedData.servings || 2,
-          difficulty: parsedData.difficulty || "Medium",
-          description: parsedData.description || "",
-          ingredients: parsedData.ingredients || [],
-          instructions: parsedData.instructions || [],
-          tags: parsedData.tags || []
-        };
-        
-        toast.success("Recipe extracted with fallback parser");
-        return recipeData;
-      } catch (fallbackError) {
-        console.error("Both scrapers failed:", fallbackError);
-        toast.error("Unable to extract recipe. Please try a different URL or enter manually.");
-        throw fallbackError;
-      }
-    }
-  };
-
-  // Simplified scrape function that uses both methods
-  const scrapeRecipe = async (url: string): Promise<Partial<RecipeFormData>> => {
-    return scrapeRecipeWithFallback(url);
-  };
-
+  // Create a mutation hook for React Query
   const useScrapeRecipeMutation = () => {
     return useMutation({
       mutationFn: scrapeRecipe
