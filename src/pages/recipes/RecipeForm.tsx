@@ -1,530 +1,434 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import MainLayout from "@/components/layout/MainLayout";
-import { toast } from "sonner";
-import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
-import IngredientInput from "@/components/recipes/IngredientInput";
-import { supabase } from "@/integrations/supabase/client";
-import useAuth from "@/hooks/useAuth";
+
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useRecipes } from '@/hooks/useRecipes';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import IngredientInput from '@/components/recipes/IngredientInput';
+import useAuth from '@/hooks/useAuth';
+import RecipePhotoCapture from '@/components/recipes/RecipePhotoCapture';
+import { Loader2 } from 'lucide-react';
+
+const recipeSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  time: z.number().min(1).optional(),
+  servings: z.number().min(1).optional(),
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  tags: z.array(z.string()).optional(),
+  notes: z.string().optional(),
+  ingredients: z.array(z.string()).min(1, 'At least one ingredient is required'),
+  instructions: z.array(z.string()).min(1, 'At least one instruction is required'),
+  image: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  nutrients: z.object({
+    calories: z.number().optional(),
+    protein: z.number().optional(),
+    carbs: z.number().optional(),
+    fat: z.number().optional()
+  }).optional()
+});
+
+type RecipeFormValues = z.infer<typeof recipeSchema>;
 
 const RecipeForm = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
-  const isEditing = !!id;
-  
   const { useRecipe, useCreateRecipe, useUpdateRecipe } = useRecipes();
   const { data: existingRecipe, isLoading: isLoadingRecipe } = useRecipe(id);
-  const { mutate: createRecipe, isPending: isCreating } = useCreateRecipe();
-  const { mutate: updateRecipe, isPending: isUpdating } = useUpdateRecipe();
+  const { mutateAsync: createRecipe, isPending: isCreating } = useCreateRecipe();
+  const { mutateAsync: updateRecipe, isPending: isUpdating } = useUpdateRecipe();
   
-  const [formData, setFormData] = useState<RecipeFormData>({
-    title: "",
-    image: "",
-    images: [],
-    time: 30,
-    servings: 2,
-    difficulty: "easy",
-    description: "",
-    ingredients: [""],
-    instructions: [""],
-    tags: [],
-    rating: null
+  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [instructions, setInstructions] = useState<string[]>([]);
+  const [formStep, setFormStep] = useState(1);
+  const [isOwner, setIsOwner] = useState(false);
+
+  const form = useForm<RecipeFormValues>({
+    resolver: zodResolver(recipeSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      time: undefined,
+      servings: undefined,
+      difficulty: 'medium',
+      tags: [],
+      notes: '',
+      ingredients: [],
+      instructions: [],
+      image: '',
+      images: [],
+      nutrients: {
+        calories: undefined,
+        protein: undefined,
+        carbs: undefined,
+        fat: undefined
+      }
+    }
   });
-  
-  const [newTag, setNewTag] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [isRecipeAccessible, setIsRecipeAccessible] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const isSubmitting = isCreating || isUpdating;
-  
+
   useEffect(() => {
-    if (isEditing && existingRecipe && user) {
-      if (existingRecipe.user_id !== user.id) {
-        setIsRecipeAccessible(false);
-        toast.error("You don't have permission to edit this recipe");
-        navigate(-1);
-      }
-    }
-  }, [existingRecipe, user, isEditing, navigate]);
-  
-  useEffect(() => {
-    const extractedData = location.state?.recipeData;
-    if (extractedData && !isEditing) {
-      setFormData({
-        ...formData,
-        ...extractedData,
-        ingredients: extractedData.ingredients?.length > 0 
-          ? extractedData.ingredients 
-          : [""],
-        instructions: extractedData.instructions?.length > 0 
-          ? extractedData.instructions 
-          : [""]
-      });
+    if (existingRecipe && user) {
+      setIsOwner(existingRecipe.user_id === user.id);
       
-      window.history.replaceState({}, document.title);
-      
-      toast("Recipe extracted from image", {
-        description: "Review and edit the details before saving.",
-      });
-    }
-  }, [location.state]);
-  
-  useEffect(() => {
-    if (isEditing && existingRecipe && isRecipeAccessible) {
-      setFormData({
+      // Populate the form with existing recipe data
+      form.reset({
         title: existingRecipe.title,
-        image: existingRecipe.image || "",
+        description: existingRecipe.description || '',
+        time: existingRecipe.time,
+        servings: existingRecipe.servings,
+        difficulty: existingRecipe.difficulty || 'medium',
+        tags: existingRecipe.tags || [],
+        notes: existingRecipe.notes || '',
+        ingredients: existingRecipe.ingredients || [],
+        instructions: existingRecipe.instructions || [],
+        image: existingRecipe.image || '',
         images: existingRecipe.images || [],
-        time: existingRecipe.time || 30,
-        servings: existingRecipe.servings || 2,
-        difficulty: existingRecipe.difficulty || "easy",
-        description: existingRecipe.description || "",
-        ingredients: existingRecipe.ingredients.length > 0 ? existingRecipe.ingredients : [""],
-        instructions: existingRecipe.instructions.length > 0 ? existingRecipe.instructions : [""],
-        tags: existingRecipe.tags,
-        rating: existingRecipe.rating
+        nutrients: existingRecipe.nutrients || {
+          calories: undefined,
+          protein: undefined,
+          carbs: undefined,
+          fat: undefined
+        }
       });
-    }
-  }, [isEditing, existingRecipe, isRecipeAccessible]);
-  
-  const handleAddIngredient = () => {
-    setFormData({
-      ...formData,
-      ingredients: [...formData.ingredients, ""]
-    });
-  };
-  
-  const handleAddInstruction = () => {
-    setFormData({
-      ...formData,
-      instructions: [...formData.instructions, ""]
-    });
-  };
-  
-  const handleRemoveIngredient = (index: number) => {
-    const newIngredients = [...formData.ingredients];
-    newIngredients.splice(index, 1);
-    setFormData({
-      ...formData,
-      ingredients: newIngredients
-    });
-  };
-  
-  const handleRemoveInstruction = (index: number) => {
-    const newInstructions = [...formData.instructions];
-    newInstructions.splice(index, 1);
-    setFormData({
-      ...formData,
-      instructions: newInstructions
-    });
-  };
-  
-  const handleIngredientKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
       
-      if (formData.ingredients[index].trim()) {
-        handleAddIngredient();
-        
-        setTimeout(() => {
-          const inputs = document.querySelectorAll('input[placeholder^="Ingredient"]');
-          const newInput = inputs[inputs.length - 1] as HTMLInputElement;
-          if (newInput) newInput.focus();
-        }, 10);
-      }
+      setIngredients(existingRecipe.ingredients || []);
+      setInstructions(existingRecipe.instructions || []);
     }
-  };
-  
-  const handleInstructionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, index: number) => {
-    if (e.key === 'Enter' && e.currentTarget.selectionStart === e.currentTarget.value.length) {
-      e.preventDefault();
-      handleAddInstruction();
-      setTimeout(() => {
-        const textareas = document.querySelectorAll('textarea[placeholder^="Step"]');
-        const newTextarea = textareas[textareas.length - 1] as HTMLTextAreaElement;
-        if (newTextarea) newTextarea.focus();
-      }, 10);
-    }
-  };
-  
-  const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData({
-        ...formData,
-        tags: [...formData.tags, newTag.trim()]
-      });
-      setNewTag("");
-    }
-  };
-  
-  const handleRemoveTag = (tag: string) => {
-    setFormData({
-      ...formData,
-      tags: formData.tags.filter(t => t !== tag)
-    });
-  };
-  
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-  
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setIsUploading(true);
-    
+  }, [existingRecipe, form, user]);
+
+  const onSubmit = async (data: RecipeFormValues) => {
     try {
-      const fileExt = file.name.split('.').pop();
-      const randomId = Math.random().toString(36).substring(2, 15);
-      const fileName = `${Date.now()}-${randomId}.${fileExt}`;
-      const filePath = `recipe-images/${fileName}`;
+      // Make sure ingredients and instructions are included
+      data.ingredients = ingredients;
+      data.instructions = instructions;
       
-      const { error: uploadError } = await supabase.storage
-        .from('recipes')
-        .upload(filePath, file);
-      
-      if (uploadError) {
-        throw uploadError;
+      if (id && existingRecipe) {
+        if (!isOwner) {
+          toast.error("You don't have permission to edit this recipe");
+          return;
+        }
+        
+        await updateRecipe({
+          id,
+          ...data
+        });
+        toast.success("Recipe updated successfully");
+      } else {
+        await createRecipe(data);
+        toast.success("Recipe created successfully");
       }
-      
-      const { data } = supabase.storage.from('recipes').getPublicUrl(filePath);
-      
-      setFormData({
-        ...formData,
-        image: data.publicUrl,
-        images: [...(formData.images || []), data.publicUrl]
-      });
-      
-      toast("Image uploaded", {
-        description: "Your recipe image has been uploaded successfully.",
-      });
+      navigate('/recipes');
     } catch (error) {
-      console.error('Error uploading image:', error);
-      toast("Upload failed", {
-        description: "There was an error uploading your image. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUploading(false);
+      console.error("Error saving recipe:", error);
+      toast.error("Failed to save recipe");
     }
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!isRecipeAccessible) {
-      toast.error("You don't have permission to edit this recipe");
-      return;
-    }
-    
-    const cleanedData = {
-      ...formData,
-      ingredients: formData.ingredients.filter(i => i.trim() !== ""),
-      instructions: formData.instructions.filter(i => i.trim() !== "")
-    };
-    
-    if (isEditing && id) {
-      updateRecipe(
-        { id, data: cleanedData },
-        {
-          onSuccess: () => {
-            navigate(`/recipes/${id}`);
-          },
-          onError: (error) => {
-            toast.error(`Update failed: ${error.message || 'Unknown error'}`);
-          }
-        }
-      );
-    } else {
-      createRecipe(
-        cleanedData, 
-        {
-          onSuccess: (data) => {
-            navigate(`/recipes/${data.id}`);
-          },
-          onError: (error) => {
-            toast.error(`Creation failed: ${error.message || 'Unknown error'}`);
-          }
-        }
-      );
-    }
+
+  const handleAddIngredient = (ingredient: string) => {
+    if (!ingredient.trim()) return;
+    setIngredients([...ingredients, ingredient]);
+    form.setValue('ingredients', [...ingredients, ingredient]);
   };
-  
-  if (isEditing && isLoadingRecipe) {
+
+  const handleRemoveIngredient = (index: number) => {
+    const newIngredients = [...ingredients];
+    newIngredients.splice(index, 1);
+    setIngredients(newIngredients);
+    form.setValue('ingredients', newIngredients);
+  };
+
+  const handleAddInstruction = (instruction: string) => {
+    if (!instruction.trim()) return;
+    setInstructions([...instructions, instruction]);
+    form.setValue('instructions', [...instructions, instruction]);
+  };
+
+  const handleRemoveInstruction = (index: number) => {
+    const newInstructions = [...instructions];
+    newInstructions.splice(index, 1);
+    setInstructions(newInstructions);
+    form.setValue('instructions', newInstructions);
+  };
+
+  const handleNextStep = () => {
+    setFormStep(2);
+  };
+
+  const handlePreviousStep = () => {
+    setFormStep(1);
+  };
+
+  const handlePhotoCapture = (imageUrl: string) => {
+    form.setValue('image', imageUrl);
+  };
+
+  if (isLoadingRecipe && id) {
     return (
-      <MainLayout title="Loading Recipe" showBackButton={true}>
-        <div className="flex items-center justify-center h-64">
+      <div className="container py-8">
+        <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </div>
     );
   }
-  
-  if (!isRecipeAccessible) {
+
+  if (id && existingRecipe && !isOwner) {
     return (
-      <MainLayout title="Access Denied" showBackButton={true}>
-        <div className="flex flex-col items-center justify-center h-64">
-          <p className="text-red-500 mb-4">You don't have permission to edit this recipe</p>
-          <Button onClick={() => navigate(-1)}>Go Back</Button>
+      <div className="container py-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Permission Denied</h1>
+          <p>You don't have permission to edit this recipe.</p>
+          <Button onClick={() => navigate('/recipes')}>Back to Recipes</Button>
         </div>
-      </MainLayout>
+      </div>
     );
   }
-  
+
   return (
-    <MainLayout 
-      title={isEditing ? "Edit Recipe" : "New Recipe"} 
-      showBackButton={true}
-    >
-      <div className="page-container pb-24">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="title">Recipe Title</Label>
-            <Input
-              id="title"
-              placeholder="Enter recipe title"
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="space-y-3">
-            <Label>Recipe Image</Label>
-            <div 
-              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={handleImageClick}
-            >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileUpload} 
-                accept="image/*" 
-                style={{ display: 'none' }} 
+    <div className="container py-8 pb-20">
+      <h1 className="text-2xl font-bold mb-6">
+        {id ? 'Edit Recipe' : 'Create New Recipe'}
+      </h1>
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {formStep === 1 && (
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipe Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter recipe title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               
-              {isUploading ? (
-                <div className="space-y-2">
-                  <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Uploading image...</p>
-                </div>
-              ) : formData.image ? (
-                <div className="space-y-2">
-                  <img 
-                    src={formData.image} 
-                    alt="Recipe preview" 
-                    className="max-h-32 mx-auto object-cover rounded-md"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setFormData({...formData, image: ""});
-                    }}
-                  >
-                    Remove Image
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Click to upload an image for your recipe
-                  </p>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Choose Image
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="time">Cooking Time (min)</Label>
-              <Input
-                id="time"
-                type="number"
-                min="1"
-                value={formData.time}
-                onChange={(e) => setFormData({...formData, time: Number(e.target.value)})}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Briefly describe your recipe" 
+                        className="resize-none" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="servings">Servings</Label>
-              <Input
-                id="servings"
-                type="number"
-                min="1"
-                value={formData.servings}
-                onChange={(e) => setFormData({...formData, servings: Number(e.target.value)})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty</Label>
-              <select
-                id="difficulty"
-                className="w-full rounded-md border border-input bg-background px-3 py-2"
-                value={formData.difficulty}
-                onChange={(e) => setFormData({...formData, difficulty: e.target.value as "easy" | "medium" | "hard"})}
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Brief description of your recipe"
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-            />
-          </div>
-          
-          <div className="space-y-3">
-            <Label>Ingredients</Label>
-            <IngredientInput 
-              ingredients={formData.ingredients}
-              onChange={(ingredients) => setFormData({...formData, ingredients})}
-              onAdd={handleAddIngredient}
-              onRemove={handleRemoveIngredient}
-              onKeyDown={handleIngredientKeyDown}
-            />
-          </div>
-          
-          <div className="space-y-3">
-            <Label>Instructions</Label>
-            {formData.instructions.map((instruction, index) => (
-              <div key={index} className="flex gap-2">
-                <div className="flex-shrink-0 mt-2">
-                  <span className="flex items-center justify-center bg-sage-500 text-white w-6 h-6 rounded-full text-sm">
-                    {index + 1}
-                  </span>
-                </div>
-                <Textarea
-                  placeholder={`Step ${index + 1}`}
-                  value={instruction}
-                  onChange={(e) => {
-                    const newInstructions = [...formData.instructions];
-                    newInstructions[index] = e.target.value;
-                    setFormData({...formData, instructions: newInstructions});
-                  }}
-                  onKeyDown={(e) => handleInstructionKeyDown(e, index)}
-                  className="flex-grow"
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cooking Time (minutes)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min={1}
+                          placeholder="30"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleRemoveInstruction(index)}
-                  disabled={formData.instructions.length <= 1}
-                  className="mt-2"
-                >
-                  <Minus className="h-4 w-4" />
+                
+                <FormField
+                  control={form.control}
+                  name="servings"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Servings</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number"
+                          min={1}
+                          placeholder="4" 
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="difficulty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Difficulty</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select difficulty" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="easy">Easy</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="hard">Hard</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipe Image</FormLabel>
+                    <FormControl>
+                      <RecipePhotoCapture 
+                        currentImage={field.value} 
+                        onCapture={handlePhotoCapture}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end">
+                <Button type="button" onClick={handleNextStep}>
+                  Next: Ingredients & Instructions
                 </Button>
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddInstruction}
-              className="mt-2"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Step
-            </Button>
-          </div>
+            </div>
+          )}
           
-          <div className="space-y-3">
-            <Label>Tags</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a tag (e.g., Vegetarian, Italian)"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
+          {formStep === 2 && (
+            <div className="space-y-6">
+              <div>
+                <FormLabel>Ingredients</FormLabel>
+                <IngredientInput
+                  ingredients={ingredients}
+                  onAddIngredient={handleAddIngredient}
+                  onRemoveIngredient={handleRemoveIngredient}
+                />
+                {form.formState.errors.ingredients && (
+                  <p className="text-sm font-medium text-destructive mt-2">
+                    {form.formState.errors.ingredients.message}
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <FormLabel>Instructions</FormLabel>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a step"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddInstruction((e.target as HTMLInputElement).value);
+                          (e.target as HTMLInputElement).value = '';
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                        handleAddInstruction(input.value);
+                        input.value = '';
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  
+                  <ol className="space-y-2 list-decimal list-inside">
+                    {instructions.map((instruction, index) => (
+                      <li key={index} className="flex justify-between items-center">
+                        <span className="flex-1">{instruction}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveInstruction(index)}
+                        >
+                          Remove
+                        </Button>
+                      </li>
+                    ))}
+                  </ol>
+                  
+                  {form.formState.errors.instructions && (
+                    <p className="text-sm font-medium text-destructive">
+                      {form.formState.errors.instructions.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Any additional notes or tips" 
+                        className="resize-none" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddTag}
-              >
-                Add
-              </Button>
+              
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={handlePreviousStep}>
+                  Back to Details
+                </Button>
+                <Button type="submit" disabled={isCreating || isUpdating}>
+                  {isCreating || isUpdating ? 
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> :
+                    null}
+                  {id ? 'Update Recipe' : 'Create Recipe'}
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.tags.map((tag) => (
-                <span 
-                  key={tag} 
-                  className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm flex items-center"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    className="ml-1 text-sage-700 hover:text-sage-900"
-                    onClick={() => handleRemoveTag(tag)}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-          
-          <div className="pt-4 flex gap-3 justify-end sticky bottom-20 bg-background py-4 shadow-md z-10">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate(-1)}
-              disabled={isSubmitting}
-              className="min-w-24"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || isUploading}
-              className="min-w-32"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditing ? "Updating..." : "Creating..."}
-                </>
-              ) : (
-                isEditing ? "Update Recipe" : "Create Recipe"
-              )}
-            </Button>
-          </div>
+          )}
         </form>
-      </div>
-    </MainLayout>
+      </Form>
+    </div>
   );
 };
 
