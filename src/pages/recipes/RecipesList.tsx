@@ -167,6 +167,10 @@ const RecipesList = () => {
           open={isPhotoCaptureOpen}
           onClose={() => setIsPhotoCaptureOpen(false)}
           onRecipeExtracted={handleRecipeExtracted}
+          onCapture={(imageUrl) => {
+            console.log("Image captured:", imageUrl);
+            // This is required by the component, but in dialog mode we primarily care about the extracted recipe
+          }}
         />
         
         <FilterDrawer />
