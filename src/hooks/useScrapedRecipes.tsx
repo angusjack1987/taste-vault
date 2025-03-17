@@ -25,9 +25,9 @@ export const useScrapedRecipes = () => {
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       try {
+        // Remove the signal property as it's not supported in FunctionInvokeOptions
         const { data, error } = await supabase.functions.invoke("scrape-recipe", {
-          body: { url },
-          signal: controller.signal
+          body: { url }
         });
         
         clearTimeout(timeoutId);

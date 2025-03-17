@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,12 @@ const RecipesList = () => {
       // Navigate to the recipe form with the extracted data
       navigate("/recipes/new", { state: { recipeData } });
     }
+  };
+  
+  // Add the missing handleRecipeExtracted function
+  const handleRecipeExtracted = (recipeData: Partial<RecipeFormData>) => {
+    // Use the same handler as handleImport since they serve the same purpose
+    handleImport(recipeData);
   };
   
   return (
