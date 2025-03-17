@@ -34,7 +34,7 @@ export const supabase = createClient<Database>(
 const originalInvoke = supabase.functions.invoke;
 supabase.functions.invoke = async function(
   functionName: string,
-  options?: { body?: unknown } & { headers?: Record<string, string> }
+  options?: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal }
 ) {
   try {
     console.log(`Invoking edge function: ${functionName}`);
@@ -77,6 +77,17 @@ supabase.functions.invoke = async function(
     return response;
   } catch (error) {
     console.error(`Unexpected error in edge function ${functionName}:`, error);
+    
+    // Check if this is an AbortError (timeout)
+    if (error instanceof Error && error.name === "AbortError") {
+      return { 
+        data: null, 
+        error: { 
+          message: "Request timed out. Please try again later." 
+        } 
+      };
+    }
+    
     return { 
       data: null, 
       error: { 

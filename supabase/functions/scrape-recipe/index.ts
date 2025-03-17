@@ -9,7 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Handle preflight requests
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -17,61 +16,121 @@ serve(async (req) => {
   }
 
   try {
-    // Get API key from environment
+    // Parse request body
+    let url;
+    try {
+      const body = await req.json();
+      url = body.url;
+      
+      if (!url || typeof url !== "string") {
+        throw new Error("URL is required and must be a string");
+      }
+    } catch (error) {
+      console.error("Error parsing request body:", error.message);
+      return new Response(
+        JSON.stringify({ error: "Invalid request format", success: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    console.log(`Starting scrape for URL: ${url}`);
+
+    // Check and get OpenAI API key
     const apiKey = Deno.env.get("OPENAI_API_KEY");
     if (!apiKey) {
-      throw new Error("OPENAI_API_KEY is not set");
+      console.error("OPENAI_API_KEY environment variable not set");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error", success: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
     }
 
-    // Extract URL from request
-    const { url } = await req.json();
-    if (!url || typeof url !== "string") {
-      throw new Error("URL is required and must be a string");
-    }
-
-    console.log(`Scraping recipe from: ${url}`);
+    // Fetch the webpage with timeout and retries
+    const fetchWithRetry = async (url, retries = 2, timeout = 10000) => {
+      let lastError;
+      
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeout);
+          
+          const response = await fetch(url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
+          }
+          
+          return await response.text();
+        } catch (error) {
+          console.warn(`Fetch attempt ${i + 1} failed: ${error.message}`);
+          lastError = error;
+          
+          if (i < retries) {
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+          }
+        }
+      }
+      
+      throw new Error(`Failed to fetch after ${retries + 1} attempts: ${lastError?.message}`);
+    };
 
     // Fetch the webpage content
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      },
-      // Add timeout to prevent hanging requests
-      signal: AbortSignal.timeout(15000), // 15 second timeout
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL (${response.status}): ${response.statusText}`);
+    let html;
+    try {
+      console.log("Fetching webpage content...");
+      html = await fetchWithRetry(url);
+      console.log(`Successfully fetched ${html.length} bytes of HTML`);
+    } catch (error) {
+      console.error("Error fetching webpage:", error.message);
+      return new Response(
+        JSON.stringify({ error: `Failed to fetch webpage: ${error.message}`, success: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
     }
 
-    const html = await response.text();
-    
     // Parse the HTML
-    const parser = new DOMParser();
-    const document = parser.parseFromString(html, "text/html");
-    
-    // Extract recipe data from the page using AI
-    const recipeData = await extractRecipeWithAI(document, url, apiKey);
-    
-    // Return the recipe data
-    console.log("Successfully extracted recipe data");
-    return new Response(JSON.stringify(recipeData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-    
+    let document;
+    try {
+      const parser = new DOMParser();
+      document = parser.parseFromString(html, "text/html");
+    } catch (error) {
+      console.error("Error parsing HTML:", error.message);
+      return new Response(
+        JSON.stringify({ error: "Failed to parse webpage HTML", success: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
+    // Extract recipe
+    try {
+      console.log("Extracting recipe with AI...");
+      const recipeData = await extractRecipeWithAI(document, url, apiKey);
+      console.log("Recipe extraction successful");
+      
+      return new Response(
+        JSON.stringify({ ...recipeData, success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    } catch (error) {
+      console.error("Error extracting recipe:", error.message);
+      return new Response(
+        JSON.stringify({ error: `Recipe extraction failed: ${error.message}`, success: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
   } catch (error) {
-    console.error("Error in scrape-recipe function:", error.message);
-    
+    console.error("Unexpected error:", error.message, error.stack);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        success: false
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      JSON.stringify({ error: `An unexpected error occurred: ${error.message}`, success: false }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });
@@ -80,33 +139,39 @@ serve(async (req) => {
 function findRecipeImages(document: Document): string[] {
   const images: string[] = [];
   
-  // Look for images within recipe-related containers
-  const articleImages = document.querySelectorAll('article img, main img, .recipe img, [itemtype*="Recipe"] img');
-  articleImages.forEach(img => {
-    const src = img.getAttribute('src');
-    if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('icon')) {
-      images.push(src);
-    }
-  });
-  
-  // If no recipe-specific images found, get main content images
-  if (images.length === 0) {
-    const allImages = document.querySelectorAll('img');
-    for (const img of allImages) {
+  try {
+    // Look for images within recipe-related containers
+    const articleImages = document.querySelectorAll('article img, main img, .recipe img, [itemtype*="Recipe"] img');
+    articleImages.forEach(img => {
       const src = img.getAttribute('src');
-      const width = img.getAttribute('width');
-      
-      // Filter out small images, logos, icons
-      if (src && src.startsWith('http') && 
-          !src.includes('logo') && !src.includes('icon') &&
-          (width === null || parseInt(width) > 200)) {
+      if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('icon')) {
         images.push(src);
-        if (images.length >= 3) break; // Limit to 3 images
+      }
+    });
+    
+    // If no recipe-specific images found, get main content images
+    if (images.length === 0) {
+      const allImages = document.querySelectorAll('img');
+      for (const img of allImages) {
+        const src = img.getAttribute('src');
+        const width = img.getAttribute('width');
+        
+        // Filter out small images, logos, icons
+        if (src && src.startsWith('http') && 
+            !src.includes('logo') && !src.includes('icon') &&
+            (width === null || parseInt(width) > 200)) {
+          images.push(src);
+          if (images.length >= 3) break; // Limit to 3 images
+        }
       }
     }
+    
+    console.log(`Found ${images.length} potential recipe images`);
+    return images.slice(0, 3); // Return at most 3 images
+  } catch (error) {
+    console.error("Error finding recipe images:", error);
+    return [];
   }
-  
-  return images.slice(0, 3); // Return at most 3 images
 }
 
 // Extract recipe data using OpenAI
@@ -124,7 +189,6 @@ async function extractRecipeWithAI(document: Document, url: string, apiKey: stri
     
     // Extract images
     const images = findRecipeImages(document);
-    console.log(`Found ${images.length} potential recipe images`);
     
     // Create OpenAI client
     const openai = new OpenAI({ apiKey });
@@ -154,30 +218,43 @@ async function extractRecipeWithAI(document: Document, url: string, apiKey: stri
       Return only the JSON object with the extracted recipe data.
     `;
     
-    // Call OpenAI API
-    const aiResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-1106",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      temperature: 0.3,
-      response_format: { type: "json_object" }
-    });
+    console.log("Calling OpenAI API...");
+    // Call OpenAI API with longer timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
     
-    // Parse the AI response
-    const content = aiResponse.choices[0]?.message?.content || "{}";
-    const recipeData = JSON.parse(content);
-    
-    // Add images to the recipe data
-    return {
-      ...recipeData,
-      images: images,
-      image: images.length > 0 ? images[0] : null,
-      success: true
-    };
+    try {
+      const aiResponse = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo-1106",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+      }, { signal: controller.signal });
+      
+      clearTimeout(timeoutId);
+      
+      // Parse the AI response
+      const content = aiResponse.choices[0]?.message?.content || "{}";
+      console.log("AI response received, parsing...");
+      
+      const recipeData = JSON.parse(content);
+      
+      // Add images to the recipe data
+      return {
+        ...recipeData,
+        images: images,
+        image: images.length > 0 ? images[0] : null
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      console.error("OpenAI API error:", error);
+      throw new Error(`OpenAI API error: ${error.message}`);
+    }
   } catch (error) {
-    console.error("Error extracting recipe with AI:", error);
+    console.error("Error in extractRecipeWithAI:", error);
     throw new Error(`AI extraction failed: ${error.message}`);
   }
 }

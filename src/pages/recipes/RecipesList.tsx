@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,16 +44,8 @@ const RecipesList = () => {
   
   const handleImport = (recipeData: any) => {
     console.log("Importing recipe:", recipeData);
-    // Handle the imported recipe data here, e.g., save it to your data store
-  };
-
-  const handleRecipeExtracted = (recipeData: Partial<RecipeFormData>) => {
-    console.log("Recipe extracted:", recipeData);
     
     if (recipeData.title) {
-      // If we have a title, this is a complete recipe that we can save
-      // Since RecipeFormData explicitly excludes 'id', we don't need to check for it
-      
       // Create a new recipe
       addRecipeMutation.mutate(recipeData as RecipeFormData, {
         onSuccess: () => {
