@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -998,3 +999,19 @@ export const useSync = () => {
         toast.error("Failed to sync with connected users");
       }
     });
+  };
+
+  return {
+    useSharingPreferencesQuery,
+    useConnectedUsersQuery,
+    useUpdateSharingPreferences,
+    useConnectWithUser,
+    useRemoveConnection,
+    useSyncData,
+    useSyncWithAllUsers,
+    setupDataSyncListeners,
+    syncWithAllConnectedUsers
+  };
+};
+
+export default useSync;
