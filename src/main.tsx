@@ -13,10 +13,8 @@ const queryClient = new QueryClient()
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TourProvider>
-        <App />
-        <Toaster position="top-right" />
-      </TourProvider>
+      <App />
+      <Toaster position="top-right" />
     </AuthProvider>
   </QueryClientProvider>
 );

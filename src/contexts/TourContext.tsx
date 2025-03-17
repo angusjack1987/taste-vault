@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import { useLocation } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface TourContextType {
   startTour: () => void;
@@ -22,7 +22,6 @@ export const TourProvider = ({ children }: TourProviderProps) => {
   const [firstVisit, setFirstVisit] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
-  const { toast } = useToast();
 
   // Define the tour steps
   const steps: Step[] = [
@@ -117,48 +116,51 @@ export const TourProvider = ({ children }: TourProviderProps) => {
   return (
     <TourContext.Provider value={{ startTour, endTour, isActive }}>
       {children}
-      <Joyride
-        steps={steps}
-        run={isActive}
-        continuous
-        showProgress
-        showSkipButton
-        styles={{
-          options: {
-            zIndex: 10000,
-            primaryColor: '#FF6B6B',
-            arrowColor: '#ffffff',
-            backgroundColor: '#ffffff',
-            overlayColor: 'rgba(0, 0, 0, 0.7)',
-            textColor: '#333333',
-            width: 300,
-          },
-          buttonNext: {
-            backgroundColor: '#FF6B6B',
-            color: '#ffffff',
-            borderRadius: '0.5rem',
-            border: '2px solid black',
-            padding: '8px 16px',
-            fontWeight: 'bold',
-          },
-          buttonBack: {
-            color: '#333333',
-            marginRight: 10,
-            fontWeight: 'bold',
-          },
-          buttonSkip: {
-            color: '#777777',
-            fontWeight: 'bold',
-          },
-        }}
-        callback={handleJoyrideCallback}
-        locale={{
-          last: 'Finish',
-          skip: 'Skip tour',
-          next: 'Next',
-          back: 'Back',
-        }}
-      />
+      {/* Only render Joyride when active to prevent errors with missing tour targets */}
+      {isActive && (
+        <Joyride
+          steps={steps}
+          run={isActive}
+          continuous
+          showProgress
+          showSkipButton
+          styles={{
+            options: {
+              zIndex: 10000,
+              primaryColor: '#FF6B6B',
+              arrowColor: '#ffffff',
+              backgroundColor: '#ffffff',
+              overlayColor: 'rgba(0, 0, 0, 0.7)',
+              textColor: '#333333',
+              width: 300,
+            },
+            buttonNext: {
+              backgroundColor: '#FF6B6B',
+              color: '#ffffff',
+              borderRadius: '0.5rem',
+              border: '2px solid black',
+              padding: '8px 16px',
+              fontWeight: 'bold',
+            },
+            buttonBack: {
+              color: '#333333',
+              marginRight: 10,
+              fontWeight: 'bold',
+            },
+            buttonSkip: {
+              color: '#777777',
+              fontWeight: 'bold',
+            },
+          }}
+          callback={handleJoyrideCallback}
+          locale={{
+            last: 'Finish',
+            skip: 'Skip tour',
+            next: 'Next',
+            back: 'Back',
+          }}
+        />
+      )}
     </TourContext.Provider>
   );
 };
