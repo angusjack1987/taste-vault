@@ -8,7 +8,7 @@ import { Star } from "lucide-react";
 import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
 import { toast } from "sonner";
 import useFridge from "@/hooks/useFridge";
-import useAiRecipes from "@/hooks/useAiRecipes";
+import useAiRecipes, { GenerateRecipeParams } from "@/hooks/useAiRecipes";
 import useRecipes from "@/hooks/useRecipes";
 import useMealPlans, { MealType } from "@/hooks/useMealPlans";
 import { format } from "date-fns";

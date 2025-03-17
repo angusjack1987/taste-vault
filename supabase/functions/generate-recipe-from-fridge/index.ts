@@ -64,7 +64,7 @@ serve(async (req: Request) => {
       }
       
       // Generate recipes from the ingredients
-      const prompt = generateRecipePrompt(data.ingredients, data.userFoodPreferences, aiSettings);
+      const prompt = generateRecipePrompt(data.ingredients, data.userFoodPreferences, aiSettings, data.singleRecipe);
       result = await getRecipesFromAI(prompt, aiSettings);
     } else {
       throw new Error(`Unknown operation type: ${type}`);
@@ -116,11 +116,14 @@ serve(async (req: Request) => {
 function generateRecipePrompt(
   ingredients: string[],
   userFoodPreferences: UserFoodPreferences | null,
-  aiSettings?: AISettings
+  aiSettings?: AISettings,
+  singleRecipe?: boolean
 ): string {
   const detailLevel = aiSettings?.userPreferences?.responseStyle || "balanced";
+  // If singleRecipe is true, always create just 1 recipe
+  const recipeCount = singleRecipe ? "1 recipe" : (detailLevel === "concise" ? "1 recipe" : "2 recipes");
   
-  let prompt = `Create ${detailLevel === "concise" ? "1 recipe" : "2 recipes"} that primarily uses these ingredients:\n`;
+  let prompt = `Create ${recipeCount} that primarily uses these ingredients:\n`;
   prompt += ingredients.join(", ");
   prompt += "\n\n";
   prompt += "You can include additional ingredients not listed if necessary to create complete, delicious recipes.\n";
