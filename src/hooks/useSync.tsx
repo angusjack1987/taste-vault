@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -55,6 +55,14 @@ export const useSync = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Run sync when user logs in
+  useEffect(() => {
+    if (user) {
+      console.log("User logged in, syncing with connected users");
+      syncWithAllConnectedUsers();
+    }
+  }, [user?.id]);
 
   const fetchSharingPreferences = async (): Promise<SharingPreferences | null> => {
     if (!user) return null;
@@ -788,10 +796,12 @@ export const useSync = () => {
     }
   };
 
+  // Enhanced to listen to more events
   const setupDataSyncListeners = () => {
     if (!user) return () => {};
 
-    const recipeSubscription = supabase
+    // Recipe changes (create/update)
+    const recipeUpdateSubscription = supabase
       .channel('recipe-updates')
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -804,7 +814,21 @@ export const useSync = () => {
       })
       .subscribe();
 
-    const mealPlanSubscription = supabase
+    const recipeInsertSubscription = supabase
+      .channel('recipe-inserts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'recipes',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Recipe created, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    // Meal plan changes
+    const mealPlanUpdateSubscription = supabase
       .channel('meal-plan-updates')
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -817,7 +841,21 @@ export const useSync = () => {
       })
       .subscribe();
 
-    const fridgeSubscription = supabase
+    const mealPlanInsertSubscription = supabase
+      .channel('meal-plan-inserts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'meal_plans',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Meal plan created, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    // Fridge changes
+    const fridgeUpdateSubscription = supabase
       .channel('fridge-updates')
       .on('postgres_changes', {
         event: 'UPDATE',
@@ -830,24 +868,70 @@ export const useSync = () => {
       })
       .subscribe();
 
-    const recipeInsertSubscription = supabase
-      .channel('recipe-inserts')
+    const fridgeInsertSubscription = supabase
+      .channel('fridge-inserts')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'recipes',
+        table: 'fridge_items',
         filter: `user_id=eq.${user.id}`
       }, async (payload) => {
-        console.log('Recipe inserted, syncing with connected users:', payload);
+        console.log('Fridge item created, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    // Baby food recipe changes
+    const babyFoodUpdateSubscription = supabase
+      .channel('baby-food-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'baby_food_recipes',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Baby food recipe updated, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    const babyFoodInsertSubscription = supabase
+      .channel('baby-food-inserts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'baby_food_recipes',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('Baby food recipe created, syncing with connected users:', payload);
+        await syncWithAllConnectedUsers();
+      })
+      .subscribe();
+
+    // User preferences (for baby food settings)
+    const userPrefsUpdateSubscription = supabase
+      .channel('user-prefs-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'user_preferences',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        console.log('User preferences updated, syncing with connected users:', payload);
         await syncWithAllConnectedUsers();
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(recipeSubscription);
-      supabase.removeChannel(mealPlanSubscription);
-      supabase.removeChannel(fridgeSubscription);
+      supabase.removeChannel(recipeUpdateSubscription);
       supabase.removeChannel(recipeInsertSubscription);
+      supabase.removeChannel(mealPlanUpdateSubscription);
+      supabase.removeChannel(mealPlanInsertSubscription);
+      supabase.removeChannel(fridgeUpdateSubscription);
+      supabase.removeChannel(fridgeInsertSubscription);
+      supabase.removeChannel(babyFoodUpdateSubscription);
+      supabase.removeChannel(babyFoodInsertSubscription);
+      supabase.removeChannel(userPrefsUpdateSubscription);
     };
   };
 
@@ -902,17 +986,15 @@ export const useSync = () => {
     });
   };
   
-  return {
-    isProcessing,
-    useSharingPreferencesQuery,
-    useConnectedUsersQuery,
-    useUpdateSharingPreferences,
-    useConnectWithUser,
-    useRemoveConnection,
-    useSyncData,
-    setupDataSyncListeners
-  };
-};
-
-export default useSync;
-
+  // Added function for manual sync with all users
+  const useSyncWithAllUsers = () => {
+    return useMutation({
+      mutationFn: syncWithAllConnectedUsers,
+      onSuccess: () => {
+        toast.success("Successfully synced with all connected users");
+      },
+      onError: (error) => {
+        console.error("Error syncing with all users:", error);
+        toast.error("Failed to sync with connected users");
+      }
+    });

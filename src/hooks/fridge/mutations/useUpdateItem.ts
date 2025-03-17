@@ -23,6 +23,10 @@ export const useUpdateItem = (user: User | null) => {
         .single();
       
       if (error) throw error;
+      
+      // This will trigger a sync with connected users via the realtime subscription
+      console.log("Fridge item updated, will sync with connected users");
+      
       return data as unknown as FridgeItem;
     },
     onSuccess: () => {

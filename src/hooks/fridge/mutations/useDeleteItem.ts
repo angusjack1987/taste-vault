@@ -18,6 +18,10 @@ export const useDeleteItem = (user: User | null) => {
         .eq("user_id", user.id);
       
       if (error) throw error;
+      
+      // After deletion, will trigger a sync with connected users
+      console.log("Fridge item deleted, will sync with connected users");
+      
       return id;
     },
     onSuccess: () => {

@@ -28,7 +28,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
     throw error;
   }
 
-  // After creating, trigger sync with connected users via the realtime subscription
+  // After creating, the recipe will be synced with connected users via the realtime subscription
   console.log("Recipe created successfully, will be synced with connected users");
 
   toast.success("Recipe created successfully");
@@ -90,6 +90,7 @@ export const useUpdateRecipe = (user: User | null) => {
       }
       
       toast.success("Recipe updated successfully");
+      // The update will trigger a sync via the realtime subscription
       return { id, ...data };
     },
     onSuccess: () => {

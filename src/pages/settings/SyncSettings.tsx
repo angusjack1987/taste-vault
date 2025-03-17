@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Share, ArrowLeft, Copy, Check, RefreshCw } from "lucide-react";
+import { Share, ArrowLeft, Copy, Check, RefreshCw, UserPlus, Users } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import useSync, { SharingPreferences } from "@/hooks/useSync";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SyncSettings = () => {
   const { user } = useAuth();
@@ -23,17 +25,17 @@ const SyncSettings = () => {
     useUpdateSharingPreferences,
     useConnectWithUser,
     useConnectedUsersQuery,
+    useSyncWithAllUsers
   } = useSync();
   
   const { data: sharingPreferences } = useSharingPreferencesQuery();
   const { data: connectedUsers, isLoading: isLoadingConnections } = useConnectedUsersQuery();
   const updateSharingPrefsMutation = useUpdateSharingPreferences();
   const connectWithUserMutation = useConnectWithUser();
+  const syncWithAllUsersMutation = useSyncWithAllUsers();
   
   const [shareToken, setShareToken] = useState<string | null>(null);
-  const [targetEmail, setTargetEmail] = useState("");
   const [recipientToken, setRecipientToken] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [sharingPrefs, setSharingPrefs] = useState<SharingPreferences>({
@@ -174,18 +176,8 @@ const SyncSettings = () => {
     });
   };
 
-  const sendInvitation = async () => {
-    if (!user || !targetEmail || !shareToken) return;
-    try {
-      setIsProcessing(true);
-
-      toast.success(`Invitation would be sent to ${targetEmail} with your share token`);
-    } catch (error) {
-      console.error('Error sending invitation:', error);
-      toast.error("Failed to send invitation");
-    } finally {
-      setIsProcessing(false);
-    }
+  const triggerSync = () => {
+    syncWithAllUsersMutation.mutate();
   };
 
   const copyShareToken = () => {
@@ -199,71 +191,157 @@ const SyncSettings = () => {
     });
   };
 
-  return <MainLayout title="Sync with Others">
+  return (
+    <MainLayout title="Sync with Others">
       <div className="container max-w-4xl pb-8">
         <Button variant="ghost" className="mb-4" onClick={() => navigate('/settings')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Settings
         </Button>
-        
-        {isLoadingConnections ? (
-          <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="pt-6">
-              <p className="text-center">Loading connected users...</p>
-            </CardContent>
-          </Card>
-        ) : connectedUsers && connectedUsers.length > 0 ? (
-          <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-            <CardHeader>
-              <CardTitle className="text-xl">Connected Users</CardTitle>
-              <CardDescription>
-                Users you are currently sharing with
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {connectedUsers.map(user => (
-                  <li key={user.id} className="p-3 border rounded flex justify-between items-center">
-                    <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-3">
-                        {user.avatar_url ? (
-                          <AvatarImage src={user.avatar_url} alt={user.first_name || "User"} />
-                        ) : null}
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{user.first_name || 'Connected User'}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      Connected since {new Date(user.created_at).toLocaleDateString()}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-            <CardHeader>
-              <CardTitle className="text-xl">Connected Users</CardTitle>
-              <CardDescription>
-                You aren't connected with any users yet
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Generate a share token below and share it with someone, or use someone else's token to connect with them.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-        
+
         <Card className="mb-6 border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-xl">Sync & Share</CardTitle>
+                <CardDescription>
+                  Share your data with friends and family
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={triggerSync} 
+                variant="outline" 
+                className="flex items-center gap-2"
+                disabled={syncWithAllUsersMutation.isPending}
+              >
+                <RefreshCw className={`h-4 w-4 ${syncWithAllUsersMutation.isPending ? 'animate-spin' : ''}`} />
+                {syncWithAllUsersMutation.isPending ? "Syncing..." : "Sync Now"}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="connected" className="w-full">
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="connected" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Connected Users
+                </TabsTrigger>
+                <TabsTrigger value="connect" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Connect
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="connected">
+                {isLoadingConnections ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : connectedUsers && connectedUsers.length > 0 ? (
+                  <div className="space-y-2">
+                    {connectedUsers.map(user => (
+                      <div key={user.id} className="p-3 border rounded flex justify-between items-center">
+                        <div className="flex items-center">
+                          <Avatar className="h-8 w-8 mr-3">
+                            {user.avatar_url ? (
+                              <AvatarImage src={user.avatar_url} alt={user.first_name || "User"} />
+                            ) : null}
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <span className="font-medium">{user.first_name || 'Connected User'}</span>
+                            <div className="text-xs text-muted-foreground">
+                              Connected since {new Date(user.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                    <p>You aren't connected with any users yet</p>
+                    <p className="text-sm mt-1">Switch to the Connect tab to get started</p>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="connect">
+                <div className="grid gap-6">
+                  <div className="space-y-4">
+                    <h3 className="font-medium">Your Share Token</h3>
+                    <p className="text-sm text-muted-foreground">Generate a token to allow others to connect with you</p>
+                    
+                    {shareToken ? (
+                      <div>
+                        <div className="flex space-x-2">
+                          <Input readOnly value={shareToken} className="font-mono text-sm" />
+                          <Button onClick={copyShareToken} variant="outline" size="icon">
+                            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <div className="mt-2 flex justify-end">
+                          <Button 
+                            onClick={generateShareToken} 
+                            disabled={isGenerating} 
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center"
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            {isGenerating ? "Generating..." : "Regenerate"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        onClick={generateShareToken} 
+                        disabled={isGenerating} 
+                        className="w-full"
+                      >
+                        {isGenerating ? "Generating..." : "Generate Share Token"}
+                      </Button>
+                    )}
+                    
+                    <Separator className="my-4" />
+                    
+                    <h3 className="font-medium">Connect with Others</h3>
+                    <p className="text-sm text-muted-foreground">Enter someone else's share token to connect with them</p>
+                    
+                    <div className="flex space-x-2">
+                      <Input 
+                        placeholder="Paste share token here" 
+                        value={recipientToken} 
+                        onChange={e => setRecipientToken(e.target.value)} 
+                        className="font-mono" 
+                      />
+                      <Button 
+                        onClick={connectWithToken} 
+                        disabled={!recipientToken || connectWithUserMutation.isPending}
+                      >
+                        {connectWithUserMutation.isPending ? "Connecting..." : "Connect"}
+                      </Button>
+                    </div>
+                    {connectWithUserMutation.isError && (
+                      <p className="text-sm text-red-500 mt-1">
+                        Failed to connect. Please check the token and try again.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader>
             <CardTitle className="text-xl flex items-center">
               <Share className="h-5 w-5 mr-2" />
-              Share Your Food Library
+              Sharing Preferences
             </CardTitle>
             <CardDescription>
               Choose what you want to share with other users
@@ -356,113 +434,9 @@ const SyncSettings = () => {
             </div>
           </CardContent>
         </Card>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-            <CardHeader>
-              <CardTitle className="text-xl">Your Share Token</CardTitle>
-              <CardDescription>
-                Generate a token to allow others to connect with you
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {shareToken ? (
-                  <div>
-                    <div className="flex space-x-2">
-                      <Input readOnly value={shareToken} className="font-mono text-sm" />
-                      <Button onClick={copyShareToken} variant="outline" size="icon">
-                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    <div className="mt-2 flex justify-end">
-                      <Button 
-                        onClick={generateShareToken} 
-                        disabled={isGenerating} 
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center"
-                      >
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        {isGenerating ? "Generating..." : "Regenerate"}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button 
-                    onClick={generateShareToken} 
-                    disabled={isGenerating} 
-                    className="w-full"
-                  >
-                    {isGenerating ? "Generating..." : "Generate Share Token"}
-                  </Button>
-                )}
-
-                {shareToken && (
-                  <>
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Invite by Email</Label>
-                      <div className="flex space-x-2">
-                        <Input 
-                          id="email" 
-                          placeholder="friend@example.com" 
-                          type="email" 
-                          value={targetEmail} 
-                          onChange={e => setTargetEmail(e.target.value)} 
-                        />
-                        <Button 
-                          onClick={sendInvitation} 
-                          disabled={!targetEmail || isProcessing}
-                        >
-                          Send
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-4 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-            <CardHeader>
-              <CardTitle className="text-xl">Connect to Others</CardTitle>
-              <CardDescription>
-                Enter someone else's share token to connect with them
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="token">Share Token</Label>
-                  <div className="flex space-x-2">
-                    <Input 
-                      id="token" 
-                      placeholder="Paste share token here" 
-                      value={recipientToken} 
-                      onChange={e => setRecipientToken(e.target.value)} 
-                      className="font-mono" 
-                    />
-                    <Button 
-                      onClick={connectWithToken} 
-                      disabled={!recipientToken || connectWithUserMutation.isPending}
-                    >
-                      {connectWithUserMutation.isPending ? "Connecting..." : "Connect"}
-                    </Button>
-                  </div>
-                  {connectWithUserMutation.isError && (
-                    <p className="text-sm text-red-500 mt-1">
-                      Failed to connect. Please check the token and try again.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
-    </MainLayout>;
+    </MainLayout>
+  );
 };
 
 export default SyncSettings;
