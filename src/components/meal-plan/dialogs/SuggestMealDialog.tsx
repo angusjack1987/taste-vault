@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { Lightbulb, Loader2, ChefHat, Clock, Users, Star, ArrowRight, CheckCircle2, Circle } from 'lucide-react';
+import { Lightbulb, Loader2, ChefHat, Clock, Users, Star, ArrowRight, CheckCircle2, Circle, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ interface SuggestMealDialogProps {
   onSuggestMeal: () => Promise<void>;
   onSaveSuggestedRecipe: (optionIndex: number) => Promise<void>;
   onResetSuggestedMeal: () => void;
+  onRetrySingleOption?: (optionIndex: number) => Promise<void>;
 }
 
 const SuggestMealDialog = ({
@@ -57,9 +58,19 @@ const SuggestMealDialog = ({
   setAdditionalPreferences,
   onSuggestMeal,
   onSaveSuggestedRecipe,
-  onResetSuggestedMeal
+  onResetSuggestedMeal,
+  onRetrySingleOption
 }: SuggestMealDialogProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [retryingOptionIndex, setRetryingOptionIndex] = useState<number | null>(null);
+
+  const handleRetrySingleOption = async (index: number) => {
+    if (onRetrySingleOption) {
+      setRetryingOptionIndex(index);
+      await onRetrySingleOption(index);
+      setRetryingOptionIndex(null);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,55 +163,90 @@ const SuggestMealDialog = ({
                     {suggestedMeal.options.map((option, idx) => (
                       <div 
                         key={idx}
-                        onClick={() => setSelectedOption(idx)}
                         className={cn(
-                          "border-4 border-black rounded-xl p-4 cursor-pointer transition-all hover:shadow-neo-hover hover:-translate-y-1",
+                          "border-4 border-black rounded-xl p-4 transition-all",
                           selectedOption === idx 
                             ? "shadow-neo-heavy bg-primary/5" 
                             : "shadow-neo"
                         )}
                       >
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="text-lg font-bold">{option.title}</h3>
-                          <div className={cn(
-                            "rounded-full border-2 border-black w-6 h-6 flex items-center justify-center bg-white",
-                            selectedOption === idx ? "bg-primary text-primary-foreground" : ""
-                          )}>
-                            {selectedOption === idx 
-                              ? <CheckCircle2 className="h-5 w-5" /> 
-                              : <Circle className="h-5 w-5" />
-                            }
+                          <div
+                            className="flex-1 cursor-pointer"
+                            onClick={() => setSelectedOption(idx)}
+                          >
+                            <h3 className="text-lg font-bold">{option.title}</h3>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {onRetrySingleOption && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="border-2 border-black rounded-full hover:bg-amber-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRetrySingleOption(idx);
+                                }}
+                                disabled={retryingOptionIndex === idx || aiLoading}
+                              >
+                                {retryingOptionIndex === idx ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">Regenerate option</span>
+                              </Button>
+                            )}
+                            
+                            <div 
+                              className={cn(
+                                "rounded-full border-2 border-black w-6 h-6 flex items-center justify-center bg-white cursor-pointer",
+                                selectedOption === idx ? "bg-primary text-primary-foreground" : ""
+                              )}
+                              onClick={() => setSelectedOption(idx)}
+                            >
+                              {selectedOption === idx 
+                                ? <CheckCircle2 className="h-5 w-5" /> 
+                                : <Circle className="h-5 w-5" />
+                              }
+                            </div>
                           </div>
                         </div>
                         
-                        <p className="text-muted-foreground mb-4">{option.description}</p>
-                        
-                        {option.highlights && Array.isArray(option.highlights) && option.highlights.length > 0 && (
-                          <div className="mb-4">
-                            <div className="flex flex-wrap gap-2">
-                              {option.highlights.map((highlight, hidx) => (
-                                <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
-                                  <Star className="h-3 w-3 mr-1 text-amber-500" />
-                                  {highlight}
-                                </div>
-                              ))}
+                        <div 
+                          className="cursor-pointer"
+                          onClick={() => setSelectedOption(idx)}
+                        >
+                          <p className="text-muted-foreground mb-4">{option.description}</p>
+                          
+                          {option.highlights && Array.isArray(option.highlights) && option.highlights.length > 0 && (
+                            <div className="mb-4">
+                              <div className="flex flex-wrap gap-2">
+                                {option.highlights.map((highlight, hidx) => (
+                                  <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
+                                    <Star className="h-3 w-3 mr-1 text-amber-500" />
+                                    {highlight}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
+                          )}
+                          
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            {option.time && (
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 mr-1" />
+                                {option.time} min
+                              </div>
+                            )}
+                            {option.servings && (
+                              <div className="flex items-center">
+                                <Users className="h-4 w-4 mr-1" />
+                                {option.servings} servings
+                              </div>
+                            )}
                           </div>
-                        )}
-                        
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          {option.time && (
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-1" />
-                              {option.time} min
-                            </div>
-                          )}
-                          {option.servings && (
-                            <div className="flex items-center">
-                              <Users className="h-4 w-4 mr-1" />
-                              {option.servings} servings
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}

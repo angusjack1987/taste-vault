@@ -1,9 +1,9 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Recipe, RecipeFormData } from "./types";
 import { User } from "@supabase/supabase-js";
+import useSync from "@/hooks/useSync";
 
 export const createRecipe = async (recipeData: RecipeFormData, user: User | null): Promise<Recipe> => {
   if (!user) throw new Error("User not authenticated");
@@ -154,6 +154,7 @@ export const useBulkUpdateRecipes = (user: User | null) => {
 
 export const useDeleteRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
+  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -170,6 +171,9 @@ export const useDeleteRecipe = (user: User | null) => {
         throw error;
       }
       
+      // Sync deletion with connected users
+      await syncWithAllConnectedUsers();
+      
       toast.success("Recipe deleted successfully");
       return id;
     },
@@ -181,6 +185,7 @@ export const useDeleteRecipe = (user: User | null) => {
 
 export const useBulkDeleteRecipes = (user: User | null) => {
   const queryClient = useQueryClient();
+  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: async (ids: string[]) => {
@@ -196,6 +201,9 @@ export const useBulkDeleteRecipes = (user: User | null) => {
         toast.error("Failed to delete recipes");
         throw error;
       }
+      
+      // Sync deletion with connected users
+      await syncWithAllConnectedUsers();
       
       toast.success("Recipes deleted successfully");
       return ids;

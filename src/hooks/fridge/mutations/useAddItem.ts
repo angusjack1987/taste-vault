@@ -6,9 +6,11 @@ import { FridgeItem } from "../types";
 import { User } from "@supabase/supabase-js";
 import { categorizeItem } from "../utils/categorizeItem";
 import { parseIngredientAmount, parsePreparation } from "@/lib/ingredient-parser";
+import useSync from "@/hooks/useSync";
 
 export const useAddItem = (user: User | null) => {
   const queryClient = useQueryClient();
+  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: async (item: Omit<FridgeItem, "id" | "user_id" | "created_at">) => {
@@ -54,8 +56,9 @@ export const useAddItem = (user: User | null) => {
       
       if (error) throw error;
       
-      // This will trigger a sync with connected users via the realtime subscription
+      // This will trigger a sync with connected users
       console.log("Fridge item added, will sync with connected users");
+      await syncWithAllConnectedUsers();
       
       return data as unknown as FridgeItem;
     },

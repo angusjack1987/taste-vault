@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FridgeItem } from "../types";
 import { User } from "@supabase/supabase-js";
+import useSync from "@/hooks/useSync";
 
 export const useUpdateItem = (user: User | null) => {
   const queryClient = useQueryClient();
+  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: async (item: Partial<FridgeItem> & { id: string }) => {
@@ -24,8 +26,9 @@ export const useUpdateItem = (user: User | null) => {
       
       if (error) throw error;
       
-      // This will trigger a sync with connected users via the realtime subscription
+      // This will trigger a sync with connected users
       console.log("Fridge item updated, will sync with connected users");
+      await syncWithAllConnectedUsers();
       
       return data as unknown as FridgeItem;
     },
