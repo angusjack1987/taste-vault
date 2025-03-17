@@ -69,7 +69,7 @@ const MainLayout = ({
         backgroundGradient={backgroundGradient}
       />
       
-      <main className="flex-1 pb-28 pt-4 px-3 md:px-5 relative overflow-x-hidden overflow-y-auto">
+      <main className="flex-1 pb-32 pt-4 px-3 md:px-5 relative overflow-x-hidden overflow-y-auto">
         {/* Neo-brutalism colorful background elements with rounded corners */}
         <div className="absolute top-20 right-20 w-40 h-40 bg-[#FFD700] border-4 border-black rounded-2xl z-0 rotate-12 shadow-neo-heavy animate-neo-float"></div>
         <div className="absolute bottom-40 left-10 w-28 h-28 bg-[#FF6B6B] border-4 border-black rounded-2xl z-0 -rotate-12 shadow-neo-heavy animate-neo-pulse"></div>

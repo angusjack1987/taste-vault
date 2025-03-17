@@ -46,7 +46,7 @@ const Settings = () => {
         {
           icon: <User className="h-5 w-5 text-blue-600" />,
           label: "Profile",
-          path: "/profile",
+          path: "/settings/profile",
           bgColor: "bg-blue-100",
         },
         {

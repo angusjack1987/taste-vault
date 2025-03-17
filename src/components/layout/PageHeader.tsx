@@ -110,7 +110,7 @@ const PageHeader = ({
                   Hi, <span className="text-secondary font-bold">{firstName}</span>!
                 </div>
                 <DropdownMenuSeparator className="border-t-2 border-black" />
-                <Link to="/profile">
+                <Link to="/settings/profile">
                   <DropdownMenuItem className="cursor-pointer rounded-lg font-medium hover:bg-blue-100">
                     <User className="h-4 w-4 mr-2" />
                     Profile
