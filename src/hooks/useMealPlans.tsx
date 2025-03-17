@@ -1,9 +1,10 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import useAuth from "./useAuth";
 import { format, parseISO } from "date-fns";
-import { useSync } from "@/integrations/supabase/sync";
+import useSync from "@/hooks/useSync";
 
 export type MealType = "breakfast" | "lunch" | "dinner";
 
