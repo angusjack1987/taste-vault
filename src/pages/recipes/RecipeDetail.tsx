@@ -312,7 +312,7 @@ const RecipeDetail = () => {
           </div>
         </div>
         
-        <div className="page-container py-[107px]">
+        <div className="page-container my-0 mx-[5px] px-[28px] py-[17px]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex flex-wrap gap-4">
               {recipe.time && <div className="flex items-center text-muted-foreground">
