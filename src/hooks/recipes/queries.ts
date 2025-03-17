@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,7 +16,6 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
 
   if (error) {
     console.error("Error fetching recipes:", error);
-    toast.error("Failed to load recipes");
     throw error;
   }
 
@@ -120,7 +118,6 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
 
   if (ownError) {
     console.error("Error fetching own recipes with filters:", ownError);
-    toast.error("Failed to load recipes");
     throw ownError;
   }
 
@@ -245,7 +242,6 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
 
     if (connectionError) {
       console.error("Error fetching connections:", connectionError);
-      toast.error("Failed to load recipe details");
       return null;
     }
 
@@ -265,7 +261,6 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
         
       if (sharedError || !sharedRecipe) {
         console.error("Error fetching shared recipe:", sharedError);
-        toast.error("Failed to load recipe details");
         return null;
       }
       
@@ -291,7 +286,6 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
 
   if (error) {
     console.error("Error fetching recipe:", error);
-    toast.error("Failed to load recipe details");
     return null;
   }
 

@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useAuth } from './useAuth';
 import useRecipes from './useRecipes';
 
@@ -22,7 +21,7 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const { user } = useAuth();
   const { useAllRecipes, useBulkUpdateRecipes } = useRecipes();
-  const { data: recipes } = useAllRecipes(user);
+  const { data: recipes } = useAllRecipes();
   const { mutateAsync: bulkUpdateRecipes } = useBulkUpdateRecipes();
   const initialSyncDone = useRef(false);
   const lastSyncTime = useRef<number>(0);

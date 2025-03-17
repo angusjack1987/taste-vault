@@ -1,24 +1,30 @@
 
-import { Json } from "@/integrations/supabase/types";
-
-export type Recipe = {
-  id: string;
+export interface RecipeFormData {
   title: string;
-  image: string | null;
-  images: string[] | null;
-  time: number | null;
-  servings: number | null;
-  difficulty: string | null;
-  description: string | null;
+  description?: string;
   ingredients: string[];
   instructions: string[];
-  tags: string[];
-  rating: number | null;
+  time?: number; // in minutes
+  servings?: number;
+  difficulty?: "easy" | "medium" | "hard";
+  tags?: string[];
+  notes?: string;
+  rating?: number;
+  image?: string;
+  images?: string[];
+  nutrients?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    [key: string]: number | undefined;
+  };
+}
+
+export interface Recipe extends RecipeFormData {
+  id: string;
+  user_id: string;
   created_at: string;
   updated_at: string;
-};
-
-export type RecipeFormData = Omit<Recipe, "id" | "created_at" | "updated_at"> & {
-  images?: string[]; // Make images optional in the form data
-  rating?: number | null; // Make rating optional but ensure it accepts null values
-};
+  isShared?: boolean;
+}

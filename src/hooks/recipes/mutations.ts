@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -94,11 +95,11 @@ export const useUpdateRecipe = (user: User | null) => {
             Object.entries(params).filter(([key]) => key !== 'id')
           );
       
+      // Allow updating any recipe the user has access to (including shared ones)
       const { error } = await supabase
         .from("recipes")
         .update(data)
-        .eq("id", id)
-        .eq("user_id", user.id);
+        .eq("id", id);
         
       if (error) {
         toast.error("Failed to update recipe");
@@ -106,7 +107,6 @@ export const useUpdateRecipe = (user: User | null) => {
       }
       
       toast.success("Recipe updated successfully");
-      // No automatic sync on update
       return { id, ...data };
     },
     onSuccess: () => {
@@ -132,8 +132,7 @@ export const useBulkUpdateRecipes = (user: User | null) => {
           const { error } = await supabase
             .from("recipes")
             .update(item.updates)
-            .eq("id", item.id)
-            .eq("user_id", user.id);
+            .eq("id", item.id);
             
           if (error) {
             toast.error(`Failed to update recipe ${item.id}`);
@@ -150,8 +149,7 @@ export const useBulkUpdateRecipes = (user: User | null) => {
         const { error } = await supabase
           .from("recipes")
           .update(data)
-          .in("id", ids)
-          .eq("user_id", user.id);
+          .in("id", ids);
           
         if (error) {
           toast.error("Failed to update recipes");
@@ -175,11 +173,11 @@ export const useDeleteRecipe = (user: User | null) => {
     mutationFn: async (id: string) => {
       if (!user) throw new Error("User not authenticated");
       
+      // Allow deleting any recipe the user has access to (including shared ones)
       const { error } = await supabase
         .from("recipes")
         .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+        .eq("id", id);
         
       if (error) {
         toast.error("Failed to delete recipe");
@@ -210,8 +208,7 @@ export const useBulkDeleteRecipes = (user: User | null) => {
       const { error } = await supabase
         .from("recipes")
         .delete()
-        .in("id", ids)
-        .eq("user_id", user.id);
+        .in("id", ids);
         
       if (error) {
         toast.error("Failed to delete recipes");

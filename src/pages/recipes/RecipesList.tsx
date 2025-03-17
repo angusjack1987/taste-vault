@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -121,7 +120,8 @@ const RecipesList = () => {
                 title: recipe.title,
                 image: recipe.image || "",
                 time: recipe.time,
-                rating: recipe.rating || undefined
+                rating: recipe.rating || undefined,
+                isShared: recipe.isShared
               }))} />
             ) : (
               <div className="text-center py-10 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)]">
