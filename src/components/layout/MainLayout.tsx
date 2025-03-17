@@ -60,13 +60,13 @@ const MainLayout = ({
 
       <main className={`flex-1 ${className}`}>{children}</main>
 
-      <BottomNav>
-        {isMobile && isSyncing && (
-          <div className="absolute left-0 right-0 top-0 flex justify-center">
-            <div className="h-1 bg-primary rounded-full w-full animate-pulse"></div>
-          </div>
-        )}
-      </BottomNav>
+      {isMobile && isSyncing && (
+        <div className="fixed left-0 right-0 bottom-16 flex justify-center">
+          <div className="h-1 bg-primary rounded-full w-full animate-pulse"></div>
+        </div>
+      )}
+      
+      <BottomNav />
     </div>
   );
 };
