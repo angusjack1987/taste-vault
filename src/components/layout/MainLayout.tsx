@@ -59,6 +59,13 @@ const MainLayout = ({
     handlePageTransition();
   }, [location.pathname]);
 
+  // Determine if current route should have bottom navigation
+  // Only auth routes should not have navigation
+  const isAuthRoute = location.pathname.startsWith('/login') || 
+                    location.pathname.startsWith('/register') ||
+                    location.pathname === '/auth' ||
+                    location.pathname.startsWith('/auth/');
+
   return (
     <div className={`flex flex-col min-h-screen bg-gradient-to-br ${backgroundGradient} overflow-hidden`}>
       <PageHeader
@@ -90,7 +97,8 @@ const MainLayout = ({
         </div>
       </main>
       
-      {!hideNavigation && <BottomNav />}
+      {/* Show bottom navigation on all pages except auth routes and where explicitly hidden */}
+      {!hideNavigation && !isAuthRoute && <BottomNav />}
     </div>
   );
 };
