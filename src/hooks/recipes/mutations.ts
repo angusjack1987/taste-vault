@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,9 +29,6 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
     throw error;
   }
 
-  // After creating, the recipe will be synced with connected users via the realtime subscription
-  console.log("Recipe created successfully, will be synced with connected users");
-
   toast.success("Recipe created successfully");
 
   return {
@@ -54,11 +52,14 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
 // Create hooks for mutations
 export const useCreateRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
+  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: (recipeData: RecipeFormData) => createRecipe(recipeData, user),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      // Sync after creating a new recipe
+      syncWithAllConnectedUsers();
     },
   });
 };
@@ -90,7 +91,7 @@ export const useUpdateRecipe = (user: User | null) => {
       }
       
       toast.success("Recipe updated successfully");
-      // The update will trigger a sync via the realtime subscription
+      // No automatic sync on update
       return { id, ...data };
     },
     onSuccess: () => {
@@ -154,7 +155,6 @@ export const useBulkUpdateRecipes = (user: User | null) => {
 
 export const useDeleteRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
-  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -171,9 +171,6 @@ export const useDeleteRecipe = (user: User | null) => {
         throw error;
       }
       
-      // Sync deletion with connected users
-      await syncWithAllConnectedUsers();
-      
       toast.success("Recipe deleted successfully");
       return id;
     },
@@ -185,7 +182,6 @@ export const useDeleteRecipe = (user: User | null) => {
 
 export const useBulkDeleteRecipes = (user: User | null) => {
   const queryClient = useQueryClient();
-  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: async (ids: string[]) => {
@@ -201,9 +197,6 @@ export const useBulkDeleteRecipes = (user: User | null) => {
         toast.error("Failed to delete recipes");
         throw error;
       }
-      
-      // Sync deletion with connected users
-      await syncWithAllConnectedUsers();
       
       toast.success("Recipes deleted successfully");
       return ids;

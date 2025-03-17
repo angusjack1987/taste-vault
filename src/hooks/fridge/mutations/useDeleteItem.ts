@@ -3,11 +3,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
-import useSync from "@/hooks/useSync";
 
 export const useDeleteItem = (user: User | null) => {
   const queryClient = useQueryClient();
-  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -21,10 +19,7 @@ export const useDeleteItem = (user: User | null) => {
       
       if (error) throw error;
       
-      // After deletion, will trigger a sync with connected users
-      console.log("Fridge item deleted, will sync with connected users");
-      await syncWithAllConnectedUsers();
-      
+      // No longer automatically syncs with connected users
       return id;
     },
     onSuccess: () => {

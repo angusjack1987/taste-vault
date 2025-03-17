@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -797,143 +796,8 @@ export const useSync = () => {
     }
   };
 
-  // Enhanced to listen to more events
   const setupDataSyncListeners = () => {
-    if (!user) return () => {};
-
-    // Recipe changes (create/update)
-    const recipeUpdateSubscription = supabase
-      .channel('recipe-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'recipes',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Recipe updated, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    const recipeInsertSubscription = supabase
-      .channel('recipe-inserts')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'recipes',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Recipe created, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    // Meal plan changes
-    const mealPlanUpdateSubscription = supabase
-      .channel('meal-plan-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'meal_plans',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Meal plan updated, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    const mealPlanInsertSubscription = supabase
-      .channel('meal-plan-inserts')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'meal_plans',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Meal plan created, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    // Fridge changes
-    const fridgeUpdateSubscription = supabase
-      .channel('fridge-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'fridge_items',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Fridge item updated, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    const fridgeInsertSubscription = supabase
-      .channel('fridge-inserts')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'fridge_items',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Fridge item created, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    // Baby food recipe changes
-    const babyFoodUpdateSubscription = supabase
-      .channel('baby-food-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'baby_food_recipes',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Baby food recipe updated, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    const babyFoodInsertSubscription = supabase
-      .channel('baby-food-inserts')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'baby_food_recipes',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('Baby food recipe created, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    // User preferences (for baby food settings)
-    const userPrefsUpdateSubscription = supabase
-      .channel('user-prefs-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'user_preferences',
-        filter: `user_id=eq.${user.id}`
-      }, async (payload) => {
-        console.log('User preferences updated, syncing with connected users:', payload);
-        await syncWithAllConnectedUsers();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(recipeUpdateSubscription);
-      supabase.removeChannel(recipeInsertSubscription);
-      supabase.removeChannel(mealPlanUpdateSubscription);
-      supabase.removeChannel(mealPlanInsertSubscription);
-      supabase.removeChannel(fridgeUpdateSubscription);
-      supabase.removeChannel(fridgeInsertSubscription);
-      supabase.removeChannel(babyFoodUpdateSubscription);
-      supabase.removeChannel(babyFoodInsertSubscription);
-      supabase.removeChannel(userPrefsUpdateSubscription);
-    };
+    return () => {};
   };
 
   const useSharingPreferencesQuery = () => {
@@ -987,7 +851,6 @@ export const useSync = () => {
     });
   };
   
-  // Added function for manual sync with all users
   const useSyncWithAllUsers = () => {
     return useMutation({
       mutationFn: syncWithAllConnectedUsers,
