@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy, Utensils } from 'lucide-react';
@@ -253,7 +252,6 @@ const RecipeDetail = () => {
   return (
     <div className="container py-8 pb-20">
       <div className="space-y-6">
-        {/* Header with image */}
         <div className="relative w-full">
           {recipe.image ? (
             <div className="w-full h-64 overflow-hidden rounded-lg">
@@ -270,7 +268,6 @@ const RecipeDetail = () => {
           )}
         </div>
 
-        {/* Title and creator info */}
         <div className="space-y-4">
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold">{recipe.title}</h1>
@@ -291,7 +288,6 @@ const RecipeDetail = () => {
             )}
           </div>
 
-          {/* Tags */}
           {recipe.tags && recipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {recipe.tags.map((tag, index) => (
@@ -302,7 +298,6 @@ const RecipeDetail = () => {
             </div>
           )}
 
-          {/* Recipe info cards */}
           <div className="grid grid-cols-3 gap-3">
             {recipe.time && (
               <Card>
@@ -330,7 +325,6 @@ const RecipeDetail = () => {
             )}
           </div>
 
-          {/* Actions toolbar */}
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={handleOpenSelectIngredientsDialog} disabled={addingToShoppingList}>
               <ShoppingBag className="h-4 w-4 mr-2" />
@@ -384,7 +378,6 @@ const RecipeDetail = () => {
           </div>
         </div>
 
-        {/* Recipe content */}
         <Tabs defaultValue="ingredients" className="mt-6">
           <TabsList className="mb-4">
             <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
@@ -457,7 +450,6 @@ const RecipeDetail = () => {
                     </CardContent>
                   </Card>
                 )}
-                {/* Display any other nutrients dynamically */}
                 {Object.entries(recipe.nutrients)
                   .filter(([key]) => !['calories', 'protein', 'carbs', 'fat'].includes(key))
                   .map(([key, value]) => (
@@ -474,7 +466,6 @@ const RecipeDetail = () => {
         </Tabs>
       </div>
 
-      {/* Dialogs */}
       <SelectIngredientsDialog
         open={selectIngredientsDialogOpen}
         onOpenChange={setSelectIngredientsDialogOpen}
@@ -498,7 +489,6 @@ const RecipeDetail = () => {
         isLoading={parsingMealSuggestion}
       />
 
-      {/* Suggested Recipe Dialog */}
       <Dialog open={suggestDialogOpen} onOpenChange={setSuggestDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -546,7 +536,7 @@ const RecipeDetail = () => {
                 </>
               ) : (
                 <div className="whitespace-pre-line">
-                  {suggestedMeal.rawResponse}
+                  {typeof suggestedMeal.rawResponse === 'string' ? suggestedMeal.rawResponse : 'No response data available'}
                 </div>
               )}
               

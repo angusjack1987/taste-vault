@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import IngredientInput from '@/components/recipes/IngredientInput';
 import useAuth from '@/hooks/useAuth';
 import RecipePhotoCapture from '@/components/recipes/RecipePhotoCapture';
 import { Loader2 } from 'lucide-react';
+import { RecipeFormData } from '@/hooks/recipes/types';
 
 const recipeSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -79,7 +79,6 @@ const RecipeForm = () => {
     if (existingRecipe && user) {
       setIsOwner(existingRecipe.user_id === user.id);
       
-      // Populate the form with existing recipe data
       form.reset({
         title: existingRecipe.title,
         description: existingRecipe.description || '',
@@ -107,15 +106,28 @@ const RecipeForm = () => {
 
   const onSubmit = async (data: RecipeFormValues) => {
     try {
-      // Make sure ingredients and instructions are included
       data.ingredients = ingredients;
       data.instructions = instructions;
       
-      // Ensure title is provided as it's required
       if (!data.title) {
         toast.error("Recipe title is required");
         return;
       }
+      
+      const recipeData: RecipeFormData = {
+        title: data.title,
+        description: data.description,
+        ingredients: data.ingredients,
+        instructions: data.instructions,
+        time: data.time,
+        servings: data.servings,
+        difficulty: data.difficulty,
+        tags: data.tags,
+        notes: data.notes,
+        image: data.image,
+        images: data.images,
+        nutrients: data.nutrients
+      };
       
       if (id && existingRecipe) {
         if (!isOwner) {
@@ -125,11 +137,11 @@ const RecipeForm = () => {
         
         await updateRecipe({
           id,
-          ...data
+          ...recipeData
         });
         toast.success("Recipe updated successfully");
       } else {
-        await createRecipe(data);
+        await createRecipe(recipeData);
         toast.success("Recipe created successfully");
       }
       navigate('/recipes');
