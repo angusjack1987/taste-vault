@@ -20,10 +20,13 @@ export const useScrapedRecipes = () => {
       
       console.log("Scraping recipe from URL:", url);
       
-      // Call edge function to scrape recipe
+      // Call edge function to scrape recipe with detailed logs
+      console.log("Calling edge function with URL:", url);
       const { data, error } = await supabase.functions.invoke("scrape-recipe", {
         body: { url }
       });
+      
+      console.log("Edge function response:", { data, error });
       
       if (error) {
         console.error("Edge function error:", error);

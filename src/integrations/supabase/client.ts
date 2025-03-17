@@ -75,15 +75,18 @@ supabase.functions.invoke = async function(
         
         // For authentication errors, we don't retry
         if (response.error.status === 401 || response.error.status === 403) {
+          console.error("Authentication error:", response.error);
           return { data: null, error: { message: "Authentication error. Please sign in again." } };
         }
         
         // For rate limiting, we don't retry
         if (response.error.status === 429) {
+          console.error("Rate limit reached:", response.error);
           return { data: null, error: { message: "Too many requests. Please try again later." } };
         }
       }
       
+      console.log(`Edge function ${functionName} response:`, response);
       return response;
     } catch (error) {
       console.error(`Error in edge function ${functionName}:`, error);
