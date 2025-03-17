@@ -26,8 +26,23 @@ const BottomNav = () => {
           .eq('user_id', user.id)
           .single();
         
-        if (data?.preferences?.food?.babyFoodEnabled) {
-          setBabyFoodEnabled(true);
+        // Handle the case where preferences is a string or an object
+        if (data?.preferences) {
+          // If preferences exists, check if it's an object with a food property
+          const preferences = typeof data.preferences === 'object' 
+            ? data.preferences 
+            : JSON.parse(String(data.preferences));
+            
+          // Now safely check if babyFoodEnabled exists in the food preferences
+          if (preferences && 
+              typeof preferences === 'object' && 
+              preferences.food && 
+              typeof preferences.food === 'object' && 
+              preferences.food.babyFoodEnabled) {
+            setBabyFoodEnabled(true);
+          } else {
+            setBabyFoodEnabled(false);
+          }
         } else {
           setBabyFoodEnabled(false);
         }
