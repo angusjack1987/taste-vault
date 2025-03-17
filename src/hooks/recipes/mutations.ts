@@ -21,12 +21,28 @@ const trackDeletedRecipe = (userId: string, recipeId: string) => {
   }
 };
 
+// Helper function to normalize difficulty
+const normalizeDifficulty = (difficulty: string | undefined): "easy" | "medium" | "hard" | undefined => {
+  if (!difficulty) return undefined;
+  
+  const normalized = difficulty.toLowerCase();
+  
+  if (normalized === "easy" || normalized === "medium" || normalized === "hard") {
+    return normalized as "easy" | "medium" | "hard";
+  }
+  
+  // Default to "medium" if not a valid value
+  return "medium";
+};
+
 export const createRecipe = async (recipeData: RecipeFormData, user: User | null): Promise<Recipe> => {
   if (!user) throw new Error("User not authenticated");
 
   // Ensure rating is explicitly set to null if not provided
+  // And normalize the difficulty
   const newRecipe = {
     ...recipeData,
+    difficulty: normalizeDifficulty(recipeData.difficulty),
     user_id: user.id,
     images: recipeData.images || [],
     rating: recipeData.rating ?? null, // Use nullish coalescing to ensure null if undefined
@@ -61,6 +77,7 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
       ? data.images.map(img => String(img)) 
       : [],
     rating: data.rating,
+    difficulty: normalizeDifficulty(data.difficulty),
   };
 };
 

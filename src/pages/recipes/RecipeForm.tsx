@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Plus, Minus, UploadCloud, Loader2 } from "lucide-react";
@@ -30,7 +29,7 @@ const RecipeForm = () => {
     images: [],
     time: 30,
     servings: 2,
-    difficulty: "Easy",
+    difficulty: "easy",
     description: "",
     ingredients: [""],
     instructions: [""],
@@ -74,7 +73,7 @@ const RecipeForm = () => {
         images: existingRecipe.images || [],
         time: existingRecipe.time || 30,
         servings: existingRecipe.servings || 2,
-        difficulty: existingRecipe.difficulty || "Easy",
+        difficulty: existingRecipe.difficulty || "easy",
         description: existingRecipe.description || "",
         ingredients: existingRecipe.ingredients.length > 0 ? existingRecipe.ingredients : [""],
         instructions: existingRecipe.instructions.length > 0 ? existingRecipe.instructions : [""],
@@ -351,11 +350,11 @@ const RecipeForm = () => {
                 id="difficulty"
                 className="w-full rounded-md border border-input bg-background px-3 py-2"
                 value={formData.difficulty}
-                onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
+                onChange={(e) => setFormData({...formData, difficulty: e.target.value as "easy" | "medium" | "hard"})}
               >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
               </select>
             </div>
           </div>

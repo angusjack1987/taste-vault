@@ -28,3 +28,12 @@ export interface Recipe extends RecipeFormData {
   updated_at: string;
   isShared?: boolean;
 }
+
+// Define a SharingPreferences type for use in useSync hook
+export interface SharingPreferences {
+  recipes: boolean;
+  babyRecipes: boolean;
+  fridgeItems: boolean;
+  shoppingList: boolean;
+  mealPlan: boolean;
+}

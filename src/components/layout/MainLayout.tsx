@@ -34,7 +34,7 @@ const MainLayout = ({
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <PageHeader>
+      <PageHeader title={title}>
         <div className="flex items-center px-4 md:px-6 pb-0 md:pb-2 pt-2 gap-2">
           {showBackButton && (
             <Button

@@ -5,6 +5,43 @@ import { Recipe } from "./types";
 import { User } from "@supabase/supabase-js";
 import { useAuth } from "../useAuth";
 
+// Helper function to normalize difficulty
+const normalizeDifficulty = (difficulty: string | undefined | null): "easy" | "medium" | "hard" | undefined => {
+  if (!difficulty) return undefined;
+  
+  const normalized = difficulty.toLowerCase();
+  
+  if (normalized === "easy" || normalized === "medium" || normalized === "hard") {
+    return normalized as "easy" | "medium" | "hard";
+  }
+  
+  // Default to "medium" if not a valid value
+  return "medium";
+};
+
+// Helper function to format a recipe from the database
+const formatRecipe = (item: any, isShared: boolean = false): Recipe => {
+  return {
+    ...item,
+    ingredients: Array.isArray(item.ingredients) 
+      ? item.ingredients.map((i: any) => String(i))
+      : [],
+    instructions: Array.isArray(item.instructions) 
+      ? item.instructions.map((i: any) => String(i))
+      : [],
+    tags: Array.isArray(item.tags) 
+      ? item.tags.map((t: any) => String(t))
+      : [],
+    images: Array.isArray(item.images) 
+      ? item.images.map((img: any) => String(img)) 
+      : [],
+    image: item.image || "", // Ensure image is always a string
+    rating: item.rating ?? null, // Ensure rating is explicitly set to null if not provided
+    difficulty: normalizeDifficulty(item.difficulty),
+    isShared
+  };
+};
+
 export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
   if (!user) return [];
 
@@ -30,23 +67,7 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
     return true;
   });
 
-  return uniqueRecipes.map((item) => ({
-    ...item,
-    ingredients: Array.isArray(item.ingredients) 
-      ? item.ingredients.map(i => String(i))
-      : [],
-    instructions: Array.isArray(item.instructions) 
-      ? item.instructions.map(i => String(i))
-      : [],
-    tags: Array.isArray(item.tags) 
-      ? item.tags.map(t => String(t))
-      : [],
-    images: Array.isArray(item.images) 
-      ? item.images.map(img => String(img)) 
-      : [],
-    rating: item.rating ?? null, // Ensure rating is explicitly set to null if not provided
-    isShared: false, // Own recipes are not shared
-  }));
+  return uniqueRecipes.map(item => formatRecipe(item, false));
 };
 
 export const fetchRandomRecipeByMealType = async (mealType: string, user: User | null): Promise<Recipe | null> => {
@@ -77,22 +98,7 @@ export const fetchRandomRecipeByMealType = async (mealType: string, user: User |
   
   if (!data || data.length === 0) return null;
   
-  return {
-    ...data[0],
-    ingredients: Array.isArray(data[0].ingredients) 
-      ? data[0].ingredients.map(i => String(i))
-      : [],
-    instructions: Array.isArray(data[0].instructions) 
-      ? data[0].instructions.map(i => String(i))
-      : [],
-    tags: Array.isArray(data[0].tags) 
-      ? data[0].tags.map(t => String(t))
-      : [],
-    images: Array.isArray(data[0].images) 
-      ? data[0].images.map(img => String(img)) 
-      : [],
-    rating: data[0].rating ?? null,
-  };
+  return formatRecipe(data[0]);
 };
 
 export const fetchRecipesWithFilters = async (filters: any = {}, user: User | null): Promise<Recipe[]> => {
@@ -168,8 +174,8 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
 
   // Combine own and shared recipes
   const allRecipes = [
-    ...(ownRecipes || []).map(r => ({ ...r, isShared: false })),
-    ...sharedRecipes.map(r => ({ ...r, isShared: true }))
+    ...(ownRecipes || []).map(r => formatRecipe(r, false)),
+    ...sharedRecipes.map(r => formatRecipe(r, true))
   ];
 
   // Deduplicate recipes by title
@@ -183,22 +189,7 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
     return true;
   });
 
-  return uniqueRecipes.map((item) => ({
-    ...item,
-    ingredients: Array.isArray(item.ingredients) 
-      ? item.ingredients.map(i => String(i))
-      : [],
-    instructions: Array.isArray(item.instructions) 
-      ? item.instructions.map(i => String(i))
-      : [],
-    tags: Array.isArray(item.tags) 
-      ? item.tags.map(t => String(t))
-      : [],
-    images: Array.isArray(item.images) 
-      ? item.images.map(img => String(img)) 
-      : [],
-    rating: item.rating ?? null, // Ensure rating is explicitly set to null if not provided
-  }));
+  return uniqueRecipes;
 };
 
 export const fetchRecipeById = async (id: string, user: User | null): Promise<Recipe | null> => {
@@ -213,23 +204,7 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
 
   // If recipe is found and belongs to user
   if (data && data.user_id === user.id) {
-    return {
-      ...data,
-      ingredients: Array.isArray(data.ingredients) 
-        ? data.ingredients.map(i => String(i)) 
-        : [],
-      instructions: Array.isArray(data.instructions) 
-        ? data.instructions.map(i => String(i)) 
-        : [],
-      tags: Array.isArray(data.tags) 
-        ? data.tags.map(t => String(t)) 
-        : [],
-      images: Array.isArray(data.images) 
-        ? data.images.map(img => String(img)) 
-        : [],
-      rating: data.rating ?? null,
-      isShared: false
-    };
+    return formatRecipe(data, false);
   }
   
   // If not found or not user's recipe, check if it's a shared recipe
@@ -264,23 +239,7 @@ export const fetchRecipeById = async (id: string, user: User | null): Promise<Re
         return null;
       }
       
-      return {
-        ...sharedRecipe,
-        ingredients: Array.isArray(sharedRecipe.ingredients) 
-          ? sharedRecipe.ingredients.map(i => String(i)) 
-          : [],
-        instructions: Array.isArray(sharedRecipe.instructions) 
-          ? sharedRecipe.instructions.map(i => String(i)) 
-          : [],
-        tags: Array.isArray(sharedRecipe.tags) 
-          ? sharedRecipe.tags.map(t => String(t)) 
-          : [],
-        images: Array.isArray(sharedRecipe.images) 
-          ? sharedRecipe.images.map(img => String(img)) 
-          : [],
-        rating: sharedRecipe.rating ?? null,
-        isShared: true
-      };
+      return formatRecipe(sharedRecipe, true);
     }
   }
 
