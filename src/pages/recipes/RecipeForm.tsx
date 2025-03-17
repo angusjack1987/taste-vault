@@ -111,6 +111,12 @@ const RecipeForm = () => {
       data.ingredients = ingredients;
       data.instructions = instructions;
       
+      // Ensure title is provided as it's required
+      if (!data.title) {
+        toast.error("Recipe title is required");
+        return;
+      }
+      
       if (id && existingRecipe) {
         if (!isOwner) {
           toast.error("You don't have permission to edit this recipe");
@@ -312,7 +318,7 @@ const RecipeForm = () => {
                     <FormLabel>Recipe Image</FormLabel>
                     <FormControl>
                       <RecipePhotoCapture 
-                        currentImage={field.value} 
+                        image={field.value} 
                         onCapture={handlePhotoCapture}
                       />
                     </FormControl>
@@ -335,8 +341,16 @@ const RecipeForm = () => {
                 <FormLabel>Ingredients</FormLabel>
                 <IngredientInput
                   ingredients={ingredients}
-                  onAddIngredient={handleAddIngredient}
-                  onRemoveIngredient={handleRemoveIngredient}
+                  onChange={setIngredients}
+                  onAdd={() => handleAddIngredient('')}
+                  onRemove={handleRemoveIngredient}
+                  onKeyDown={(e, index) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddIngredient((e.target as HTMLInputElement).value);
+                      (e.target as HTMLInputElement).value = '';
+                    }
+                  }}
                 />
                 {form.formState.errors.ingredients && (
                   <p className="text-sm font-medium text-destructive mt-2">

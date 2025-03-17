@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy } from 'lucide-react';
+import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -14,12 +14,11 @@ import useShoppingList, { ShoppingListItemInput, categorizeIngredient } from '@/
 import { Recipe } from '@/hooks/recipes/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { SelectIngredientsDialog } from '@/components/recipes/SelectIngredientsDialog';
-import { ShareRecipeDialog } from '@/components/recipes/ShareRecipeDialog';
-import { RecipeVariationsDialog } from '@/components/recipes/RecipeVariationsDialog';
+import SelectIngredientsDialog from '@/components/recipes/SelectIngredientsDialog';
+import ShareRecipeDialog from '@/components/recipes/ShareRecipeDialog';
+import RecipeVariationsDialog from '@/components/recipes/RecipeVariationsDialog';
 import useAiRecipes from '@/hooks/useAiRecipes';
 import { getIngredientIcon, getPastelColorForTag } from '@/utils/recipe-icons';
-import { Utensils } from 'lucide-react';
 
 const RecipeDetail = () => {
   const navigate = useNavigate();
@@ -480,20 +479,21 @@ const RecipeDetail = () => {
         open={selectIngredientsDialogOpen}
         onOpenChange={setSelectIngredientsDialogOpen}
         ingredients={recipe.ingredients}
-        onAddToShoppingList={handleAddToShoppingList}
+        onConfirm={handleAddToShoppingList}
         isLoading={addingToShoppingList}
       />
 
       <ShareRecipeDialog
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
+        recipeName={recipe.title}
         onShare={handleShareRecipe}
-        recipe={recipe}
       />
 
       <RecipeVariationsDialog
         open={variationsDialogOpen}
         onOpenChange={setVariationsDialogOpen}
+        recipeName={recipe.title}
         onGenerateVariation={handleGenerateVariation}
         isLoading={parsingMealSuggestion}
       />
