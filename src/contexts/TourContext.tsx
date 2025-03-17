@@ -106,9 +106,9 @@ export const TourProvider = ({ children }: TourProviderProps) => {
     // Tour is finished or skipped - use the STATUS enum for comparison
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setIsActive(false);
-      toast({
-        title: "Tour completed",
-        description: "You can start the tour again from the settings page if needed.",
+      // Fix: Using the correct toast API for sonner
+      toast("Tour completed", {
+        description: "You can start the tour again from the settings page if needed."
       });
     }
   };
