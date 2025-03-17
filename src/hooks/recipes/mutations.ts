@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -73,7 +72,8 @@ export const useCreateRecipe = (user: User | null) => {
     mutationFn: (recipeData: RecipeFormData) => createRecipe(recipeData, user),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      // Sync after creating a new recipe
+      // Sync after creating a new recipe - this is one of the few places
+      // where we want to trigger an automatic sync
       syncWithAllConnectedUsers();
     },
   });

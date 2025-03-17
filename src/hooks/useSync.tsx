@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -56,12 +55,18 @@ export const useSync = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
-
+  const hasInitialSyncRef = useRef(false);
+  const lastSyncTimeRef = useRef<number>(0);
+  
   useEffect(() => {
-    if (user) {
-      console.log("User logged in, syncing with connected users");
+    if (user && !hasInitialSyncRef.current) {
+      console.log("User logged in, performing initial sync");
       syncWithAllConnectedUsers();
+      hasInitialSyncRef.current = true;
     }
+    
+    return () => {
+    };
   }, [user?.id]);
 
   const fetchSharingPreferences = async (): Promise<SharingPreferences | null> => {
@@ -155,6 +160,14 @@ export const useSync = () => {
   const syncWithAllConnectedUsers = async (): Promise<void> => {
     if (!user) return;
     
+    const now = Date.now();
+    if (now - lastSyncTimeRef.current < 5000) {
+      console.log("Skipping sync - too soon since last sync");
+      return;
+    }
+    
+    lastSyncTimeRef.current = now;
+    
     try {
       const { data: connections } = await supabase
         .from('profile_sharing')
@@ -168,6 +181,7 @@ export const useSync = () => {
       );
       
       console.log("Syncing with all connected users:", otherUserIds);
+      setIsProcessing(true);
       
       await Promise.allSettled(
         otherUserIds.map(userId => syncData(userId))
@@ -175,6 +189,8 @@ export const useSync = () => {
       
     } catch (err) {
       console.error("Error syncing with all connected users:", err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -479,8 +495,8 @@ export const useSync = () => {
       if (!recipes || recipes.length === 0) return;
       
       let syncedCount = 0;
+      let skippedCount = 0;
       
-      // Get the list of deleted recipe IDs for this user
       const deletedRecipeIds: string[] = [];
       try {
         const storageKey = `deleted_recipes_${user?.id}`;
@@ -492,58 +508,74 @@ export const useSync = () => {
         console.error("Error retrieving deleted recipes:", error);
       }
       
+      const processedTitles = new Set<string>();
+      
+      const { data: existingRecipes } = await supabase
+        .from('recipes')
+        .select('id, title')
+        .eq('user_id', user!.id);
+        
+      if (existingRecipes) {
+        existingRecipes.forEach(recipe => {
+          processedTitles.add(recipe.title.toLowerCase().trim());
+        });
+      }
+      
       for (const recipe of recipes) {
-        // Skip recipes that have been deleted by this user
         if (deletedRecipeIds.includes(recipe.id)) {
           console.log(`Skipping deleted recipe "${recipe.title}" with ID ${recipe.id}`);
+          skippedCount++;
           continue;
         }
         
-        const { data: existingRecipe } = await supabase
+        const normalizedTitle = recipe.title.toLowerCase().trim();
+        
+        if (processedTitles.has(normalizedTitle)) {
+          console.log(`Skipping duplicate recipe "${recipe.title}"`);
+          skippedCount++;
+          continue;
+        }
+        
+        processedTitles.add(normalizedTitle);
+        
+        const newRecipe = {
+          title: recipe.title || '',
+          description: recipe.description || '',
+          ingredients: recipe.ingredients || [],
+          instructions: recipe.instructions || [],
+          tags: recipe.tags || [],
+          user_id: user!.id,
+          servings: recipe.servings || null,
+          time: recipe.time || null,
+          difficulty: recipe.difficulty || null,
+          image: recipe.image,
+          images: recipe.images,
+          rating: recipe.rating || null
+        };
+        
+        console.log(`Syncing recipe "${recipe.title}" with:`, {
+          image: recipe.image,
+          imageType: typeof recipe.image,
+          images: recipe.images,
+          imagesType: Array.isArray(recipe.images) ? 'array' : typeof recipe.images,
+          imagesLength: Array.isArray(recipe.images) ? recipe.images.length : 'not an array'
+        });
+        
+        const { error: insertError } = await supabase
           .from('recipes')
-          .select('id')
-          .eq('user_id', user!.id)
-          .eq('title', recipe.title)
-          .maybeSingle();
+          .insert([newRecipe]);
           
-        if (!existingRecipe) {
-          const newRecipe = {
-            title: recipe.title || '',
-            description: recipe.description || '',
-            ingredients: recipe.ingredients || [],
-            instructions: recipe.instructions || [],
-            tags: recipe.tags || [],
-            user_id: user!.id,
-            servings: recipe.servings || null,
-            time: recipe.time || null,
-            difficulty: recipe.difficulty || null,
-            image: recipe.image,
-            images: recipe.images,
-            rating: recipe.rating || null
-          };
-          
-          console.log(`Syncing recipe "${recipe.title}" with:`, {
-            image: recipe.image,
-            imageType: typeof recipe.image,
-            images: recipe.images,
-            imagesType: Array.isArray(recipe.images) ? 'array' : typeof recipe.images,
-            imagesLength: Array.isArray(recipe.images) ? recipe.images.length : 'not an array'
-          });
-          
-          const { error: insertError } = await supabase
-            .from('recipes')
-            .insert([newRecipe]);
-            
-          if (insertError) {
-            console.error(`Error syncing recipe "${recipe.title}":`, insertError);
-          } else {
-            syncedCount++;
-          }
+        if (insertError) {
+          console.error(`Error syncing recipe "${recipe.title}":`, insertError);
+        } else {
+          syncedCount++;
         }
       }
       
-      console.log(`Successfully synced ${syncedCount} recipes`);
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      console.log(`Successfully synced ${syncedCount} recipes, skipped ${skippedCount}`);
+      if (syncedCount > 0) {
+        queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      }
     } catch (err) {
       console.error("Error in syncRecipes:", err);
       throw err;
@@ -891,7 +923,8 @@ export const useSync = () => {
     useSyncData,
     useSyncWithAllUsers,
     setupDataSyncListeners,
-    syncWithAllConnectedUsers
+    syncWithAllConnectedUsers,
+    isProcessing
   };
 };
 

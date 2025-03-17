@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,7 +20,18 @@ export const fetchRecipes = async (user: User | null): Promise<Recipe[]> => {
     throw error;
   }
 
-  return (data || []).map((item) => ({
+  // Deduplicate recipes by title
+  const uniqueTitles = new Set<string>();
+  const uniqueRecipes = (data || []).filter(recipe => {
+    const normalizedTitle = recipe.title.toLowerCase().trim();
+    if (uniqueTitles.has(normalizedTitle)) {
+      return false;
+    }
+    uniqueTitles.add(normalizedTitle);
+    return true;
+  });
+
+  return uniqueRecipes.map((item) => ({
     ...item,
     ingredients: Array.isArray(item.ingredients) 
       ? item.ingredients.map(i => String(i))
@@ -111,7 +121,18 @@ export const fetchRecipesWithFilters = async (filters: any = {}, user: User | nu
     throw error;
   }
 
-  return (data || []).map((item) => ({
+  // Deduplicate recipes by title
+  const uniqueTitles = new Set<string>();
+  const uniqueRecipes = (data || []).filter(recipe => {
+    const normalizedTitle = recipe.title.toLowerCase().trim();
+    if (uniqueTitles.has(normalizedTitle)) {
+      return false;
+    }
+    uniqueTitles.add(normalizedTitle);
+    return true;
+  });
+
+  return uniqueRecipes.map((item) => ({
     ...item,
     ingredients: Array.isArray(item.ingredients) 
       ? item.ingredients.map(i => String(i))

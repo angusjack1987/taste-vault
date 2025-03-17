@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { 
   Eye, 
   EyeOff, 
@@ -71,14 +71,14 @@ const DevToolsSection = () => {
   const [selectedPrompt, setSelectedPrompt] = useState<BackendPrompt | null>(null);
   const { user } = useAuth();
   
-  const handleToggleVisibility = () => {
+  const handleToggleVisibility = useCallback(() => {
     setIsVisible(prev => !prev);
     if (!isVisible) {
       fetchPromptsForEndpoint(null);
     }
-  };
+  }, [isVisible]);
   
-  const fetchPromptsForEndpoint = async (endpoint: string | null) => {
+  const fetchPromptsForEndpoint = useCallback(async (endpoint: string | null) => {
     if (!user) return;
     
     setIsLoading(true);
@@ -110,13 +110,13 @@ const DevToolsSection = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, searchQuery]);
   
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     fetchPromptsForEndpoint(selectedEndpoint);
-  };
+  }, [fetchPromptsForEndpoint, selectedEndpoint]);
   
-  const formatJSON = (jsonString: string | null | undefined) => {
+  const formatJSON = useCallback((jsonString: string | null | undefined) => {
     if (!jsonString) return "No data available";
     try {
       const parsed = JSON.parse(jsonString);
@@ -124,7 +124,7 @@ const DevToolsSection = () => {
     } catch (e) {
       return jsonString;
     }
-  };
+  }, []);
   
   if (!isVisible) {
     return (
