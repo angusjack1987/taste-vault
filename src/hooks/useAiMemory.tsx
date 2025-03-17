@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,8 +36,8 @@ export const useAiMemory = () => {
     if (!user) return;
 
     try {
-      // Use a type assertion to bypass TypeScript's type checking for the RPC call
-      const { data, error } = await (supabase.rpc as any)('get_latest_memory_insights', { 
+      // Use the get_latest_memory_insights RPC function
+      const { data, error } = await supabase.rpc('get_latest_memory_insights', { 
         user_id_param: user.id 
       });
 
@@ -153,13 +154,12 @@ export const useAiMemory = () => {
     }
   };
 
-  // Store insights in Supabase database using a raw query to avoid TypeScript errors
+  // Store insights in Supabase database using the RPC function
   const storeInsightsInSupabase = async (rawInsights: string) => {
     if (!user) return;
     
     try {
-      // Use a type assertion to bypass TypeScript's type checking for the RPC call
-      const { error } = await (supabase.rpc as any)(
+      const { error } = await supabase.rpc(
         'store_memory_insights',
         { 
           user_id_param: user.id, 

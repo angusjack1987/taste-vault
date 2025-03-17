@@ -471,7 +471,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_latest_memory_insights: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          insights: string
+          user_id: string
+        }[]
+      }
+      store_memory_insights: {
+        Args: {
+          user_id_param: string
+          insights_param: string
+          created_at_param: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
