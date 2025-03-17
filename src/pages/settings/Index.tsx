@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -11,7 +12,6 @@ import {
   HelpCircle,
   Info,
   Palette,
-  PlayCircle,
   Share
 } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
@@ -19,7 +19,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { useTour } from "@/contexts/TourContext";
 
 // Define the interface for settings items
 interface SettingsItem {
@@ -39,7 +38,6 @@ interface SettingsGroup {
 const Settings = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { startTour } = useTour();
   
   const settingsGroups: SettingsGroup[] = [
     {
@@ -85,12 +83,6 @@ const Settings = () => {
           label: "Design System",
           path: "/settings/design-system",
           bgColor: "bg-green-100",
-        },
-        {
-          icon: <PlayCircle className="h-5 w-5 text-teal-500" />,
-          label: "App Tour",
-          bgColor: "bg-teal-100",
-          onClick: () => startTour(),
         },
       ]
     },
