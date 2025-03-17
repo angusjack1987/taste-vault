@@ -491,10 +491,12 @@ export const useSync = () => {
             servings: recipe.servings || null,
             time: recipe.time || null,
             difficulty: recipe.difficulty || null,
-            image: recipe.image || null,
-            images: recipe.images || [],
+            image: recipe.image,
+            images: recipe.images,
             rating: recipe.rating || null
           };
+          
+          console.log(`Syncing recipe "${recipe.title}" with image: ${recipe.image}`);
           
           const { error: insertError } = await supabase
             .from('recipes')
