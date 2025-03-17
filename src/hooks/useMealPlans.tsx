@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, handleSupabaseRequest } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import useAuth from "./useAuth";
 import { format, parseISO } from "date-fns";
@@ -28,7 +27,7 @@ export type MealPlanWithRecipe = MealPlan & {
 
 export const useMealPlans = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, refreshSession } = useAuth();
 
   const fetchMealPlansForRange = async (
     startDate: Date,
@@ -39,35 +38,42 @@ export const useMealPlans = () => {
     const startStr = format(startDate, "yyyy-MM-dd");
     const endStr = format(endDate, "yyyy-MM-dd");
 
-    const { data, error } = await supabase
-      .from("meal_plans")
-      .select(
-        `
-        *,
-        recipe:recipes (
-          id,
-          title,
-          image
-        )
-      `
-      )
-      .eq("user_id", user.id)
-      .gte("date", startStr)
-      .lte("date", endStr)
-      .order("date", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching meal plans:", error);
-      toast.error("Failed to load meal plans");
-      throw error;
-    }
-
-    // Transform the data to match our MealPlanWithRecipe type
-    return (data || []).map(item => ({
-      ...item,
-      meal_type: item.meal_type as MealType,
-      recipe: item.recipe || null
-    }));
+    return handleSupabaseRequest(
+      async () => {
+        const response = await supabase
+          .from("meal_plans")
+          .select(
+            `
+            *,
+            recipe:recipes (
+              id,
+              title,
+              image
+            )
+          `
+          )
+          .eq("user_id", user.id)
+          .gte("date", startStr)
+          .lte("date", endStr)
+          .order("date", { ascending: true });
+      
+        return response;
+      },
+      "Failed to load meal plans"
+    ).then(data => {
+      // If we get a 401/403, try refreshing the session
+      if (!data && user) {
+        refreshSession();
+        return [];
+      }
+      
+      // Transform the data to match our MealPlanWithRecipe type
+      return (data || []).map(item => ({
+        ...item,
+        meal_type: item.meal_type as MealType,
+        recipe: item.recipe || null
+      }));
+    });
   };
 
   const fetchTodaysMeals = async (): Promise<MealPlanWithRecipe[]> => {
@@ -76,34 +82,35 @@ export const useMealPlans = () => {
     const today = new Date();
     const todayStr = format(today, "yyyy-MM-dd");
 
-    const { data, error } = await supabase
-      .from("meal_plans")
-      .select(
-        `
-        *,
-        recipe:recipes (
-          id,
-          title,
-          image
-        )
-      `
-      )
-      .eq("user_id", user.id)
-      .eq("date", todayStr)
-      .order("meal_type", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching today's meals:", error);
-      toast.error("Failed to load today's meals");
-      throw error;
-    }
-
-    // Transform the data to match our MealPlanWithRecipe type
-    return (data || []).map(item => ({
-      ...item,
-      meal_type: item.meal_type as MealType,
-      recipe: item.recipe || null
-    }));
+    return handleSupabaseRequest(
+      async () => {
+        const response = await supabase
+          .from("meal_plans")
+          .select(
+            `
+            *,
+            recipe:recipes (
+              id,
+              title,
+              image
+            )
+          `
+          )
+          .eq("user_id", user.id)
+          .eq("date", todayStr)
+          .order("meal_type", { ascending: true });
+        
+        return response;
+      },
+      "Failed to load today's meals"
+    ).then(data => {
+      // Transform the data to match our MealPlanWithRecipe type
+      return (data || []).map(item => ({
+        ...item,
+        meal_type: item.meal_type as MealType,
+        recipe: item.recipe || null
+      }));
+    });
   };
 
   const createMealPlan = async (mealPlan: {
@@ -201,6 +208,9 @@ export const useMealPlans = () => {
       queryKey: ["meal-plans", format(startDate, "yyyy-MM-dd"), format(endDate, "yyyy-MM-dd")],
       queryFn: () => fetchMealPlansForRange(startDate, endDate),
       enabled: !!user,
+      retry: 3,
+      retryDelay: 1000,
+      staleTime: 60000, // 1 minute
     });
   };
 
@@ -209,6 +219,8 @@ export const useMealPlans = () => {
       queryKey: ["meal-plans", "today", format(new Date(), "yyyy-MM-dd")],
       queryFn: fetchTodaysMeals,
       enabled: !!user,
+      retry: 3,
+      retryDelay: 1000,
     });
   };
 

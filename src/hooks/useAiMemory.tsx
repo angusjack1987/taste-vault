@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, handleSupabaseRequest } from "@/integrations/supabase/client";
 import useAuth from "./useAuth";
 import useAISettings from "./useAISettings";
 import { marked } from "marked";
@@ -20,7 +20,7 @@ export const useAiMemory = () => {
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, refreshSession } = useAuth();
   const { useAISettingsQuery } = useAISettings();
   const { data: aiSettings } = useAISettingsQuery();
 
@@ -37,60 +37,60 @@ export const useAiMemory = () => {
 
     try {
       // Use the get_latest_memory_insights RPC function
-      const { data, error } = await supabase.rpc('get_latest_memory_insights', { 
-        user_id_param: user.id 
-      });
+      const insightsData = await handleSupabaseRequest(
+        async () => {
+          return await supabase.rpc('get_latest_memory_insights', { 
+            user_id_param: user.id 
+          });
+        },
+        "Error fetching memory insights"
+      );
 
-      if (error) {
-        console.error("Error fetching from RPC:", error);
-        throw error;
-      }
-
-      if (data && data.length > 0) {
+      if (insightsData && insightsData.length > 0) {
         // We found insights in the database, use these
-        const parsedInsights = parseMarkdownToHtml(data[0].insights);
+        const parsedInsights = parseMarkdownToHtml(insightsData[0].insights);
         setInsights(parsedInsights);
-        setLastUpdated(data[0].created_at);
+        setLastUpdated(insightsData[0].created_at);
         
         // Also update local storage for quick access
         const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
         const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
         localStorage.setItem(storageKey, parsedInsights);
-        localStorage.setItem(timestampKey, data[0].created_at);
+        localStorage.setItem(timestampKey, insightsData[0].created_at);
         return;
       }
       
       // Fallback to local storage if no database record found
-      const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
-      const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
-      
-      const storedInsights = localStorage.getItem(storageKey);
-      const storedTimestamp = localStorage.getItem(timestampKey);
-      
-      if (storedInsights) {
-        setInsights(storedInsights);
-      }
-      
-      if (storedTimestamp) {
-        setLastUpdated(storedTimestamp);
-      }
+      fallbackToLocalStorage();
     } catch (err) {
       console.error("Error fetching stored insights:", err);
       
-      // Fallback to local storage if there's an error
-      const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
-      const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
-      
-      const storedInsights = localStorage.getItem(storageKey);
-      const storedTimestamp = localStorage.getItem(timestampKey);
-      
-      if (storedInsights) {
-        setInsights(storedInsights);
+      // If we get a 401/403, try refreshing the session
+      if (user) {
+        refreshSession();
       }
       
-      if (storedTimestamp) {
-        setLastUpdated(storedTimestamp);
-      }
+      // Fallback to local storage
+      fallbackToLocalStorage();
+    }
+  };
+
+  // Helper function to get data from local storage
+  const fallbackToLocalStorage = () => {
+    if (!user) return;
+    
+    const storageKey = `${MEMORY_INSIGHTS_KEY}-${user.id}`;
+    const timestampKey = `${MEMORY_TIMESTAMP_KEY}-${user.id}`;
+    
+    const storedInsights = localStorage.getItem(storageKey);
+    const storedTimestamp = localStorage.getItem(timestampKey);
+    
+    if (storedInsights) {
+      setInsights(storedInsights);
+    }
+    
+    if (storedTimestamp) {
+      setLastUpdated(storedTimestamp);
     }
   };
 
@@ -103,28 +103,31 @@ export const useAiMemory = () => {
     setLoading(true);
 
     try {
-      const { data: response, error } = await supabase.functions.invoke(
-        "ai-memory-insights",
-        {
-          body: {
-            userId: user.id,
-            aiSettings: {
-              model: aiSettings?.model || "gpt-4o-mini",
-              temperature: aiSettings?.temperature || 0.7,
-              useMemory: aiSettings?.useMemory ?? true,
-            },
-          },
-        }
+      const functionResponse = await handleSupabaseRequest(
+        async () => {
+          return await supabase.functions.invoke(
+            "ai-memory-insights",
+            {
+              body: {
+                userId: user.id,
+                aiSettings: {
+                  model: aiSettings?.model || "gpt-4o-mini",
+                  temperature: aiSettings?.temperature || 0.7,
+                  useMemory: aiSettings?.useMemory ?? true,
+                },
+              },
+            }
+          );
+        },
+        "Failed to get AI insights"
       );
 
-      if (error) {
-        console.error("Error getting AI memory insights:", error);
-        toast.error("Failed to get AI insights");
-        throw error;
+      if (!functionResponse) {
+        return null;
       }
 
       // Parse markdown to HTML
-      const rawInsights = response.insights;
+      const rawInsights = functionResponse.insights;
       const parsedInsights = parseMarkdownToHtml(rawInsights);
       
       setInsights(parsedInsights);
@@ -159,18 +162,19 @@ export const useAiMemory = () => {
     if (!user) return;
     
     try {
-      const { error } = await supabase.rpc(
-        'store_memory_insights',
-        { 
-          user_id_param: user.id, 
-          insights_param: rawInsights,
-          created_at_param: new Date().toISOString()
-        }
+      await handleSupabaseRequest(
+        async () => {
+          return await supabase.rpc(
+            'store_memory_insights',
+            { 
+              user_id_param: user.id, 
+              insights_param: rawInsights,
+              created_at_param: new Date().toISOString()
+            }
+          );
+        },
+        "Error storing memory insights"
       );
-        
-      if (error) {
-        console.error("Error storing insights in database:", error);
-      }
     } catch (err) {
       console.error("Failed to persist insights to database:", err);
     }
