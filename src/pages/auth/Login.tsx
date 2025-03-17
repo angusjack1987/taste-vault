@@ -32,17 +32,32 @@ const Login = () => {
         throw error;
       }
 
-      const { data: preferences } = await supabase
-        .from('user_preferences')
-        .select('id')
-        .eq('user_id', data.user.id)
-        .single();
+      if (!data.user) {
+        throw new Error("No user data returned");
+      }
 
-      const isNewUser = !preferences;
-      
-      if (isNewUser) {
-        navigate("/onboarding");
-      } else {
+      try {
+        const { data: preferences, error: preferencesError } = await supabase
+          .from('user_preferences')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (preferencesError && preferencesError.code !== 'PGRST116') {
+          console.warn("Error checking user preferences:", preferencesError);
+        }
+
+        const isNewUser = !preferences;
+        
+        if (isNewUser) {
+          navigate("/onboarding");
+        } else {
+          const returnUrl = location.state && (location.state as any).returnUrl || "/";
+          navigate(returnUrl);
+        }
+      } catch (preferencesCheckError) {
+        // If we can't check preferences, still allow login
+        console.error("Error checking preferences:", preferencesCheckError);
         const returnUrl = location.state && (location.state as any).returnUrl || "/";
         navigate(returnUrl);
       }
@@ -53,7 +68,15 @@ const Login = () => {
       });
     } catch (error: any) {
       console.error("Login error:", error);
-      setAuthError(error.message || "Failed to login");
+      
+      // Provide more user-friendly error messages
+      if (error.message === "Failed to fetch") {
+        setAuthError("Unable to connect to the server. Please check your internet connection and try again.");
+      } else if (error.message?.includes("Invalid login credentials")) {
+        setAuthError("Invalid email or password. Please try again.");
+      } else {
+        setAuthError(error.message || "Failed to login. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
