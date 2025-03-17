@@ -18,8 +18,6 @@ export const useDeleteItem = (user: User | null) => {
         .eq("user_id", user.id);
       
       if (error) throw error;
-      
-      // No longer automatically syncs with connected users
       return id;
     },
     onSuccess: () => {

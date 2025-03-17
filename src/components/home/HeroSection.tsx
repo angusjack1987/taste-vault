@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Calendar, Sparkles, Utensils } from 'lucide-react';
+
 interface HeroSectionProps {
   firstName: string;
   recipesCount: number;
@@ -8,6 +10,7 @@ interface HeroSectionProps {
   avgCookTime: number;
   onOpenSuggestDialog: () => void;
 }
+
 const HeroSection = ({
   firstName,
   recipesCount,
@@ -15,13 +18,14 @@ const HeroSection = ({
   avgCookTime,
   onOpenSuggestDialog
 }: HeroSectionProps) => {
-  return <section className="mt-6">
-      <h1 className="text-3xl font-bold mb-1 neo-text-chunky my-[24px]">Good day, {firstName}!</h1>
-      
+  return (
+    <section className="mt-6">
+      <h1 className="text-3xl font-bold mb-1 neo-text-chunky">Good day, {firstName}!</h1>
+      <p className="text-3xl font-bold mb-6 neo-text-outline">What shall we cook today?</p>
       
       <div className="grid grid-cols-2 gap-5 mb-8">
         <Link to="/recipes" className="block">
-          <div className="section-pink h-full flex flex-col items-center justify-center my-0 py-0">
+          <div className="section-pink h-full flex flex-col items-center justify-center py-6">
             <Utensils className="h-8 w-8 mb-3" strokeWidth={3} />
             <p className="text-4xl font-black">{recipesCount}</p>
             <p className="font-extrabold uppercase text-sm mt-1">Recipes</p>
@@ -54,6 +58,8 @@ const HeroSection = ({
           </div>
         </button>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default HeroSection;

@@ -1,76 +1,115 @@
 
-import { useState, useEffect, ReactNode } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy, Utensils } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRecipes } from '@/hooks/useRecipes';
-import useShoppingList, { ShoppingListItemInput, categorizeIngredient } from '@/hooks/useShoppingList';
-import { Recipe } from '@/hooks/recipes/types';
-import { supabase } from '@/integrations/supabase/client';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import SelectIngredientsDialog from '@/components/recipes/SelectIngredientsDialog';
-import ShareRecipeDialog from '@/components/recipes/ShareRecipeDialog';
-import RecipeVariationsDialog from '@/components/recipes/RecipeVariationsDialog';
-import useAiRecipes from '@/hooks/useAiRecipes';
-import { getIngredientIcon, getPastelColorForTag } from '@/utils/recipe-icons';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { 
+  Clock, 
+  Users, 
+  ChefHat, 
+  Bookmark, 
+  Heart, 
+  Share2, 
+  Edit,
+  Loader2,
+  ShoppingBag,
+  Check,
+  Trash2,
+  Wand2,
+  // Add missing food-related icons
+  Beef,
+  Fish,
+  Apple,
+  Egg,
+  Wheat,
+  Carrot,
+  Utensils
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MainLayout from "@/components/layout/MainLayout";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import useRecipes from "@/hooks/useRecipes";
+import useShoppingList, { ShoppingListItemInput, categorizeIngredient } from "@/hooks/useShoppingList";
+import { parseIngredientAmount, parsePreparation, cleanIngredientString, extractPreparationInstructions } from "@/lib/ingredient-parser";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import SuggestMealDialog from "@/components/meal-plan/dialogs/SuggestMealDialog";
+import useAiRecipes from "@/hooks/useAiRecipes";
+import AiSuggestionButton from "@/components/ui/ai-suggestion-button";
+import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
+import ShareRecipeDialog from "@/components/recipes/ShareRecipeDialog";
+import SelectIngredientsDialog from "@/components/recipes/SelectIngredientsDialog";
 
 const RecipeDetail = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [addingToShoppingList, setAddingToShoppingList] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
+  const [variationsDialogOpen, setVariationsDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [suggestedMeal, setSuggestedMeal] = useState<any>(null);
+  const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
+  const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
+  const [additionalPreferences, setAdditionalPreferences] = useState("");
+  const [selectIngredientsDialogOpen, setSelectIngredientsDialogOpen] = useState(false);
+  
   const { useRecipe, useDeleteRecipe } = useRecipes();
   const { useAddManyShoppingListItems } = useShoppingList();
-  const { suggestMealForPlan } = useAiRecipes();
+  const { suggestMealForPlan, loading: aiLoading } = useAiRecipes();
   
   const { data: recipe, isLoading, error } = useRecipe(id);
-  const { mutateAsync: deleteRecipe } = useDeleteRecipe();
   const { mutateAsync: addToShoppingList } = useAddManyShoppingListItems();
-  
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [addingToShoppingList, setAddingToShoppingList] = useState(false);
-  const [creatorProfile, setCreatorProfile] = useState<any>(null);
-  const [selectIngredientsDialogOpen, setSelectIngredientsDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [variationsDialogOpen, setVariationsDialogOpen] = useState(false);
-  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
-  const [suggestedMeal, setSuggestedMeal] = useState<any>(null);
-  const [suggestMealType, setSuggestMealType] = useState("dinner");
-  const [additionalPreferences, setAdditionalPreferences] = useState("");
-  const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
+  const { mutateAsync: deleteRecipe } = useDeleteRecipe();
 
-  useEffect(() => {
-    if (recipe?.user_id) {
-      const fetchCreator = async () => {
-        const { data } = await supabase
-          .from('profiles')
-          .select('username, first_name')
-          .eq('id', recipe.user_id)
-          .single();
-        if (data) {
-          setCreatorProfile(data);
-        }
-      };
-      fetchCreator();
+  const getIngredientIcon = (ingredientName: string) => {
+    const lowerName = ingredientName.toLowerCase();
+    
+    if (/chicken|turkey|beef|meat|steak|pork|lamb|veal/i.test(lowerName)) {
+      return <Beef className="h-4 w-4 text-sage-500" />;
+    } else if (/fish|salmon|tuna|cod|tilapia|shrimp|prawn|seafood/i.test(lowerName)) {
+      return <Fish className="h-4 w-4 text-sage-500" />;
+    } else if (/apple|banana|orange|grape|berry|berries|fruit|pear|peach|plum|mango|pineapple|watermelon|melon|kiwi|cherry|cherries|strawberry|blueberry|raspberry|blackberry|blackberries|cherry|cherries/i.test(lowerName)) {
+      return <Apple className="h-4 w-4 text-sage-500" />;
+    } else if (/egg|eggs/i.test(lowerName)) {
+      return <Egg className="h-4 w-4 text-sage-500" />;
+    } else if (/flour|bread|rice|pasta|grain|wheat|cereal|oat/i.test(lowerName)) {
+      return <Wheat className="h-4 w-4 text-sage-500" />;
+    } else if (/carrot|vegetable|tomato|potato|onion|garlic|pepper|cucumber|lettuce/i.test(lowerName)) {
+      return <Carrot className="h-4 w-4 text-sage-500" />;
+    } else {
+      return <Utensils className="h-4 w-4 text-sage-500" />;
     }
-  }, [recipe?.user_id]);
+  };
 
   const handleAddToShoppingList = async (selectedIngredients: string[] = []) => {
     if (!recipe) return;
+    
     setAddingToShoppingList(true);
+    
     try {
       const ingredientsToAdd = selectedIngredients.length > 0 ? selectedIngredients : recipe.ingredients;
+      
       const shoppingItems: ShoppingListItemInput[] = ingredientsToAdd.map(ingredient => ({
         recipe_id: recipe.id,
         ingredient,
         category: categorizeIngredient(ingredient),
         is_checked: false,
-        quantity: null
+        quantity: null,
       }));
+      
       await addToShoppingList(shoppingItems);
       toast.success(`${ingredientsToAdd.length} items added to shopping list`);
       setSelectIngredientsDialogOpen(false);
@@ -84,7 +123,9 @@ const RecipeDetail = () => {
 
   const handleDeleteRecipe = async () => {
     if (!recipe || !id) return;
+    
     setIsDeleting(true);
+    
     try {
       await deleteRecipe(id);
       toast.success("Recipe deleted successfully");
@@ -100,7 +141,7 @@ const RecipeDetail = () => {
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
   };
-
+  
   const handleOpenVariationsDialog = () => {
     setVariationsDialogOpen(true);
   };
@@ -115,7 +156,9 @@ const RecipeDetail = () => {
 
   const handleGenerateVariation = async (type: string, preferences?: string) => {
     if (!recipe) return;
+    
     setParsingMealSuggestion(true);
+    
     try {
       let promptPrefix = "";
       switch (type) {
@@ -129,20 +172,21 @@ const RecipeDetail = () => {
           promptPrefix = `Adapt "${recipe.title}" with ingredient substitutions${preferences ? ` for ${preferences}` : ""} while maintaining flavor and texture.`;
           break;
       }
+      
       setAdditionalPreferences(promptPrefix);
+      
       const result = await suggestMealForPlan({
         mealType: suggestMealType,
         additionalPreferences: promptPrefix
       });
+      
       try {
         const parsedResult = JSON.parse(result);
         setSuggestedMeal(parsedResult);
         setVariationsDialogOpen(false);
         setSuggestDialogOpen(true);
       } catch (e) {
-        setSuggestedMeal({
-          rawResponse: result
-        });
+        setSuggestedMeal({ rawResponse: result });
         setVariationsDialogOpen(false);
         setSuggestDialogOpen(true);
       }
@@ -157,20 +201,22 @@ const RecipeDetail = () => {
 
   const handleSuggestMeal = async () => {
     if (!recipe) return;
+    
     setParsingMealSuggestion(true);
+    
     try {
       setAdditionalPreferences(`Similar to "${recipe.title}" but with variations`);
+      
       const result = await suggestMealForPlan({
         mealType: suggestMealType,
         additionalPreferences: `Similar to "${recipe.title}" but with variations`
       });
+      
       try {
         const parsedResult = JSON.parse(result);
         setSuggestedMeal(parsedResult);
       } catch (e) {
-        setSuggestedMeal({
-          rawResponse: result
-        });
+        setSuggestedMeal({ rawResponse: result });
       }
     } catch (error) {
       console.error("Error suggesting meal:", error);
@@ -193,9 +239,11 @@ const RecipeDetail = () => {
 
   const handleShareRecipe = (method: string) => {
     if (!recipe) return;
+    
     const recipeUrl = window.location.href;
     const recipeTitle = recipe.title;
     const recipeDescription = recipe.description || "Check out this recipe!";
+    
     switch (method) {
       case "copy":
         navigator.clipboard.writeText(recipeUrl).then(() => {
@@ -224,282 +272,305 @@ const RecipeDetail = () => {
     }
   };
 
-  const formatRawResponse = (rawResponse: unknown): string => {
-    if (rawResponse === null || rawResponse === undefined) {
-      return 'No response data available';
+  const getPastelColorForTag = (tag: string): string => {
+    const tagLower = tag.toLowerCase();
+    
+    if (tagLower.includes('breakfast')) return 'bg-[#FEF7CD] text-black';
+    if (tagLower.includes('lunch')) return 'bg-[#D3E4FD] text-black';
+    if (tagLower.includes('dinner')) return 'bg-[#E5DEFF] text-black';
+    if (tagLower.includes('dessert')) return 'bg-[#FFDEE2] text-black';
+    if (tagLower.includes('snack')) return 'bg-[#FDE1D3] text-black';
+    
+    if (tagLower.includes('italian')) return 'bg-[#F2FCE2] text-black';
+    if (tagLower.includes('mexican')) return 'bg-[#FEC6A1] text-black';
+    if (tagLower.includes('asian') || tagLower.includes('chinese') || tagLower.includes('japanese')) return 'bg-[#F2FCE2] text-black';
+    if (tagLower.includes('american')) return 'bg-[#FEF7CD] text-black';
+    
+    const colors = [
+      'bg-[#F2FCE2] text-black',
+      'bg-[#FEF7CD] text-black',
+      'bg-[#FEC6A1] text-black',
+      'bg-[#E5DEFF] text-black',
+      'bg-[#FFDEE2] text-black',
+      'bg-[#FDE1D3] text-black',
+      'bg-[#D3E4FD] text-black',
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+      hash = tag.charCodeAt(i) + ((hash << 5) - hash);
     }
     
-    if (typeof rawResponse === 'string') {
-      return rawResponse;
-    }
-    
-    if (typeof rawResponse === 'object') {
-      try {
-        return JSON.stringify(rawResponse, null, 2);
-      } catch (e) {
-        return 'Error formatting response data';
-      }
-    }
-    
-    return String(rawResponse);
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
   };
 
   if (isLoading) {
     return (
-      <div className="container py-8">
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div className="w-16 h-16 rounded-full bg-gray-200 animate-pulse"></div>
-          <div className="h-8 w-3/4 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-6 w-1/2 bg-gray-200 rounded animate-pulse"></div>
+      <MainLayout title="Loading Recipe..." showBackButton={true}>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </div>
+      </MainLayout>
     );
   }
-
+  
   if (error || !recipe) {
+    toast.error("Failed to load recipe");
     return (
-      <div className="container py-8">
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <h1 className="text-2xl font-semibold">Recipe not found</h1>
-          <p className="text-gray-500">The recipe you're looking for doesn't exist or you don't have permission to view it.</p>
-          <Button variant="default" asChild>
-            <Link to="/recipes">Back to Recipes</Link>
+      <MainLayout title="Recipe Not Found" showBackButton={true}>
+        <div className="flex flex-col justify-center items-center h-64">
+          <p className="text-muted-foreground mb-4">
+            The recipe you're looking for couldn't be found.
+          </p>
+          <Button onClick={() => navigate("/recipes")}>
+            Return to Recipes
           </Button>
         </div>
-      </div>
+      </MainLayout>
     );
   }
-
+  
   return (
-    <div className="container py-8 pb-20">
-      <div className="space-y-6">
-        <div className="relative w-full">
-          {recipe.image ? (
-            <div className="w-full h-64 overflow-hidden rounded-lg">
-              <img 
-                src={recipe.image} 
-                alt={recipe.title} 
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Utensils className="text-gray-400 h-16 w-16" />
-            </div>
-          )}
+    <MainLayout 
+      title={recipe.title} 
+      showBackButton={true}
+      action={
+        <div className="flex gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <a href={`/recipes/${id}/edit`}>
+              <Edit className="h-5 w-5 text-primary" />
+            </a>
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this recipe? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleDeleteRecipe}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>Delete</>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold">{recipe.title}</h1>
-            {recipe.description && (
-              <p className="text-gray-600">{recipe.description}</p>
-            )}
-            
-            {creatorProfile && (
-              <div className="flex items-center gap-2 mt-1">
-                <div className="text-sm text-gray-500">Created by:</div>
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback>{creatorProfile.username?.substring(0, 2) || "U"}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium">
-                  {creatorProfile.first_name || creatorProfile.username || "Unknown user"}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {recipe.tags && recipe.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {recipe.tags.map((tag, index) => (
-                <Badge key={index} className={`${getPastelColorForTag(tag)} border-none`}>
-                  {tag}
-                </Badge>
-              ))}
+      }
+    >
+      <div>
+        <div className="relative">
+          {recipe.image ? (
+            <img 
+              src={recipe.image} 
+              alt={recipe.title} 
+              className="w-full h-48 md:h-64 object-cover"
+            />
+          ) : (
+            <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
+              <p className="text-muted-foreground">No image available</p>
             </div>
           )}
-
-          <div className="grid grid-cols-3 gap-3">
-            {recipe.time && (
-              <Card>
-                <CardContent className="p-3 text-center">
-                  <p className="text-sm text-gray-500">Time</p>
-                  <p className="font-semibold">{recipe.time} min</p>
-                </CardContent>
-              </Card>
-            )}
-            {recipe.servings && (
-              <Card>
-                <CardContent className="p-3 text-center">
-                  <p className="text-sm text-gray-500">Servings</p>
-                  <p className="font-semibold">{recipe.servings}</p>
-                </CardContent>
-              </Card>
-            )}
-            {recipe.difficulty && (
-              <Card>
-                <CardContent className="p-3 text-center">
-                  <p className="text-sm text-gray-500">Difficulty</p>
-                  <p className="font-semibold capitalize">{recipe.difficulty}</p>
-                </CardContent>
-              </Card>
-            )}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+            <h1 className="text-white text-xl font-semibold">{recipe.title}</h1>
           </div>
+        </div>
+        
+        <div className="page-container">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap gap-4">
+              {recipe.time && (
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="w-4 h-4 mr-1" />
+                  <span className="text-sm">{recipe.time} min</span>
+                </div>
+              )}
+              {recipe.servings && (
+                <div className="flex items-center text-muted-foreground">
+                  <Users className="w-4 h-4 mr-1" />
+                  <span className="text-sm">{recipe.servings} servings</span>
+                </div>
+              )}
+              {recipe.difficulty && (
+                <div className="flex items-center text-muted-foreground">
+                  <ChefHat className="w-4 h-4 mr-1" />
+                  <span className="text-sm">{recipe.difficulty}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                onClick={() => setIsFavorited(!isFavorited)}
+                className={isMobile ? "p-1" : ""}
+              >
+                <Heart 
+                  className={`h-5 w-5 text-primary ${isFavorited ? 'fill-primary' : ''}`} 
+                />
+              </Button>
+              <Button 
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                className={isMobile ? "p-1" : ""}
+              >
+                <Bookmark className="h-5 w-5 text-primary" />
+              </Button>
+              <Button 
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                onClick={handleOpenShareDialog}
+                className={isMobile ? "p-1" : ""}
+              >
+                <Share2 className="h-5 w-5 text-primary" />
+              </Button>
+            </div>
+          </div>
+          
+          {recipe.description && (
+            <p className="text-muted-foreground mb-6">{recipe.description}</p>
+          )}
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={handleOpenSelectIngredientsDialog} disabled={addingToShoppingList}>
-              <ShoppingBag className="h-4 w-4 mr-2" />
+          <div className="mb-6">
+            <AiSuggestionButton
+              onClick={handleOpenVariationsDialog}
+              label="Create Variations"
+              variant="cheese"
+              isLoading={parsingMealSuggestion}
+              className="w-full md:w-auto"
+            >
+              <Wand2 className="h-4 w-4 mr-2" />
+              Create Variations
+            </AiSuggestionButton>
+          </div>
+          
+          <Tabs defaultValue="ingredients" className="mb-8">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
+              <TabsTrigger value="instructions">Instructions</TabsTrigger>
+            </TabsList>
+            <TabsContent value="ingredients" className="mt-4">
+              <ScrollArea maxHeight="350px">
+                <ul className="space-y-3">
+                  {recipe.ingredients.map((ingredient, index) => {
+                    const cleanedIngredient = cleanIngredientString(ingredient);
+                    const prepInstructions = extractPreparationInstructions(cleanedIngredient);
+                    const { mainText, preparation } = parsePreparation(cleanedIngredient);
+                    const { name, amount } = parseIngredientAmount(mainText);
+                    
+                    return (
+                      <li key={index} className="flex items-center p-2 bg-sage-50 rounded-md border border-sage-200 hover:bg-sage-100 transition-colors">
+                        <div className="flex-shrink-0 mr-3">
+                          {getIngredientIcon(name)}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <span className="text-sm">
+                            {amount ? `${amount} ${name}` : name}
+                            {(prepInstructions || preparation) && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                {prepInstructions || preparation}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="instructions" className="mt-4">
+              <ScrollArea maxHeight="350px">
+                <ol className="space-y-4">
+                  {recipe.instructions.map((instruction, index) => (
+                    <li key={index} className="flex gap-3 mb-4">
+                      <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
+                        {index + 1}
+                      </span>
+                      <span className="text-xs sm:text-sm">{instruction}</span>
+                    </li>
+                  ))}
+                </ol>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+          
+          {recipe.tags && recipe.tags.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-medium mb-2">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {recipe.tags.map((tag) => (
+                  <span 
+                    key={tag} 
+                    className={`px-3 py-1 rounded-full text-sm border-2 border-black font-medium ${getPastelColorForTag(tag)}`}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleOpenSelectIngredientsDialog}
+              disabled={addingToShoppingList}
+            >
+              {addingToShoppingList ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <ShoppingBag className="h-4 w-4 mr-2" />
+              )}
               Add to Shopping List
             </Button>
-            <Button variant="outline" size="sm" onClick={handleOpenVariationsDialog}>
-              <ChefHat className="h-4 w-4 mr-2" />
-              Variations
+            <Button 
+              className="w-full"
+              onClick={() => navigate("/meal-plan")}
+            >
+              Add to Meal Plan
             </Button>
-            <Button variant="outline" size="sm" onClick={handleOpenShareDialog}>
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/recipes/${recipe.id}/edit`}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Link>
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete Recipe</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <p className="text-sm text-gray-500">
-                    Are you sure you want to delete this recipe? This action cannot be undone.
-                  </p>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" size="sm">
-                    Cancel
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={handleDeleteRecipe}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? "Deleting..." : "Delete Recipe"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
-
-        <Tabs defaultValue="ingredients" className="mt-6">
-          <TabsList className="mb-4">
-            <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
-            <TabsTrigger value="instructions">Instructions</TabsTrigger>
-            {recipe.notes && <TabsTrigger value="notes">Notes</TabsTrigger>}
-            {recipe.nutrients && <TabsTrigger value="nutrients">Nutrition</TabsTrigger>}
-          </TabsList>
-          
-          <TabsContent value="ingredients" className="space-y-4">
-            <ul className="space-y-2">
-              {recipe.ingredients.map((ingredient, index) => (
-                <li key={index} className="flex items-center gap-2">
-                  {getIngredientIcon(ingredient)}
-                  <span>{ingredient}</span>
-                </li>
-              ))}
-            </ul>
-          </TabsContent>
-          
-          <TabsContent value="instructions" className="space-y-4">
-            <ol className="space-y-3 list-decimal list-inside">
-              {recipe.instructions.map((instruction, index) => (
-                <li key={index} className="pl-1">
-                  {instruction}
-                </li>
-              ))}
-            </ol>
-          </TabsContent>
-          
-          {recipe.notes && (
-            <TabsContent value="notes" className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-md">
-                <p className="whitespace-pre-line">{recipe.notes}</p>
-              </div>
-            </TabsContent>
-          )}
-          
-          {recipe.nutrients && (
-            <TabsContent value="nutrients" className="space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                {recipe.nutrients.calories !== undefined && (
-                  <Card>
-                    <CardContent className="p-3">
-                      <p className="text-sm text-gray-500">Calories</p>
-                      <p className="font-semibold">{recipe.nutrients.calories} kcal</p>
-                    </CardContent>
-                  </Card>
-                )}
-                {recipe.nutrients.protein !== undefined && (
-                  <Card>
-                    <CardContent className="p-3">
-                      <p className="text-sm text-gray-500">Protein</p>
-                      <p className="font-semibold">{recipe.nutrients.protein} g</p>
-                    </CardContent>
-                  </Card>
-                )}
-                {recipe.nutrients.carbs !== undefined && (
-                  <Card>
-                    <CardContent className="p-3">
-                      <p className="text-sm text-gray-500">Carbs</p>
-                      <p className="font-semibold">{recipe.nutrients.carbs} g</p>
-                    </CardContent>
-                  </Card>
-                )}
-                {recipe.nutrients.fat !== undefined && (
-                  <Card>
-                    <CardContent className="p-3">
-                      <p className="text-sm text-gray-500">Fat</p>
-                      <p className="font-semibold">{recipe.nutrients.fat} g</p>
-                    </CardContent>
-                  </Card>
-                )}
-                {Object.entries(recipe.nutrients)
-                  .filter(([key]) => !['calories', 'protein', 'carbs', 'fat'].includes(key))
-                  .map(([key, value]) => (
-                    <Card key={key}>
-                      <CardContent className="p-3">
-                        <p className="text-sm text-gray-500">{key.charAt(0).toUpperCase() + key.slice(1)}</p>
-                        <p className="font-semibold">{value} g</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-            </TabsContent>
-          )}
-        </Tabs>
       </div>
 
-      <SelectIngredientsDialog
-        open={selectIngredientsDialogOpen}
-        onOpenChange={setSelectIngredientsDialogOpen}
-        ingredients={recipe.ingredients}
-        onConfirm={handleAddToShoppingList}
-        isLoading={addingToShoppingList}
-      />
-
-      <ShareRecipeDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        recipeName={recipe.title}
-        onShare={handleShareRecipe}
+      <SuggestMealDialog
+        open={suggestDialogOpen}
+        onOpenChange={setSuggestDialogOpen}
+        currentDay={null}
+        currentMealType={null}
+        suggestMealType={suggestMealType}
+        setSuggestMealType={setSuggestMealType}
+        aiLoading={aiLoading}
+        suggestedMeal={suggestedMeal}
+        parsingMealSuggestion={parsingMealSuggestion}
+        additionalPreferences={additionalPreferences}
+        setAdditionalPreferences={setAdditionalPreferences}
+        onSuggestMeal={handleSuggestMeal}
+        onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
+        onResetSuggestedMeal={handleResetSuggestedMeal}
       />
 
       <RecipeVariationsDialog
@@ -510,76 +581,21 @@ const RecipeDetail = () => {
         isLoading={parsingMealSuggestion}
       />
 
-      <Dialog open={suggestDialogOpen} onOpenChange={setSuggestDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Recipe Suggestion</DialogTitle>
-          </DialogHeader>
-          
-          {suggestedMeal ? (
-            <div className="space-y-4 py-2">
-              {suggestedMeal.title ? (
-                <>
-                  <h3 className="text-xl font-semibold">{suggestedMeal.title}</h3>
-                  {suggestedMeal.description && (
-                    <p className="text-gray-700">{suggestedMeal.description}</p>
-                  )}
-                  
-                  {suggestedMeal.ingredients && suggestedMeal.ingredients.length > 0 && (
-                    <Accordion type="single" collapsible>
-                      <AccordionItem value="ingredients">
-                        <AccordionTrigger>Ingredients</AccordionTrigger>
-                        <AccordionContent>
-                          <ul className="list-disc pl-5 space-y-1">
-                            {suggestedMeal.ingredients.map((ingredient: string, i: number) => (
-                              <li key={i}>{ingredient}</li>
-                            ))}
-                          </ul>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  )}
-                  
-                  {suggestedMeal.instructions && suggestedMeal.instructions.length > 0 && (
-                    <Accordion type="single" collapsible className="mt-2">
-                      <AccordionItem value="instructions">
-                        <AccordionTrigger>Instructions</AccordionTrigger>
-                        <AccordionContent>
-                          <ol className="list-decimal pl-5 space-y-2">
-                            {suggestedMeal.instructions.map((instruction: string, i: number) => (
-                              <li key={i}>{instruction}</li>
-                            ))}
-                          </ol>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  )}
-                </>
-              ) : (
-                <div className="whitespace-pre-line">
-                  {formatRawResponse(suggestedMeal.rawResponse)}
-                </div>
-              )}
-              
-              <div className="flex flex-wrap justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={handleResetSuggestedMeal}>
-                  Cancel
-                </Button>
-                <Button onClick={() => handleSaveSuggestedRecipe(0)}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Save to My Recipes
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="py-8 flex flex-col items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="mt-4 text-sm text-gray-500">Generating suggestion...</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+      <ShareRecipeDialog 
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        recipeName={recipe.title}
+        onShare={handleShareRecipe}
+      />
+
+      <SelectIngredientsDialog
+        open={selectIngredientsDialogOpen}
+        onOpenChange={setSelectIngredientsDialogOpen}
+        ingredients={recipe?.ingredients || []}
+        onConfirm={handleAddToShoppingList}
+        isLoading={addingToShoppingList}
+      />
+    </MainLayout>
   );
 };
 

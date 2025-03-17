@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, Plus, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const RecipesList = () => {
   
   const addRecipeMutation = useAddRecipe();
   
+  // Explicitly type the recipes variable to ensure it's always an array
   const recipes: Recipe[] = data as Recipe[] || [];
   
   useEffect(() => {
@@ -120,8 +122,7 @@ const RecipesList = () => {
                 title: recipe.title,
                 image: recipe.image || "",
                 time: recipe.time,
-                rating: recipe.rating || undefined,
-                isShared: recipe.isShared
+                rating: recipe.rating || undefined
               }))} />
             ) : (
               <div className="text-center py-10 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)]">
@@ -135,42 +136,13 @@ const RecipesList = () => {
         <ImportRecipeDialog
           open={isImportDialogOpen}
           onClose={() => setIsImportDialogOpen(false)}
-          onImport={(recipeData) => {
-            // First, close the dialog
-            setIsImportDialogOpen(false);
-            
-            // Then create the recipe with the imported data
-            console.log("Creating recipe from imported data:", recipeData);
-            addRecipeMutation.mutate(recipeData as RecipeFormData, {
-              onSuccess: (newRecipe) => {
-                toast({
-                  title: "Success",
-                  description: "Recipe imported and saved successfully!",
-                  variant: "default"
-                });
-                // Optional: Navigate to the new recipe
-                navigate(`/recipes/${newRecipe.id}`);
-              },
-              onError: (error) => {
-                console.error("Error saving imported recipe:", error);
-                toast({
-                  title: "Error",
-                  description: "Failed to save the imported recipe. Please try again.",
-                  variant: "destructive"
-                });
-              }
-            });
-          }}
+          onImport={handleImport}
         />
         
         <RecipePhotoCapture
           open={isPhotoCaptureOpen}
           onClose={() => setIsPhotoCaptureOpen(false)}
           onRecipeExtracted={handleRecipeExtracted}
-          onCapture={(imageUrl) => {
-            console.log("Image captured:", imageUrl);
-            // This is required by the component, but in dialog mode we primarily care about the extracted recipe
-          }}
         />
         
         <FilterDrawer />

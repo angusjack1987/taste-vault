@@ -11,23 +11,17 @@ const corsHeaders = {
 };
 
 // Function to find all images in the DOM that might be recipe-related
-function findRecipeImages(document: Document, baseUrl: string): string[] {
+function findRecipeImages(document: Document): string[] {
   const images: string[] = [];
   
   // Look for images within article, main, or div with specific classes
-  const articleImages = document.querySelectorAll('article img, main img, .recipe img, .recipe-image img, [itemtype*="Recipe"] img, .post-content img, .entry-content img');
+  const articleImages = document.querySelectorAll('article img, main img, .recipe img, .recipe-image img, [itemtype*="Recipe"] img');
   articleImages.forEach(img => {
     const src = img.getAttribute('src');
-    if (src && !src.includes('logo') && !src.includes('avatar') && !src.includes('icon') && 
-        !src.includes('badge') && !src.includes('pixel.gif')) {
-      try {
-        // Ensure the URL is absolute
-        const absoluteUrl = src.startsWith('http') ? src : new URL(src, baseUrl).href;
-        if (!images.includes(absoluteUrl)) {
-          images.push(absoluteUrl);
-        }
-      } catch (e) {
-        console.error("Error creating absolute URL:", e);
+    if (src && !src.includes('logo') && !src.includes('avatar') && !src.includes('icon') && (src.endsWith('.jpg') || src.endsWith('.jpeg') || src.endsWith('.png'))) {
+      // Ensure the URL is absolute
+      if (src.startsWith('http')) {
+        images.push(src);
       }
     }
   });
@@ -46,37 +40,15 @@ function findRecipeImages(document: Document, baseUrl: string): string[] {
           !src.includes('avatar') && 
           !src.includes('icon') &&
           !src.includes('badge') &&
-          !src.includes('pixel.gif') &&
           (width === null || parseInt(width) > 200) &&
           (height === null || parseInt(height) > 200)) {
-        try {
-          // Ensure the URL is absolute
-          const absoluteUrl = src.startsWith('http') ? src : new URL(src, baseUrl).href;
-          if (!images.includes(absoluteUrl)) {
-            images.push(absoluteUrl);
-          }
-        } catch (e) {
-          console.error("Error creating absolute URL:", e);
+        // Ensure the URL is absolute
+        if (src.startsWith('http')) {
+          images.push(src);
         }
       }
     }
   }
-  
-  // Also look for high-resolution image URLs in data attributes
-  const imgWithDataSrc = document.querySelectorAll('[data-src], [data-lazy-src], [data-original]');
-  imgWithDataSrc.forEach(img => {
-    const dataSrc = img.getAttribute('data-src') || img.getAttribute('data-lazy-src') || img.getAttribute('data-original');
-    if (dataSrc && dataSrc.match(/\.(jpeg|jpg|png|webp)/i)) {
-      try {
-        const absoluteUrl = dataSrc.startsWith('http') ? dataSrc : new URL(dataSrc, baseUrl).href;
-        if (!images.includes(absoluteUrl)) {
-          images.push(absoluteUrl);
-        }
-      } catch (e) {
-        console.error("Error creating absolute URL from data attribute:", e);
-      }
-    }
-  });
   
   // Limit to top 3 images
   return images.slice(0, 3);
@@ -137,8 +109,7 @@ serve(async (req) => {
       throw new Error("OPENAI_API_KEY is not set");
     }
 
-    const requestData = await req.json();
-    const { url } = requestData;
+    const { url } = await req.json();
     if (!url) {
       throw new Error("URL is required");
     }
@@ -163,8 +134,8 @@ serve(async (req) => {
     const document = parser.parseFromString(html, "text/html");
     
     // Extract images
-    const images = findRecipeImages(document, url);
-    console.log(`Found ${images.length} potential recipe images:`, images);
+    const images = findRecipeImages(document);
+    console.log(`Found ${images.length} potential recipe images`);
     
     // Generate prompts for AI
     const { systemPrompt, userPrompt } = createPrompts(document, url);
@@ -193,7 +164,7 @@ serve(async (req) => {
       image: images.length > 0 ? images[0] : null
     };
 
-    console.log("Successfully extracted recipe data:", recipeWithImages);
+    console.log("Successfully extracted recipe data");
     
     // Return the recipe data
     return new Response(JSON.stringify(recipeWithImages), {

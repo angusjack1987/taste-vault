@@ -23,8 +23,6 @@ export const useUpdateItem = (user: User | null) => {
         .single();
       
       if (error) throw error;
-      
-      // No longer automatically syncs with connected users
       return data as unknown as FridgeItem;
     },
     onSuccess: () => {

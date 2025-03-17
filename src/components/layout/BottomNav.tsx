@@ -1,176 +1,176 @@
 
-import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { Home, BookOpen, Plus, Calendar, Settings, Refrigerator, ChefHat, Baby, BookPlus } from 'lucide-react';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Home, Book, Plus, Calendar, Settings, BookPlus, ShoppingCart, Refrigerator, Baby, ChefHat } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
+
+const navItems = [{
+  to: "/",
+  label: "Home",
+  Icon: Home,
+  tourClass: "tour-step-1"
+}, {
+  to: "/recipes",
+  label: "Recipes",
+  Icon: Book,
+  tourClass: "tour-step-2"
+},
+// Plus button will go here in the UI, but not in this array
+{
+  to: "/meal-plan",
+  label: "Meal Plan",
+  Icon: Calendar,
+  tourClass: "tour-step-3"
+}, {
+  to: "/settings",
+  label: "Settings",
+  Icon: Settings,
+  tourClass: "tour-step-4"
+}];
 
 const BottomNav = () => {
   const location = useLocation();
-  const [showPlusMenu, setShowPlusMenu] = useState(false);
-  const [babyFoodEnabled, setBabyFoodEnabled] = useState(false);
+  const pathname = location.pathname;
   const { user } = useAuth();
+  const [babyFoodEnabled, setBabyFoodEnabled] = useState(false);
 
-  // Check if baby food feature is enabled in user preferences
   useEffect(() => {
-    const checkBabyFoodEnabled = async () => {
-      if (!user) {
-        setBabyFoodEnabled(false);
-        return;
-      }
-      
+    const fetchBabyFoodPreference = async () => {
+      if (!user) return;
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('user_preferences')
           .select('preferences')
           .eq('user_id', user.id)
           .single();
         
-        // Handle the case where preferences is a string or an object
+        if (error) throw error;
+        
         if (data?.preferences) {
-          // If preferences exists, check if it's an object with a food property
-          const preferences = typeof data.preferences === 'object' 
-            ? data.preferences 
-            : JSON.parse(String(data.preferences));
-            
-          // Now safely check if babyFoodEnabled exists in the food preferences
-          if (preferences && 
-              typeof preferences === 'object' && 
-              preferences.food && 
-              typeof preferences.food === 'object' && 
-              preferences.food.babyFoodEnabled) {
-            setBabyFoodEnabled(true);
-          } else {
-            setBabyFoodEnabled(false);
+          // Check if preferences is an object and not a string
+          const prefs = typeof data.preferences === 'object' ? data.preferences : {};
+
+          // Only access food property if preferences is an object
+          if (prefs && typeof prefs === 'object' && 'food' in prefs && typeof prefs.food === 'object' && prefs.food) {
+            // Safe type assertion
+            const foodPrefs = prefs.food as Record<string, any>;
+            if ('babyFoodEnabled' in foodPrefs) {
+              setBabyFoodEnabled(Boolean(foodPrefs.babyFoodEnabled));
+            }
           }
-        } else {
-          setBabyFoodEnabled(false);
         }
       } catch (error) {
-        console.error("Error checking baby food preferences:", error);
-        setBabyFoodEnabled(false);
+        console.error("Error fetching baby food preference:", error);
       }
     };
     
-    checkBabyFoodEnabled();
+    fetchBabyFoodPreference();
   }, [user]);
 
-  const navigation = [
-    { path: '/index', icon: <Home className="w-5 h-5" />, label: 'HOME' },
-    { path: '/recipes', icon: <BookOpen className="w-5 h-5" />, label: 'RECIPES' },
-    { path: '/recipes/new', icon: <Plus className="w-6 h-6" />, label: '', isSpecial: true },
-    { path: '/meal-plan', icon: <Calendar className="w-5 h-5" />, label: 'MEAL PLAN' },
-    { path: '/settings', icon: <Settings className="w-5 h-5" />, label: 'SETTINGS' },
-  ];
-
-  // Filter menu items based on preferences
-  const getPlusMenuItems = () => {
-    const baseItems = [
-      { path: '/fridge', icon: <Refrigerator className="w-4 h-4" />, label: 'FRIDGE' },
-      { path: '/sous-chef', icon: <ChefHat className="w-4 h-4" />, label: 'SOUS CHEF' },
-      { path: '/recipes/new', icon: <BookPlus className="w-4 h-4" />, label: 'ADD RECIPE' },
-    ];
-    
-    if (babyFoodEnabled) {
-      baseItems.splice(2, 0, { path: '/baby-food', icon: <Baby className="w-4 h-4" />, label: 'BABY FOOD' });
-    }
-    
-    return baseItems;
-  };
-
-  const togglePlusMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setShowPlusMenu(!showPlusMenu);
-  };
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      if (showPlusMenu) {
-        setShowPlusMenu(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [showPlusMenu]);
-  
-  // Close menu when navigating
-  useEffect(() => {
-    setShowPlusMenu(false);
-  }, [location.pathname]);
-
   return (
-    <div className="fixed bottom-0 left-0 w-full flex justify-center items-center pb-4 z-50 px-2">
-      <nav className="bg-white border-4 border-black rounded-full shadow-neo-medium w-auto max-w-[95%] relative">
-        <ul className="flex items-center h-14">
-          {navigation.map((item, index) => (
-            <li key={item.path} className={index === 2 ? "relative" : ""}>
-              {item.isSpecial ? (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePlusMenu(e);
-                  }}
-                  className={`
-                    bg-[#FF6347] text-white rounded-full p-2.5
-                    border-4 border-black transform -translate-y-5
-                    transition-all duration-300 ease-in-out
-                    hover:shadow-[0_0_15px_rgba(255,99,71,0.6)]
-                    flex items-center justify-center
-                    ${showPlusMenu ? 'rotate-45' : 'hover:rotate-90'}
-                  `}
-                  aria-label="Quick actions"
-                >
-                  {item.icon}
-                </button>
-              ) : (
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) => `
-                    flex flex-col items-center justify-center px-3 sm:px-4
-                    ${isActive ? 'text-primary' : 'text-gray-500 hover:text-primary'}
-                  `}
-                >
-                  {item.icon}
-                  <span className="text-xs font-bold hidden sm:inline-block">{item.label}</span>
-                </NavLink>
-              )}
-            </li>
-          ))}
-        </ul>
+    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full px-4">
+      <div className="grid grid-cols-5 items-center bg-white border-2 border-black text-black rounded-2xl shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] max-w-md px-0 mx-[8px] py-[2px] my-[11px]">
+        {/* First navigation item */}
+        <div className={`flex justify-center ${navItems[0].tourClass}`}>
+          <Link to={navItems[0].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[0].to ? "text-primary font-black" : "text-black font-bold")}>
+            <div className="flex justify-center w-full">
+              {React.createElement(navItems[0].Icon, {
+                className: cn("w-5 h-5 mb-0.5 transition-all", pathname === navItems[0].to ? "text-primary" : "text-black"),
+                strokeWidth: 2.5
+              })}
+            </div>
+            <span className="text-[10px] uppercase">{navItems[0].label}</span>
+          </Link>
+        </div>
 
-        {/* Plus menu popup */}
-        {showPlusMenu && (
-          <div 
-            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 flex flex-col gap-2 items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {getPlusMenuItems().map((item, index) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => `
-                  flex items-center gap-2 px-3 py-1.5 rounded-full
-                  border-2 border-black bg-white
-                  ${isActive ? 'bg-primary text-white' : 'text-gray-800'}
-                  shadow-neo-light hover:shadow-neo-medium
-                  transition-all duration-200 transform hover:-translate-y-1
-                  animate-fade-in
-                `}
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <div className="bg-[#FF6347] p-1.5 rounded-full">
-                  {item.icon}
-                </div>
-                <span className="font-bold text-xs">{item.label}</span>
-              </NavLink>
-            ))}
-          </div>
-        )}
-      </nav>
+        {/* Second navigation item */}
+        <div className={`flex justify-center ${navItems[1].tourClass}`}>
+          <Link to={navItems[1].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[1].to || navItems[1].to !== "/" && pathname.startsWith(navItems[1].to) ? "text-primary font-black" : "text-black font-bold")}>
+            <div className="flex justify-center w-full">
+              {React.createElement(navItems[1].Icon, {
+                className: cn("w-5 h-5 mb-0.5 transition-all", pathname === navItems[1].to || navItems[1].to !== "/" && pathname.startsWith(navItems[1].to) ? "text-primary" : "text-black"),
+                strokeWidth: 2.5
+              })}
+            </div>
+            <span className="text-[10px] uppercase">{navItems[1].label}</span>
+          </Link>
+        </div>
+
+        {/* Center Action Button */}
+        <div className="flex justify-center relative tour-step-5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary hover:bg-primary/90 transition-all border-2 border-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 group">
+                <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" strokeWidth={3} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="center" className="w-56 mb-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl animate-in">
+              <Link to="/recipes/new">
+                <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
+                  <BookPlus className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
+                  Add Recipe
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/fridge" className="tour-step-6">
+                <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
+                  <Refrigerator className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
+                  Fridge
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/shopping" className="tour-step-7">
+                <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
+                  <ShoppingCart className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
+                  Shopping List
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/sous-chef" className="tour-step-8">
+                <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
+                  <ChefHat className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
+                  Sous Chef
+                </DropdownMenuItem>
+              </Link>
+              {babyFoodEnabled && 
+                <Link to="/baby-food">
+                  <DropdownMenuItem className="cursor-pointer rounded-md group font-bold">
+                    <Baby className="h-4 w-4 mr-2 group-hover:animate-pulse-slow" />
+                    Baby Food
+                  </DropdownMenuItem>
+                </Link>
+              }
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Third navigation item */}
+        <div className={`flex justify-center ${navItems[2].tourClass}`}>
+          <Link to={navItems[2].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[2].to || navItems[2].to !== "/" && pathname.startsWith(navItems[2].to) ? "text-primary font-black" : "text-black font-bold")}>
+            <div className="flex justify-center w-full px-0 mx-0 my-0">
+              {React.createElement(navItems[2].Icon, {
+                className: cn("w-5 h-5 mb-0.5 transition-all", pathname === navItems[2].to || navItems[2].to !== "/" && pathname.startsWith(navItems[2].to) ? "text-primary" : "text-black"),
+                strokeWidth: 2.5
+              })}
+            </div>
+            <span className="text-[10px] uppercase text-center my-0 mx-0 px-0 py-0">{navItems[2].label}</span>
+          </Link>
+        </div>
+
+        {/* Fourth navigation item */}
+        <div className={`flex justify-center ${navItems[3].tourClass}`}>
+          <Link to={navItems[3].to} className={cn("flex flex-col items-center justify-center px-2 py-1 transition-all hover:scale-110", pathname === navItems[3].to || navItems[3].to !== "/" && pathname.startsWith(navItems[3].to) ? "text-primary font-black" : "text-black font-bold")}>
+            <div className="flex justify-center w-full">
+              {React.createElement(navItems[3].Icon, {
+                className: cn("w-5 h-5 mb-0.5 transition-all", pathname === navItems[3].to || navItems[3].to !== "/" && pathname.startsWith(navItems[3].to) ? "text-primary" : "text-black"),
+                strokeWidth: 2.5
+              })}
+            </div>
+            <span className="text-[10px] uppercase">{navItems[3].label}</span>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

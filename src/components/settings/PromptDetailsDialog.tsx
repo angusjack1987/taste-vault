@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Dialog,
@@ -27,7 +28,7 @@ const PromptDetailsDialog = ({
   const { usePromptDetailsQuery } = useAISettings();
   const { data: promptDetails, isLoading } = usePromptDetailsQuery(promptId);
 
-  if (!promptId || !open) {
+  if (!promptId) {
     return null;
   }
 

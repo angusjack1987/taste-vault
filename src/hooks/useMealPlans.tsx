@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import useAuth from "./useAuth";
 import { format, parseISO } from "date-fns";
-import useSync from "@/hooks/useSync";
 
 export type MealType = "breakfast" | "lunch" | "dinner";
 
@@ -30,7 +29,6 @@ export type MealPlanWithRecipe = MealPlan & {
 export const useMealPlans = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { syncWithAllConnectedUsers } = useSync();
 
   const fetchMealPlansForRange = async (
     startDate: Date,
@@ -158,9 +156,6 @@ export const useMealPlans = () => {
       }
 
       result = data;
-      
-      // Sync with connected users
-      await syncWithAllConnectedUsers();
     } else {
       // Create a new meal plan
       const { data, error } = await supabase
@@ -176,9 +171,6 @@ export const useMealPlans = () => {
       }
 
       result = data;
-      
-      // Sync with connected users
-      await syncWithAllConnectedUsers();
     }
 
     // Transform the data to match our MealPlan type
@@ -202,9 +194,6 @@ export const useMealPlans = () => {
       toast.error("Failed to remove meal from plan");
       throw error;
     }
-    
-    // Sync deletion with connected users
-    await syncWithAllConnectedUsers();
   };
 
   const useMealPlansForRange = (startDate: Date, endDate: Date) => {

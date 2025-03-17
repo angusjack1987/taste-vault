@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import useAuth from '@/hooks/useAuth';
@@ -15,27 +14,13 @@ import HeroSection from '@/components/home/HeroSection';
 import MemoryInsightsSection from '@/components/home/MemoryInsightsSection';
 import TodaysMealsSection from '@/components/home/TodaysMealsSection';
 import AiChefSection from '@/components/home/AiChefSection';
-import { Recipe } from '@/hooks/recipes/types';
-import { RecipeCardProps } from '@/components/recipes/RecipeCard';
-
-// Helper function to convert Recipe objects to RecipeCardProps
-const mapRecipesToCardProps = (recipes: Recipe[]): RecipeCardProps[] => {
-  return recipes.map(recipe => ({
-    id: recipe.id,
-    title: recipe.title,
-    image: recipe.image, // Image is now non-optional in Recipe
-    time: recipe.time,
-    rating: recipe.rating,
-    isShared: recipe.isShared
-  }));
-};
 
 const IndexPage = () => {
   const { user } = useAuth();
   const { useAllRecipes } = useRecipes();
   const { useTodaysMeals } = useMealPlans();
   const { suggestMealForPlan, loading: aiLoading } = useAiRecipes();
-  const { getMemoryInsights, insights, loading: memoryLoading, isMemoryEnabled, lastUpdated, extractPreview } = useAiMemory();
+  const { getMemoryInsights, insights, loading: memoryLoading, isMemoryEnabled, lastUpdated } = useAiMemory();
   
   const { data: recipes = [], isLoading: recipesLoading } = useAllRecipes();
   const { data: todaysMeals = [], isLoading: mealsLoading } = useTodaysMeals();
@@ -48,9 +33,8 @@ const IndexPage = () => {
   const [additionalPreferences, setAdditionalPreferences] = useState("");
   const [memoryPreview, setMemoryPreview] = useState<string | null>(null);
 
-  // Fix: Convert Recipe[] to RecipeCardProps[] using the helper function
-  const recentRecipeProps = mapRecipesToCardProps(recipes.slice(0, 4));
-  const popularRecipeProps = mapRecipesToCardProps([...recipes].sort(() => 0.5 - Math.random()).slice(0, 4));
+  const recentRecipes = recipes.slice(0, 4);
+  const popularRecipes = [...recipes].sort(() => 0.5 - Math.random()).slice(0, 4); // Random for demo
   
   useEffect(() => {
     console.log("Memory enabled:", isMemoryEnabled);
@@ -64,19 +48,29 @@ const IndexPage = () => {
       if (!insights && !memoryLoading) {
         getMemoryInsights().then(insights => {
           if (insights) {
-            // Get a concise preview of the insights
-            const preview = extractPreview(insights);
-            setMemoryPreview(preview);
-            console.log("Memory preview set:", preview);
+            // Get the first paragraph for preview
+            const firstParagraph = extractFirstParagraph(insights);
+            setMemoryPreview(firstParagraph);
+            console.log("Memory preview set:", firstParagraph);
           }
         });
       } else if (insights) {
         // If we already have insights, set the preview
-        const preview = extractPreview(insights);
-        setMemoryPreview(preview);
+        const firstParagraph = extractFirstParagraph(insights);
+        setMemoryPreview(firstParagraph);
       }
     }
-  }, [user, insights, memoryLoading, getMemoryInsights, isMemoryEnabled, extractPreview]);
+  }, [user, insights, memoryLoading, getMemoryInsights, isMemoryEnabled]);
+
+  const extractFirstParagraph = (html: string): string => {
+    // Simple extraction - get content up to first paragraph break
+    // This is a basic implementation that assumes the first chunk of HTML is a paragraph
+    const firstChunk = html.split('</p>')[0];
+    if (firstChunk) {
+      return firstChunk + '</p>';
+    }
+    return html;
+  };
 
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
@@ -136,7 +130,7 @@ const IndexPage = () => {
         {/* Memory Insights Section - Always visible */}
         <MemoryInsightsSection 
           memoryLoading={memoryLoading}
-          memoryPreview={memoryPreview}
+          memoryPreview={memoryPreview || ""}
           isMemoryEnabled={isMemoryEnabled}
           onOpenMemoryDialog={() => setMemoryDialogOpen(true)}
           onGenerateInsights={getMemoryInsights}
@@ -149,7 +143,7 @@ const IndexPage = () => {
         {/* Recent Recipes Section */}
         <CategorySection 
           title="Recent Recipes" 
-          recipes={recentRecipeProps}
+          recipes={recentRecipes}
           viewAllLink="/recipes"
           emptyMessage="No recipes yet. Start adding some!"
         />
@@ -157,7 +151,7 @@ const IndexPage = () => {
         {/* Popular Recipes Section */}
         <CategorySection 
           title="Popular Recipes" 
-          recipes={popularRecipeProps}
+          recipes={popularRecipes}
           viewAllLink="/recipes"
           emptyMessage="Explore more recipes to see popular ones!"
         />

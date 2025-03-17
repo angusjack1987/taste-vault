@@ -1,48 +1,15 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Recipe, RecipeFormData } from "./types";
 import { User } from "@supabase/supabase-js";
-import useSync from "@/hooks/useSync";
-
-// Create a helper function to track deleted recipe IDs in localStorage
-const trackDeletedRecipe = (userId: string, recipeId: string) => {
-  try {
-    const storageKey = `deleted_recipes_${userId}`;
-    const deletedRecipes = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    
-    if (!deletedRecipes.includes(recipeId)) {
-      deletedRecipes.push(recipeId);
-      localStorage.setItem(storageKey, JSON.stringify(deletedRecipes));
-    }
-  } catch (error) {
-    console.error("Error tracking deleted recipe:", error);
-  }
-};
-
-// Helper function to normalize difficulty
-const normalizeDifficulty = (difficulty: string | undefined): "easy" | "medium" | "hard" | undefined => {
-  if (!difficulty) return undefined;
-  
-  const normalized = difficulty.toLowerCase();
-  
-  if (normalized === "easy" || normalized === "medium" || normalized === "hard") {
-    return normalized as "easy" | "medium" | "hard";
-  }
-  
-  // Default to "medium" if not a valid value
-  return "medium";
-};
 
 export const createRecipe = async (recipeData: RecipeFormData, user: User | null): Promise<Recipe> => {
   if (!user) throw new Error("User not authenticated");
 
   // Ensure rating is explicitly set to null if not provided
-  // And normalize the difficulty
   const newRecipe = {
     ...recipeData,
-    difficulty: normalizeDifficulty(recipeData.difficulty),
     user_id: user.id,
     images: recipeData.images || [],
     rating: recipeData.rating ?? null, // Use nullish coalescing to ensure null if undefined
@@ -77,22 +44,178 @@ export const createRecipe = async (recipeData: RecipeFormData, user: User | null
       ? data.images.map(img => String(img)) 
       : [],
     rating: data.rating,
-    difficulty: normalizeDifficulty(data.difficulty),
   };
 };
 
-// Create hooks for mutations
+export const updateRecipe = async ({
+  id,
+  ...recipeData
+}: RecipeFormData & { id: string }, user: User | null): Promise<Recipe> => {
+  if (!user) throw new Error("User not authenticated");
+
+  const updateData = {
+    ...recipeData,
+    images: recipeData.images || [],
+    rating: recipeData.rating ?? null, // Ensure rating is explicitly set to null if not provided
+  };
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating recipe:", error);
+    toast.error("Failed to update recipe");
+    throw error;
+  }
+
+  toast.success("Recipe updated successfully");
+
+  return {
+    ...data,
+    ingredients: Array.isArray(data.ingredients) 
+      ? data.ingredients.map(i => String(i)) 
+      : [],
+    instructions: Array.isArray(data.instructions) 
+      ? data.instructions.map(i => String(i)) 
+      : [],
+    tags: Array.isArray(data.tags) 
+      ? data.tags.map(t => String(t)) 
+      : [],
+    images: Array.isArray(data.images) 
+      ? data.images.map(img => String(img)) 
+      : [],
+    rating: data.rating,
+  };
+};
+
+export const bulkUpdateRecipes = async (
+  recipeUpdates: Array<{ id: string, updates: Partial<RecipeFormData> }>,
+  user: User | null
+): Promise<void> => {
+  if (!user) throw new Error("User not authenticated");
+  
+  for (const { id, updates } of recipeUpdates) {
+    const { error } = await supabase
+      .from("recipes")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", user.id);
+    
+    if (error) {
+      console.error(`Error updating recipe ${id}:`, error);
+      toast.error(`Failed to update recipe: ${error.message}`);
+      throw error;
+    }
+  }
+  
+  toast.success(`${recipeUpdates.length} recipes updated successfully`);
+};
+
+export const deleteRecipe = async (id: string, user: User | null): Promise<void> => {
+  if (!user) throw new Error("User not authenticated");
+
+  try {
+    const { error: mealPlanError } = await supabase
+      .from("meal_plans")
+      .update({ recipe_id: null })
+      .eq("recipe_id", id)
+      .eq("user_id", user.id);
+
+    if (mealPlanError) {
+      console.error("Error removing meal plan references:", mealPlanError);
+      toast.error("Failed to remove meal plan references");
+      throw mealPlanError;
+    }
+
+    const { error: shoppingListError } = await supabase
+      .from("shopping_list")
+      .delete()
+      .eq("recipe_id", id)
+      .eq("user_id", user.id);
+
+    if (shoppingListError) {
+      console.error("Error removing shopping list items:", shoppingListError);
+      toast.error("Failed to remove shopping list items");
+      throw shoppingListError;
+    }
+
+    const { error } = await supabase
+      .from("recipes")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Error deleting recipe:", error);
+      toast.error("Failed to delete recipe");
+      throw error;
+    }
+
+    toast.success("Recipe deleted successfully");
+  } catch (error) {
+    console.error("Error in recipe deletion process:", error);
+    throw error;
+  }
+};
+
+export const bulkDeleteRecipes = async (ids: string[], user: User | null): Promise<void> => {
+  if (!user) throw new Error("User not authenticated");
+  
+  try {
+    const { error: mealPlanError } = await supabase
+      .from("meal_plans")
+      .update({ recipe_id: null })
+      .in("recipe_id", ids)
+      .eq("user_id", user.id);
+
+    if (mealPlanError) {
+      console.error("Error removing meal plan references:", mealPlanError);
+      toast.error("Failed to remove meal plan references");
+      throw mealPlanError;
+    }
+
+    const { error: shoppingListError } = await supabase
+      .from("shopping_list")
+      .delete()
+      .in("recipe_id", ids)
+      .eq("user_id", user.id);
+
+    if (shoppingListError) {
+      console.error("Error removing shopping list items:", shoppingListError);
+      toast.error("Failed to remove shopping list items");
+      throw shoppingListError;
+    }
+
+    const { error } = await supabase
+      .from("recipes")
+      .delete()
+      .in("id", ids)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Error deleting recipes:", error);
+      toast.error("Failed to delete recipes");
+      throw error;
+    }
+
+    toast.success(`${ids.length} recipes deleted successfully`);
+  } catch (error) {
+    console.error("Error in bulk recipe deletion process:", error);
+    throw error;
+  }
+};
+
 export const useCreateRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
-  const { syncWithAllConnectedUsers } = useSync();
   
   return useMutation({
     mutationFn: (recipeData: RecipeFormData) => createRecipe(recipeData, user),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      // Sync after creating a new recipe - this is one of the few places
-      // where we want to trigger an automatic sync
-      syncWithAllConnectedUsers();
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 };
@@ -101,33 +224,10 @@ export const useUpdateRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (params: { id: string; data: Partial<RecipeFormData> } | Partial<RecipeFormData> & { id: string }) => {
-      if (!user) throw new Error("User not authenticated");
-      
-      // Support both formats: { id, data } and { id, ...otherProps }
-      const id = 'id' in params ? params.id : '';
-      const data = 'data' in params 
-        ? params.data 
-        : Object.fromEntries(
-            Object.entries(params).filter(([key]) => key !== 'id')
-          );
-      
-      // Allow updating any recipe the user has access to (including shared ones)
-      const { error } = await supabase
-        .from("recipes")
-        .update(data)
-        .eq("id", id);
-        
-      if (error) {
-        toast.error("Failed to update recipe");
-        throw error;
-      }
-      
-      toast.success("Recipe updated successfully");
-      return { id, ...data };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    mutationFn: (data: RecipeFormData & { id: string }) => updateRecipe(data, user),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["recipe", data.id] });
     },
   });
 };
@@ -136,49 +236,10 @@ export const useBulkUpdateRecipes = (user: User | null) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (params: { ids: string[]; data: Partial<RecipeFormData> } | { id: string; updates: Record<string, any> }[]) => {
-      if (!user) throw new Error("User not authenticated");
-      
-      // Handle both formats
-      if (Array.isArray(params)) {
-        // Handle array of {id, updates}
-        const ids = params.map(item => item.id);
-        // When dealing with multiple items with different updates,
-        // we need to run multiple update operations
-        for (const item of params) {
-          const { error } = await supabase
-            .from("recipes")
-            .update(item.updates)
-            .eq("id", item.id);
-            
-          if (error) {
-            toast.error(`Failed to update recipe ${item.id}`);
-            throw error;
-          }
-        }
-        
-        toast.success("Recipes updated successfully");
-        return ids;
-      } else {
-        // Handle {ids, data} format
-        const { ids, data } = params;
-        
-        const { error } = await supabase
-          .from("recipes")
-          .update(data)
-          .in("id", ids);
-          
-        if (error) {
-          toast.error("Failed to update recipes");
-          throw error;
-        }
-        
-        toast.success("Recipes updated successfully");
-        return ids;
-      }
-    },
+    mutationFn: (recipeUpdates: Array<{ id: string, updates: Partial<RecipeFormData> }>) => 
+      bulkUpdateRecipes(recipeUpdates, user),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 };
@@ -187,49 +248,9 @@ export const useDeleteRecipe = (user: User | null) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (id: string) => {
-      if (!user) throw new Error("User not authenticated");
-      
-      // First check if user owns the recipe
-      const { data: recipe, error: fetchError } = await supabase
-        .from("recipes")
-        .select("user_id")
-        .eq("id", id)
-        .single();
-        
-      if (fetchError) {
-        toast.error("Failed to verify recipe ownership");
-        throw fetchError;
-      }
-      
-      // Only allow deletion if user owns the recipe
-      if (recipe.user_id !== user.id) {
-        const error = new Error("You don't have permission to delete this recipe");
-        toast.error(error.message);
-        throw error;
-      }
-      
-      // If user owns the recipe, proceed with deletion
-      const { error: deleteError } = await supabase
-        .from("recipes")
-        .delete()
-        .eq("id", id);
-        
-      if (deleteError) {
-        toast.error("Failed to delete recipe");
-        throw deleteError;
-      }
-      
-      // Track the deleted recipe ID to prevent re-syncing
-      if (user.id) {
-        trackDeletedRecipe(user.id, id);
-      }
-      
-      toast.success("Recipe deleted successfully");
-      return id;
-    },
+    mutationFn: (id: string) => deleteRecipe(id, user),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 };
@@ -238,29 +259,9 @@ export const useBulkDeleteRecipes = (user: User | null) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (ids: string[]) => {
-      if (!user) throw new Error("User not authenticated");
-      
-      const { error } = await supabase
-        .from("recipes")
-        .delete()
-        .in("id", ids);
-        
-      if (error) {
-        toast.error("Failed to delete recipes");
-        throw error;
-      }
-      
-      // Track all deleted recipe IDs to prevent re-syncing
-      if (user.id) {
-        ids.forEach(id => trackDeletedRecipe(user.id, id));
-      }
-      
-      toast.success("Recipes deleted successfully");
-      return ids;
-    },
+    mutationFn: (ids: string[]) => bulkDeleteRecipes(ids, user),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 };

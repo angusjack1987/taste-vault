@@ -1,20 +1,30 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Lightbulb, Loader2, ChefHat, Clock, Users, Star, ArrowRight, CheckCircle2, Circle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { MealType } from '@/hooks/useMealPlans';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Loader2, Coffee, UtensilsCrossed, Soup, RefreshCw } from 'lucide-react';
+
+interface MealOption {
+  title: string;
+  description: string;
+  highlights?: string[];
+  ingredients?: string[];
+  instructions?: string[];
+  time?: number | null;
+  servings?: number | null;
+}
+
+interface SuggestedMeal {
+  options?: MealOption[];
+  rawResponse?: string;
+}
 
 interface SuggestMealDialogProps {
   open: boolean;
@@ -23,218 +33,247 @@ interface SuggestMealDialogProps {
   currentMealType: MealType | null;
   suggestMealType: MealType;
   setSuggestMealType: (type: MealType) => void;
-  additionalPreferences: string;
-  setAdditionalPreferences: (prefs: string) => void;
   aiLoading: boolean;
+  suggestedMeal: SuggestedMeal | null;
   parsingMealSuggestion: boolean;
-  suggestedMeal: any | null;
-  onSuggestMeal: () => void;
+  additionalPreferences: string;
+  setAdditionalPreferences: (value: string) => void;
+  onSuggestMeal: () => Promise<void>;
   onSaveSuggestedRecipe: (optionIndex: number) => Promise<void>;
   onResetSuggestedMeal: () => void;
-  onRetrySingleOption?: (index: number) => void;
 }
 
-const SuggestMealDialog: React.FC<SuggestMealDialogProps> = ({
+const SuggestMealDialog = ({
   open,
   onOpenChange,
   currentDay,
   currentMealType,
   suggestMealType,
   setSuggestMealType,
+  aiLoading,
+  suggestedMeal,
+  parsingMealSuggestion,
   additionalPreferences,
   setAdditionalPreferences,
-  aiLoading,
-  parsingMealSuggestion,
-  suggestedMeal,
   onSuggestMeal,
   onSaveSuggestedRecipe,
-  onResetSuggestedMeal,
-  onRetrySingleOption
-}) => {
+  onResetSuggestedMeal
+}: SuggestMealDialogProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  
-  const handleCloseDialog = () => {
-    setSelectedOption(null);
-    onResetSuggestedMeal();
-    onOpenChange(false);
-  };
-  
-  const handleSaveSuggestedRecipe = async () => {
-    if (selectedOption !== null) {
-      await onSaveSuggestedRecipe(selectedOption);
-    }
-  };
-  
-  const isLoading = aiLoading || parsingMealSuggestion;
-  
+
   return (
-    <Dialog open={open} onOpenChange={handleCloseDialog}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl" scrollable maxHeight="85vh">
         <DialogHeader>
-          <DialogTitle>AI Meal Suggestion</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-amber-500" />
+            AI Meal Inspiration
+          </DialogTitle>
           <DialogDescription>
-            {currentDay ? (
-              <span>Generate meal ideas for {format(currentDay, 'EEEE, MMMM d')} {currentMealType}</span>
-            ) : (
-              <span>Generate meal ideas based on your preferences</span>
-            )}
+            Let AI suggest delicious meal ideas based on your preferences
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto py-4">
+        <ScrollArea className="max-h-[calc(85vh-140px)] -mr-6 pr-6">
           {!suggestedMeal ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Meal Type</Label>
-                <ToggleGroup 
-                  type="single" 
-                  value={suggestMealType}
-                  onValueChange={(value) => value && setSuggestMealType(value as MealType)}
-                  className="flex justify-start"
+            <div className="space-y-5 mt-2 p-2">
+              <div className="space-y-3">
+                <Label htmlFor="meal-type" className="text-base">What type of meal are you planning?</Label>
+                <Select 
+                  value={suggestMealType} 
+                  onValueChange={(value) => setSuggestMealType(value as MealType)}
                 >
-                  <ToggleGroupItem value="breakfast" aria-label="Breakfast">
-                    <Coffee className="h-4 w-4 mr-2" />
-                    Breakfast
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="lunch" aria-label="Lunch">
-                    <Soup className="h-4 w-4 mr-2" />
-                    Lunch
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="dinner" aria-label="Dinner">
-                    <UtensilsCrossed className="h-4 w-4 mr-2" />
-                    Dinner
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select meal type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="breakfast">Breakfast</SelectItem>
+                    <SelectItem value="lunch">Lunch</SelectItem>
+                    <SelectItem value="dinner">Dinner</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
-              <div className="space-y-2">
-                <Label>Additional Preferences</Label>
+              <div className="space-y-3">
+                <Label htmlFor="preferences" className="text-base">Any specific preferences?</Label>
                 <Textarea
-                  placeholder="Optional: Include any dietary restrictions, preferences, or ingredients you'd like to use..."
+                  id="preferences"
+                  placeholder="e.g., quick, vegetarian, high-protein, Italian, spicy, etc."
                   value={additionalPreferences}
                   onChange={(e) => setAdditionalPreferences(e.target.value)}
-                  rows={4}
+                  className="min-h-[100px] text-base"
                 />
               </div>
-            </div>
-          ) : isLoading ? (
-            <div className="flex flex-col items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin mb-4" />
-              <p className="text-center">Generating meal suggestions... This might take a moment.</p>
-            </div>
-          ) : suggestedMeal.rawResponse ? (
-            <div className="p-4 border rounded-md whitespace-pre-wrap font-mono text-sm">
-              {suggestedMeal.rawResponse}
-            </div>
-          ) : suggestedMeal.options && suggestedMeal.options.length > 0 ? (
-            <div className="space-y-6">
-              <h3 className="font-semibold text-lg">Choose a recipe to save:</h3>
               
-              <div className="grid grid-cols-1 gap-4">
-                {suggestedMeal.options.map((option: any, index: number) => (
-                  <div 
-                    key={index}
-                    className={`border-2 p-4 rounded-lg cursor-pointer ${
-                      selectedOption === index ? 'border-primary' : 'border-border'
-                    }`}
-                    onClick={() => setSelectedOption(index)}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-lg font-bold">{option.title}</h4>
-                      
-                      {onRetrySingleOption && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRetrySingleOption(index);
-                          }}
-                          title="Regenerate this option"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground mb-3">{option.description}</p>
-                    
-                    {option.time && (
-                      <p className="text-sm mb-2"><strong>Time:</strong> {option.time} minutes</p>
-                    )}
-                    
-                    {option.servings && (
-                      <p className="text-sm mb-2"><strong>Servings:</strong> {option.servings}</p>
-                    )}
-                    
-                    <div className="mt-3">
-                      <h5 className="font-medium mb-1">Ingredients:</h5>
-                      <ul className="text-sm pl-5 list-disc">
-                        {option.ingredients.slice(0, 5).map((ing: string, i: number) => (
-                          <li key={i}>{ing}</li>
-                        ))}
-                        {option.ingredients.length > 5 && (
-                          <li>...and {option.ingredients.length - 5} more</li>
-                        )}
-                      </ul>
-                    </div>
-                    
-                    <div className="mt-3">
-                      <h5 className="font-medium mb-1">Instructions:</h5>
-                      <ol className="text-sm pl-5 list-decimal">
-                        {option.instructions.slice(0, 2).map((step: string, i: number) => (
-                          <li key={i}>{step}</li>
-                        ))}
-                        {option.instructions.length > 2 && (
-                          <li>...and {option.instructions.length - 2} more steps</li>
-                        )}
-                      </ol>
-                    </div>
+              <Button 
+                onClick={onSuggestMeal} 
+                disabled={aiLoading}
+                className="w-full text-base py-6"
+                variant="cheese"
+              >
+                {aiLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Finding Perfect Meal Ideas...
+                  </>
+                ) : (
+                  <>
+                    <Lightbulb className="mr-2 h-5 w-5" />
+                    Get Meal Suggestions
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-6">
+              {parsingMealSuggestion ? (
+                <div className="py-10 relative text-center">
+                  {/* Neo-brutalist animation elements */}
+                  <div className="absolute top-0 left-10 w-16 h-16 bg-green-300 border-2 border-black rounded-full animate-neo-float opacity-40 z-0"></div>
+                  <div className="absolute bottom-10 right-10 w-14 h-14 bg-orange-300 border-2 border-black rounded-full animate-bounce opacity-30 z-0"></div>
+                  <div className="absolute top-20 right-20 w-12 h-12 bg-blue-300 border-2 border-black rounded-full animate-pulse opacity-20 z-0"></div>
+                  <div className="absolute bottom-5 left-20 w-10 h-10 bg-yellow-300 border-2 border-black rounded-full animate-neo-float opacity-30 z-0"></div>
+                  
+                  <div className="relative z-10 bg-white p-6 border-2 border-black rounded-xl shadow-[5px_5px_0px_0px_rgba(0,0,0,0.8)] animate-pulse">
+                    <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+                    <div className="text-lg font-bold uppercase">Preparing culinary inspiration</div>
+                    <div className="text-muted-foreground">Cooking up delicious ideas...</div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 border rounded-md bg-red-50">
-              <p>Sorry, we couldn't generate meal suggestions. Please try again.</p>
+                </div>
+              ) : suggestedMeal.rawResponse ? (
+                <div className="mt-4 p-5 bg-white border-4 border-black rounded-xl shadow-neo text-sm whitespace-pre-line">
+                  {suggestedMeal.rawResponse}
+                </div>
+              ) : suggestedMeal.options && Array.isArray(suggestedMeal.options) && suggestedMeal.options.length > 0 ? (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium text-center">Select a meal option:</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {suggestedMeal.options.map((option, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => setSelectedOption(idx)}
+                        className={cn(
+                          "border-4 border-black rounded-xl p-4 cursor-pointer transition-all hover:shadow-neo-hover hover:-translate-y-1",
+                          selectedOption === idx 
+                            ? "shadow-neo-heavy bg-primary/5" 
+                            : "shadow-neo"
+                        )}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h3 className="text-lg font-bold">{option.title}</h3>
+                          <div className={cn(
+                            "rounded-full border-2 border-black w-6 h-6 flex items-center justify-center bg-white",
+                            selectedOption === idx ? "bg-primary text-primary-foreground" : ""
+                          )}>
+                            {selectedOption === idx 
+                              ? <CheckCircle2 className="h-5 w-5" /> 
+                              : <Circle className="h-5 w-5" />
+                            }
+                          </div>
+                        </div>
+                        
+                        <p className="text-muted-foreground mb-4">{option.description}</p>
+                        
+                        {option.highlights && Array.isArray(option.highlights) && option.highlights.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex flex-wrap gap-2">
+                              {option.highlights.map((highlight, hidx) => (
+                                <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
+                                  <Star className="h-3 w-3 mr-1 text-amber-500" />
+                                  {highlight}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {option.time && (
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1" />
+                              {option.time} min
+                            </div>
+                          )}
+                          {option.servings && (
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-1" />
+                              {option.servings} servings
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {selectedOption !== null && suggestedMeal.options && suggestedMeal.options[selectedOption] && (
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium mb-2 flex items-center">
+                          <ChefHat className="h-4 w-4 mr-2" />
+                          Recipe Details
+                        </h4>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="text-sm font-medium text-muted-foreground mb-1">Ingredients:</h5>
+                            <ul className="list-disc pl-5 text-sm space-y-1">
+                              {suggestedMeal.options[selectedOption].ingredients && 
+                               Array.isArray(suggestedMeal.options[selectedOption].ingredients) && 
+                               suggestedMeal.options[selectedOption].ingredients?.map((ingredient, idx) => (
+                                <li key={idx}>{ingredient}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div>
+                            <h5 className="text-sm font-medium text-muted-foreground mb-1">Instructions:</h5>
+                            <ol className="list-decimal pl-5 text-sm space-y-2">
+                              {suggestedMeal.options[selectedOption].instructions && 
+                               Array.isArray(suggestedMeal.options[selectedOption].instructions) && 
+                               suggestedMeal.options[selectedOption].instructions?.map((step, idx) => (
+                                <li key={idx}>{step}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 gap-4">
+                  <p className="text-muted-foreground">No meal suggestions available. Please try again.</p>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </ScrollArea>
         
-        <DialogFooter className="pt-2">
-          {!suggestedMeal ? (
-            <>
-              <Button variant="outline" onClick={handleCloseDialog}>
-                Cancel
-              </Button>
-              <Button onClick={onSuggestMeal} disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Generate Suggestions
-              </Button>
-            </>
-          ) : isLoading ? (
-            <Button variant="outline" onClick={handleCloseDialog}>
-              Cancel
+        {suggestedMeal && !parsingMealSuggestion && (
+          <DialogFooter className="mt-4 flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={onResetSuggestedMeal}
+              className="sm:flex-1"
+            >
+              Back
             </Button>
-          ) : (
-            <>
-              <div className="flex gap-2 w-full justify-between sm:justify-end">
-                <Button variant="outline" onClick={onResetSuggestedMeal}>
-                  Start Over
-                </Button>
-                <Button variant="outline" onClick={handleCloseDialog}>
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSaveSuggestedRecipe}
-                  disabled={selectedOption === null || !suggestedMeal.options}
-                >
-                  Save Recipe
-                </Button>
-              </div>
-            </>
-          )}
-        </DialogFooter>
+            {suggestedMeal.options && Array.isArray(suggestedMeal.options) && suggestedMeal.options.length > 0 && (
+              <Button 
+                onClick={() => selectedOption !== null && onSaveSuggestedRecipe(selectedOption)}
+                className="sm:flex-1"
+                disabled={selectedOption === null}
+                variant="cheese"
+              >
+                <ArrowRight className="mr-2 h-4 w-4" />
+                {currentDay && currentMealType 
+                  ? "Save to Recipe Library & Meal Plan" 
+                  : "Save to Recipe Library"}
+              </Button>
+            )}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ export const useAISettings = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
+  // Fetch AI settings from user preferences
   const fetchAISettings = async (): Promise<AISettings | null> => {
     if (!user) return null;
     
@@ -51,10 +53,12 @@ export const useAISettings = () => {
     }
   };
   
+  // Update AI settings in user preferences
   const updateAISettings = async (aiSettings: AISettings): Promise<AISettings> => {
     if (!user) throw new Error("User not authenticated");
     
     try {
+      // First get existing preferences
       const { data: existingData } = await supabase
         .from('user_preferences')
         .select('id, preferences')
@@ -69,6 +73,7 @@ export const useAISettings = () => {
       let result;
       
       if (existingData) {
+        // Update existing preferences
         const { data, error } = await supabase
           .from('user_preferences')
           .update({ preferences: updatedPreferences })
@@ -79,6 +84,7 @@ export const useAISettings = () => {
         if (error) throw error;
         result = data;
       } else {
+        // Create new preferences
         const { data, error } = await supabase
           .from('user_preferences')
           .insert([{ 
@@ -102,6 +108,7 @@ export const useAISettings = () => {
     }
   };
   
+  // Fetch prompt history
   const fetchPromptHistory = async (): Promise<PromptHistoryItem[]> => {
     if (!user) return [];
     
@@ -122,6 +129,7 @@ export const useAISettings = () => {
     }
   };
   
+  // Get full prompt details
   const getPromptDetails = async (promptId: string): Promise<PromptHistoryItem | null> => {
     if (!user) return null;
     
@@ -143,6 +151,7 @@ export const useAISettings = () => {
     }
   };
   
+  // Clear prompt history
   const clearPromptHistory = async (): Promise<void> => {
     if (!user) throw new Error("User not authenticated");
     
@@ -162,6 +171,7 @@ export const useAISettings = () => {
     }
   };
   
+  // React Query hooks
   const useAISettingsQuery = () => {
     return useQuery({
       queryKey: ['ai-settings'],
@@ -187,12 +197,11 @@ export const useAISettings = () => {
     });
   };
   
-  const usePromptDetailsQuery = (promptId: string | null, options = {}) => {
+  const usePromptDetailsQuery = (promptId: string | null) => {
     return useQuery({
       queryKey: ['prompt-details', promptId],
       queryFn: () => getPromptDetails(promptId as string),
       enabled: !!user && !!promptId,
-      ...options
     });
   };
   

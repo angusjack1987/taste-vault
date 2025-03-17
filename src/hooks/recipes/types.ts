@@ -1,41 +1,24 @@
 
-export interface RecipeFormData {
+import { Json } from "@/integrations/supabase/types";
+
+export type Recipe = {
+  id: string;
   title: string;
-  description?: string;
+  image: string | null;
+  images: string[] | null;
+  time: number | null;
+  servings: number | null;
+  difficulty: string | null;
+  description: string | null;
   ingredients: string[];
   instructions: string[];
-  time?: number; // in minutes
-  servings?: number;
-  difficulty?: "easy" | "medium" | "hard";
-  tags?: string[];
-  notes?: string;
-  rating?: number;
-  image?: string;
-  images?: string[];
-  nutrients?: {
-    calories?: number;
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-    [key: string]: number | undefined;
-  };
-}
-
-export interface Recipe extends RecipeFormData {
-  id: string;
-  user_id: string;
+  tags: string[];
+  rating: number | null;
   created_at: string;
   updated_at: string;
-  isShared?: boolean;
-  // Make image optional in Recipe interface to match reality
-  image?: string;
-}
+};
 
-// Define a SharingPreferences type for use in useSync hook
-export interface SharingPreferences {
-  recipes: boolean;
-  babyRecipes: boolean;
-  fridgeItems: boolean;
-  shoppingList: boolean;
-  mealPlan: boolean;
-}
+export type RecipeFormData = Omit<Recipe, "id" | "created_at" | "updated_at"> & {
+  images?: string[]; // Make images optional in the form data
+  rating?: number | null; // Make rating optional but ensure it accepts null values
+};

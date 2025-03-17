@@ -1,11 +1,10 @@
-
 import React from "react";
 import { Carrot, Plus, Scissors, Beef, Fish, Egg, Wheat, Utensils, Apple } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { parseIngredientAmount, parsePreparation, cleanIngredientString, extractPreparationInstructions } from "@/lib/ingredient-parser";
 
-export interface IngredientInputProps {
+interface IngredientInputProps {
   ingredients: string[];
   onChange: (ingredients: string[]) => void;
   onAdd: () => void;

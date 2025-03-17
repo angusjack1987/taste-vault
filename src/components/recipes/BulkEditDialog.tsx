@@ -76,7 +76,12 @@ const BulkEditDialog = ({
       updates.servings = parseInt(servings, 10) || null;
     }
     
-    updateRecipes({ ids: selectedRecipeIds, data: updates }, {
+    const recipeUpdates = selectedRecipeIds.map(id => ({
+      id,
+      updates
+    }));
+    
+    updateRecipes(recipeUpdates, {
       onSuccess: () => {
         onSuccess();
         onOpenChange(false);

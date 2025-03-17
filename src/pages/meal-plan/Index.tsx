@@ -550,12 +550,6 @@ const MealPlan = () => {
         onSuggestMeal={handleSuggestMeal}
         onSaveSuggestedRecipe={handleSaveSuggestedRecipe}
         onResetSuggestedMeal={() => setSuggestedMeal(null)}
-        onRetrySingleOption={(index) => {
-          // Add implementation for retrying a single option
-          console.log("Retry single option:", index);
-          // For now, just re-run the whole suggestion
-          handleSuggestMeal();
-        }}
       />
       
       <PlanWeekDialog

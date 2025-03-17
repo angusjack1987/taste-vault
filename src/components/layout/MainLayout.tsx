@@ -1,74 +1,95 @@
-
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import PageHeader from "./PageHeader";
+import { ReactNode, useEffect, useState, useMemo } from "react";
 import BottomNav from "./BottomNav";
-import { useIsMobile } from "@/hooks/use-mobile";
-import useSync from "@/hooks/useSync";
-import SyncIcon from "../ui/sync-icon";
+import PageHeader from "./PageHeader";
+import { useLocation } from "react-router-dom";
 
 interface MainLayoutProps {
-  children: React.ReactNode;
-  title?: string;
+  children: ReactNode;
+  title: string;
   showBackButton?: boolean;
+  showUserMenu?: boolean;
   action?: React.ReactNode;
-  className?: string;
+  hideNavigation?: boolean;
 }
 
 const MainLayout = ({
   children,
   title,
   showBackButton = false,
+  showUserMenu = true,
   action,
-  className = "",
+  hideNavigation = false,
 }: MainLayoutProps) => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const { isSyncing } = useSync();
-
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const [mounted, setMounted] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const location = useLocation();
+  
+  // Generate a consistent gradient for the page to prevent flashing
+  const backgroundGradient = useMemo(() => {
+    // Create a deterministic gradient based on pathname to keep it consistent
+    const gradientIndex = location.pathname.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 4;
+    const gradients = [
+      'from-[#AAFFA9] to-[#7FFFD4]', // Green to teal
+      'from-[#FFB347] to-[#FFCC33]', // Orange to yellow
+      'from-[#FF9AA2] to-[#FFB7B2]', // Pink to light pink
+      'from-[#C9FFE5] to-[#7FFFD4]', // Light mint to aquamarine
+    ];
+    return gradients[gradientIndex];
+  }, [location.pathname]);
+  
+  // Handle page transitions
+  useEffect(() => {
+    const handlePageTransition = async () => {
+      setIsTransitioning(true);
+      setMounted(false);
+      
+      // Short delay to trigger exit animation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Then set mounted to true to trigger entrance animation
+      setMounted(true);
+      
+      // After animation completes, reset transitioning state
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 500);
+    };
+    
+    handlePageTransition();
+  }, [location.pathname]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <PageHeader title={title} showBackButton={false}>
-        <div className="flex items-center px-4 md:px-6 pb-0 md:pb-2 pt-2 gap-2">
-          {showBackButton && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-0 w-8 h-8"
-              onClick={handleBack}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          )}
-          {title && (
-            <h1 className="flex-1 flex items-center font-heading text-xl font-semibold tracking-tight">
-              {title}
-              {!isMobile && (
-                <SyncIcon isSyncing={isSyncing} className="ml-2" />
-              )}
-            </h1>
-          )}
-          {action && <div className="flex items-center">{action}</div>}
-        </div>
-      </PageHeader>
-
-      <main className={`flex-1 ${className}`}>{children}</main>
-
-      {isMobile && isSyncing && (
-        <div className="fixed left-0 right-0 bottom-16 flex justify-center">
-          <div className="h-1 bg-primary rounded-full w-full animate-pulse"></div>
-        </div>
-      )}
+    <div className={`flex flex-col min-h-screen bg-gradient-to-br ${backgroundGradient} overflow-hidden`}>
+      <PageHeader
+        title={title}
+        showBackButton={showBackButton}
+        showUserMenu={showUserMenu}
+        action={action}
+        backgroundGradient={backgroundGradient}
+      />
       
-      <div className="pb-20">
-        <BottomNav />
-      </div>
+      <main className="flex-1 pb-24 pt-4 px-3 md:px-5 relative overflow-x-hidden overflow-y-auto">
+        {/* Neo-brutalism colorful background elements with rounded corners */}
+        <div className="absolute top-20 right-20 w-40 h-40 bg-[#FFD700] border-4 border-black rounded-2xl z-0 rotate-12 shadow-neo-heavy animate-neo-float"></div>
+        <div className="absolute bottom-40 left-10 w-28 h-28 bg-[#FF6B6B] border-4 border-black rounded-2xl z-0 -rotate-12 shadow-neo-heavy animate-neo-pulse"></div>
+        <div className="absolute top-40 left-10 w-20 h-20 bg-[#4CAF50] border-4 border-black rounded-2xl z-0 rotate-45 shadow-neo-heavy animate-neo-float"></div>
+        
+        {/* Main content with neo-brutalist slide-in animation */}
+        <div 
+          className={`mx-auto w-full md:max-w-6xl lg:max-w-7xl xl:max-w-[1900px] relative main-content transition-all duration-500 ease-in-out z-10 transform ${
+            mounted 
+              ? 'translate-x-0 opacity-100' 
+              : 'translate-x-full opacity-0'
+          }`}
+          key={location.pathname} // Key helps React recognize this needs to be re-rendered on route change
+        >
+          <div className="p-3 md:p-5 neo-container bg-white mb-5 shadow-neo-heavy border-4 border-black rounded-2xl">
+            {children}
+          </div>
+        </div>
+      </main>
+      
+      {!hideNavigation && <BottomNav />}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 
 interface AuthGuardProps {
@@ -27,27 +27,29 @@ const AuthGuard = ({
         });
       } else if (!requireAuth && isAuthenticated) {
         // User is logged in but the page is only for non-authenticated users
-        navigate("/dashboard");
+        navigate("/");
       }
     }
   }, [user, isLoading, navigate, requireAuth, location.pathname, location.search]);
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (isLoading && requireAuth) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  // If we require auth and user is not authenticated, show a direct redirect
-  if (requireAuth && !user && !isLoading) {
-    return <Navigate to="/auth/login" state={{ returnUrl: location.pathname + location.search }} />;
+  // Only render children if:
+  // 1. We require auth and user is authenticated, OR
+  // 2. We don't require auth and user is not authenticated
+  const shouldRender = 
+    (requireAuth && !!user) || 
+    (!requireAuth && !user);
+
+  // If conditions aren't met, render nothing (navigation will happen via useEffect)
+  if (!shouldRender && !isLoading) {
+    return <div className="flex items-center justify-center h-screen">Redirecting...</div>;
   }
 
-  // If we don't require auth and user is authenticated, redirect to dashboard
-  if (!requireAuth && !!user && !isLoading) {
-    return <Navigate to="/dashboard" />;
-  }
-
-  // If conditions are met, render children
+  // If we're still here, we're good to go
   return <>{children}</>;
 };
 

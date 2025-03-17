@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import { v4 as uuidv4 } from 'uuid';
 import useSync from "@/hooks/useSync";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type ShareProfileDialogProps = {
   open: boolean;
@@ -228,7 +228,8 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         toast.success(`Successfully connected with ${username}`);
         setConnectToken("");
         setActiveTab("connections");
-        await syncDataMutation.mutateAsync();
+        // Sync immediately after connecting
+        await syncDataMutation.mutateAsync(tokenCheck.user_id);
         refetchConnections();
       }
     } catch (error) {
@@ -258,7 +259,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setIsSyncing(prev => ({ ...prev, [userId]: true }));
     
     try {
-      const success = await syncDataMutation.mutateAsync();
+      const success = await syncDataMutation.mutateAsync(userId);
       
       if (success) {
         toast.success(`Successfully synchronized data with ${userName}`);
@@ -422,14 +423,9 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
                   <div key={user.id} className="flex flex-col p-3 border rounded-md">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <Avatar className="h-8 w-8">
-                          {user.avatar_url ? (
-                            <AvatarImage src={user.avatar_url} alt={user.first_name || "User"} />
-                          ) : null}
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
+                          {user.first_name ? user.first_name[0].toUpperCase() : 'U'}
+                        </div>
                         <span className="ml-3 font-medium">{user.first_name || 'Connected User'}</span>
                       </div>
                       <Button 

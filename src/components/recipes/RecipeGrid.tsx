@@ -1,25 +1,20 @@
-
 import { Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import RecipeCard from "./RecipeCard";
-
 export type GridRecipe = {
   id: string;
   title: string;
   image: string;
   time?: number;
   rating?: number;
-  isShared?: boolean;
   selected?: boolean;
   onSelect?: () => void;
 };
-
 type RecipeGridProps = {
   recipes: GridRecipe[];
   emptyMessage?: string;
   selectionMode?: boolean;
 };
-
 const RecipeGrid = ({
   recipes,
   emptyMessage = "No recipes found",
@@ -31,7 +26,6 @@ const RecipeGrid = ({
         <span className="font-bold uppercase">{emptyMessage}</span>
       </div>;
   }
-  
   return <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 my-0 mx-[10px] py-[7px]">
       {recipes.map(recipe => <div key={recipe.id} className="relative">
           {selectionMode && <div className="absolute top-2 left-2 z-10 bg-white border-1 border-black p-1 cursor-pointer rounded-lg shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)]" onClick={e => {
@@ -43,10 +37,9 @@ const RecipeGrid = ({
             </div>}
           
           {selectionMode ? <div onClick={() => recipe.onSelect && recipe.onSelect()} className="cursor-pointer">
-              <RecipeCard id={recipe.id} title={recipe.title} image={recipe.image} time={recipe.time} rating={recipe.rating} isShared={recipe.isShared} />
-            </div> : <RecipeCard id={recipe.id} title={recipe.title} image={recipe.image} time={recipe.time} rating={recipe.rating} isShared={recipe.isShared} />}
+              <RecipeCard id={recipe.id} title={recipe.title} image={recipe.image} time={recipe.time} rating={recipe.rating} />
+            </div> : <RecipeCard id={recipe.id} title={recipe.title} image={recipe.image} time={recipe.time} rating={recipe.rating} />}
         </div>)}
     </div>;
 };
-
 export default RecipeGrid;

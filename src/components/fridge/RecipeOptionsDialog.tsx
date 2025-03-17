@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Loader2, BookmarkPlus, Calendar, CheckCircle2, Circle, Star, RefreshCw } from "lucide-react";
+import { Loader2, BookmarkPlus, Calendar, CheckCircle2, Circle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,7 +25,6 @@ interface RecipeOptionsDialogProps {
   onSelectRecipe: (index: number) => void;
   onSaveToRecipeBook: () => void;
   onAddToMealPlan: (recipeId: string) => void;
-  onRegenerateRecipe: (index: number) => void;
   recipes: GridRecipe[];
 }
 
@@ -38,13 +37,11 @@ const RecipeOptionsDialog = ({
   onSelectRecipe,
   onSaveToRecipeBook,
   onAddToMealPlan,
-  onRegenerateRecipe,
   recipes
 }: RecipeOptionsDialogProps) => {
   const [mealPlanDialogOpen, setMealPlanDialogOpen] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType>("dinner");
   const [selectedMealPlanRecipeId, setSelectedMealPlanRecipeId] = useState<string | null>(null);
-  const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
   
   const handleAddToMealPlan = () => {
     setSelectedMealType("dinner");
@@ -57,11 +54,6 @@ const RecipeOptionsDialog = ({
       onAddToMealPlan(selectedMealPlanRecipeId);
       setMealPlanDialogOpen(false);
     }
-  };
-  
-  const handleRegenerateRecipe = (index: number) => {
-    setRegeneratingIndex(index);
-    onRegenerateRecipe(index);
   };
   
   // Get a suggested recipe if we saved one from the generated recipes
@@ -121,98 +113,68 @@ const RecipeOptionsDialog = ({
                 {generatedRecipes.map((recipe, index) => (
                   <div 
                     key={index}
+                    onClick={() => onSelectRecipe(index)}
                     className={cn(
-                      "border-4 border-black rounded-xl p-4 transition-all",
+                      "border-4 border-black rounded-xl p-4 cursor-pointer transition-all hover:shadow-neo-hover hover:-translate-y-1",
                       selectedRecipeIndex === index 
                         ? "shadow-neo-heavy bg-primary/5" 
                         : "shadow-neo"
                     )}
                   >
                     <div className="flex justify-between items-start mb-3">
-                      <div 
-                        className="flex-1 cursor-pointer"
-                        onClick={() => onSelectRecipe(index)}
-                      >
-                        <h3 className="text-lg font-black uppercase">{recipe.title}</h3>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="border-2 border-black rounded-full hover:bg-amber-100"
-                          onClick={() => handleRegenerateRecipe(index)}
-                          disabled={regeneratingIndex === index}
-                        >
-                          {regeneratingIndex === index ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4" />
-                          )}
-                          <span className="sr-only">Regenerate recipe</span>
-                        </Button>
-                        
-                        <div 
-                          className={cn(
-                            "rounded-full border-2 border-black w-6 h-6 flex items-center justify-center bg-white cursor-pointer",
-                            selectedRecipeIndex === index ? "bg-primary text-primary-foreground" : ""
-                          )}
-                          onClick={() => onSelectRecipe(index)}
-                        >
-                          {selectedRecipeIndex === index 
-                            ? <CheckCircle2 className="h-5 w-5" /> 
-                            : <Circle className="h-5 w-5" />
-                          }
-                        </div>
+                      <h3 className="text-lg font-black uppercase">{recipe.title}</h3>
+                      <div className={cn(
+                        "rounded-full border-2 border-black w-6 h-6 flex items-center justify-center bg-white",
+                        selectedRecipeIndex === index ? "bg-primary text-primary-foreground" : ""
+                      )}>
+                        {selectedRecipeIndex === index 
+                          ? <CheckCircle2 className="h-5 w-5" /> 
+                          : <Circle className="h-5 w-5" />
+                        }
                       </div>
                     </div>
                     
-                    <div 
-                      className="cursor-pointer"
-                      onClick={() => onSelectRecipe(index)}
-                    >
-                      <p className="text-muted-foreground mb-3">{recipe.description}</p>
+                    <p className="text-muted-foreground mb-3">{recipe.description}</p>
+                    
+                    {recipe.highlights && recipe.highlights.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex flex-wrap gap-2">
+                          {recipe.highlights.map((highlight: string, hidx: number) => (
+                            <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
+                              <Star className="h-3 w-3 mr-1 text-amber-500" />
+                              {highlight}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="text-sm space-y-4">
+                      <div>
+                        <h4 className="font-bold mb-1">Ingredients:</h4>
+                        <ul className="list-disc pl-5 space-y-1">
+                          {recipe.ingredients?.map((ingredient: string, idx: number) => (
+                            <li key={idx}>{ingredient}</li>
+                          ))}
+                        </ul>
+                      </div>
                       
-                      {recipe.highlights && recipe.highlights.length > 0 && (
-                        <div className="mb-3">
-                          <div className="flex flex-wrap gap-2">
-                            {recipe.highlights.map((highlight: string, hidx: number) => (
-                              <div key={hidx} className="bg-yellow-200 text-black text-xs px-2 py-1 rounded-full border-2 border-black flex items-center shadow-neo-sm">
-                                <Star className="h-3 w-3 mr-1 text-amber-500" />
-                                {highlight}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      <div>
+                        <h4 className="font-bold mb-1">Instructions:</h4>
+                        <ol className="list-decimal pl-5 space-y-2">
+                          {recipe.instructions?.map((step: string, idx: number) => (
+                            <li key={idx}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
                       
-                      <div className="text-sm space-y-4">
-                        <div>
-                          <h4 className="font-bold mb-1">Ingredients:</h4>
-                          <ul className="list-disc pl-5 space-y-1">
-                            {recipe.ingredients?.map((ingredient: string, idx: number) => (
-                              <li key={idx}>{ingredient}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-bold mb-1">Instructions:</h4>
-                          <ol className="list-decimal pl-5 space-y-2">
-                            {recipe.instructions?.map((step: string, idx: number) => (
-                              <li key={idx}>{step}</li>
-                            ))}
-                          </ol>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 pt-2 text-muted-foreground">
-                          {recipe.time && (
-                            <div>⏱️ {recipe.time} min</div>
-                          )}
-                          {recipe.servings && (
-                            <div>👥 Serves {recipe.servings}</div>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-4 pt-2 text-muted-foreground">
+                        {recipe.time && (
+                          <div>⏱️ {recipe.time} min</div>
+                        )}
+                        {recipe.servings && (
+                          <div>👥 Serves {recipe.servings}</div>
+                        )}
                       </div>
                     </div>
                   </div>
