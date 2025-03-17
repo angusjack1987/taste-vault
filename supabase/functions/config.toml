@@ -12,6 +12,7 @@ verify_jwt = true
 [[functions]]
 name = "scrape-recipe"
 verify_jwt = false
+timeout_ms = 15000
 
 [[functions]]
 name = "ai-recipe-parser"
