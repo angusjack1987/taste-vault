@@ -16,7 +16,7 @@ const HeroSection = ({
   onOpenSuggestDialog
 }: HeroSectionProps) => {
   return <section className="mt-6">
-      <h1 className="text-3xl font-bold mb-1 neo-text-chunky my-[22px]">Good day, {firstName}!</h1>
+      <h1 className="text-3xl font-bold mb-1 neo-text-chunky my-[24px]">Good day, {firstName}!</h1>
       
       
       <div className="grid grid-cols-2 gap-5 mb-8">
