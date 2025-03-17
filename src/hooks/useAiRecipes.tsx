@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +16,11 @@ export interface AISettings {
   promptHistoryEnabled?: boolean;
   useMemory?: boolean;
   userPreferences?: UserPreferences;
+}
+
+export interface GenerateRecipeParams {
+  ingredients: string[];
+  singleRecipe?: boolean;
 }
 
 export const useAiRecipes = () => {
@@ -86,7 +90,6 @@ export const useAiRecipes = () => {
     );
   };
 
-  // Add the missing suggestRecipe function for the baby food page
   const suggestRecipe = async (data: {
     ingredients: string;
     recipeName?: string;
@@ -152,10 +155,7 @@ export const useAiRecipes = () => {
     );
   };
 
-  // Update the generateRecipe function for the fridge page to be more consistent
-  const generateRecipe = async (data: {
-    ingredients: string[];
-  }) => {
+  const generateRecipe = async (data: GenerateRecipeParams) => {
     return makeEdgeFunctionRequest(
       "generate-recipe-from-fridge",
       "generate-recipe",
@@ -163,7 +163,6 @@ export const useAiRecipes = () => {
     );
   };
 
-  // Add new generateBabyFood function
   const generateBabyFood = async (data: {
     ingredients: string[];
     babyFoodPreferences: {
@@ -208,7 +207,6 @@ export const useAiRecipes = () => {
     }
   };
 
-  // Add the new enhanceRecipeInstructions function
   const enhanceRecipeInstructions = async (data: {
     recipeTitle: string;
     instructions: string[];
