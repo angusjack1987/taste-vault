@@ -28,3 +28,15 @@ verify_jwt = true
 [[functions]]
 name = "extract-recipe-from-image"
 verify_jwt = false
+
+[[functions]]
+name = "enhance-recipe-instructions"
+verify_jwt = false
+
+[[functions]]
+name = "realtime-chef-assistant"
+verify_jwt = false
+
+[[functions]]
+name = "generate-baby-food"
+verify_jwt = true

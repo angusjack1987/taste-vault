@@ -54,7 +54,7 @@ export const useScrapedRecipes = () => {
       return recipeData;
     } catch (error) {
       console.error("Error scraping recipe:", error);
-      toast.error(`Failed to scrape recipe: ${error.message}`);
+      toast.error(`Failed to scrape recipe: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     } finally {
       setIsLoading(false);

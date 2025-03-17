@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,8 @@ const ChefVoiceAssistant: React.FC<ChefVoiceAssistantProps> = ({ className }) =>
   const [transcriptText, setTranscriptText] = useState('');
   const chatRef = useRef<RealtimeChat | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 2;
 
   const handleMessage = (event: any) => {
     // Handle response audio
@@ -42,14 +45,35 @@ const ChefVoiceAssistant: React.FC<ChefVoiceAssistantProps> = ({ className }) =>
       
       // Get ephemeral token from Supabase Edge Function
       const response = await supabase.functions.invoke('realtime-chef-assistant');
+      
+      if (response.error) {
+        console.error("Edge function error:", response.error);
+        
+        // Check if we should retry
+        if (retryCount < maxRetries) {
+          toast.info("Retrying connection...");
+          setRetryCount(prev => prev + 1);
+          
+          // Wait a moment before retrying
+          setTimeout(() => {
+            startConversation();
+          }, 1500);
+          return;
+        }
+        
+        throw new Error(response.error.message || 'Failed to get ephemeral token');
+      }
+      
       if (!response.data || !response.data.client_secret?.value) {
-        throw new Error('Failed to get ephemeral token');
+        throw new Error('Invalid response from edge function');
       }
       
       // Initialize chat with OpenAI
       chatRef.current = new RealtimeChat(handleMessage);
       await chatRef.current.init(response.data.client_secret.value);
       
+      // Reset retry count on success
+      setRetryCount(0);
       setIsConnected(true);
       setIsConnecting(false);
       
@@ -73,6 +97,7 @@ const ChefVoiceAssistant: React.FC<ChefVoiceAssistantProps> = ({ className }) =>
     setIsListening(false);
     setIsSpeaking(false);
     setTranscriptText('');
+    setRetryCount(0);
   };
 
   useEffect(() => {
@@ -129,7 +154,7 @@ const ChefVoiceAssistant: React.FC<ChefVoiceAssistantProps> = ({ className }) =>
               ) : (
                 <ChefHat className="h-4 w-4" />
               )}
-              <span>{isConnecting ? "Connecting..." : "Ask Chef"}</span>
+              <span>{isConnecting ? (retryCount > 0 ? `Retrying (${retryCount}/${maxRetries})...` : "Connecting...") : "Ask Chef"}</span>
             </Button>
           )}
           

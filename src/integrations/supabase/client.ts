@@ -55,6 +55,23 @@ supabase.functions.invoke = async function(
     
     if (response.error) {
       console.error(`Edge function ${functionName} error:`, response.error);
+      
+      // Check for specific error conditions and provide better user feedback
+      if (response.error.message?.includes('Failed to fetch') || response.error.message?.includes('NetworkError')) {
+        return { data: null, error: { message: "Network connection issue. Please check your internet connection and try again." } };
+      }
+      
+      if (response.error.status === 401 || response.error.status === 403) {
+        return { data: null, error: { message: "Authentication error. Please sign in again." } };
+      }
+      
+      if (response.error.status === 429) {
+        return { data: null, error: { message: "Too many requests. Please try again later." } };
+      }
+      
+      if (response.error.status >= 500) {
+        return { data: null, error: { message: "Server error. Please try again later." } };
+      }
     }
     
     return response;
