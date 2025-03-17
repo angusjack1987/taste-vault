@@ -25,6 +25,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
+      console.log("Initializing auth state");
+      
       // Get the current session
       const { data: { session }, error } = await supabase.auth.getSession();
       
@@ -32,6 +34,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("Auth error during initialization:", error);
         toast.error("Authentication error. Please try logging in again.");
         return;
+      }
+      
+      console.log("Session retrieved:", session ? "Valid session" : "No session");
+      
+      if (session?.expires_at) {
+        const expiresAt = new Date(session.expires_at * 1000);
+        const now = new Date();
+        console.log(`Session expires at: ${expiresAt.toLocaleString()}, Current time: ${now.toLocaleString()}`);
+        
+        if (expiresAt <= now) {
+          console.log("Session has expired, attempting refresh");
+          await refreshSession();
+          return;
+        }
       }
       
       setSession(session);
@@ -77,6 +93,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) {
         console.error("Error signing out:", error);
         toast.error("Error signing out");
+      } else {
+        console.log("Successfully signed out");
       }
     } catch (err) {
       console.error("Unexpected error during sign out:", err);
@@ -92,18 +110,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       setIsRefreshing(true);
+      console.log("Attempting to refresh session");
+      
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
         console.error("Error refreshing session:", error);
-        toast.error("Unable to refresh your session. Please log in again.");
+        if (error.message?.includes("token is expired")) {
+          console.log("Token expired, user needs to sign in again");
+          // Clear the session to force sign out
+          setSession(null);
+          setUser(null);
+        }
         return;
       }
       
       if (data.session) {
+        console.log("Session refreshed successfully, expires at:", 
+          new Date(data.session.expires_at! * 1000).toLocaleString());
         setSession(data.session);
         setUser(data.session.user);
-        console.log("Session refreshed successfully");
+      } else {
+        console.log("No session returned after refresh");
+        setSession(null);
+        setUser(null);
       }
     } catch (err) {
       console.error("Unexpected error refreshing session:", err);

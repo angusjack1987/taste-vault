@@ -7,6 +7,9 @@ import { toast } from 'sonner';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ylqhmufqrrprgklflgiw.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlscWhtdWZxcnJwcmdrbGZsZ2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NzE1MzUsImV4cCI6MjA1NzM0NzUzNX0.DpeIbCZW5QOrOl62u-X56EbAnZChd6yqDzaiJM-FJso";
 
+// Log client initialization for debugging
+console.log(`Initializing Supabase client with URL: ${SUPABASE_URL.substring(0, 15)}...`);
+
 // Create a more robust client with better error handling and network resilience
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
@@ -16,6 +19,7 @@ export const supabase = createClient<Database>(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      storageKey: 'recipe-app-auth-storage', // Add a specific storage key to avoid conflicts
     },
     global: {
       headers: {
@@ -29,6 +33,9 @@ export const supabase = createClient<Database>(
     },
   }
 );
+
+// Log success if client initialization worked
+console.log('Supabase client initialized successfully');
 
 // Enhanced Supabase functions invoke method with better error handling and retries
 const originalInvoke = supabase.functions.invoke;
@@ -53,11 +60,14 @@ supabase.functions.invoke = async function(
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
+      // Add more detailed debug headers
       const response = await originalInvoke.call(this, functionName, {
         ...options,
         headers: {
           ...options?.headers,
           'Cache-Control': 'no-cache',
+          'X-Debug-Client': 'recipe-app-client',
+          'X-Request-Time': new Date().toISOString(),
         }
       });
       
@@ -139,6 +149,8 @@ export async function handleSupabaseRequest<T>(
 
     if (error) {
       console.error(`Supabase error:`, error);
+      
+      // More specific error handling based on error code/message
       if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
         // Auth error - session might be invalid
         toast.error("Your session has expired. Please log in again.");
@@ -149,6 +161,13 @@ export async function handleSupabaseRequest<T>(
       // Network error handling
       if (error.message?.includes('Failed to fetch') || error.code === 'NETWORK_ERROR') {
         toast.error("Network error. Please check your connection and try again.");
+        return null;
+      }
+      
+      // Authentication error handling
+      if (error.code === 'PGRST401' || error.status === 401) {
+        toast.error("Authentication error. Please log in again.");
+        supabase.auth.signOut();
         return null;
       }
       
