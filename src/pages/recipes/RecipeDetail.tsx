@@ -1,3 +1,4 @@
+
 import { useState, useEffect, ReactNode } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy, Utensils } from 'lucide-react';
@@ -556,6 +557,7 @@ const RecipeDetail = () => {
                 </>
               ) : (
                 <div className="whitespace-pre-line">
+                  {/* Fix: Convert the unknown type to a string before rendering */}
                   {formatRawResponse(suggestedMeal.rawResponse)}
                 </div>
               )}
