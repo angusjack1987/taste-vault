@@ -142,13 +142,21 @@ const RecipesList = () => {
             console.log("Creating recipe from imported data:", recipeData);
             addRecipeMutation.mutate(recipeData as RecipeFormData, {
               onSuccess: (newRecipe) => {
-                toast.success("Recipe imported and saved successfully!");
+                toast({
+                  title: "Success",
+                  description: "Recipe imported and saved successfully!",
+                  variant: "default"
+                });
                 // Optional: Navigate to the new recipe
                 navigate(`/recipes/${newRecipe.id}`);
               },
               onError: (error) => {
                 console.error("Error saving imported recipe:", error);
-                toast.error("Failed to save the imported recipe. Please try again.");
+                toast({
+                  title: "Error",
+                  description: "Failed to save the imported recipe. Please try again.",
+                  variant: "destructive"
+                });
               }
             });
           }}
