@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import useAuth from '@/hooks/useAuth';
@@ -22,7 +23,7 @@ const mapRecipesToCardProps = (recipes: Recipe[]): RecipeCardProps[] => {
   return recipes.map(recipe => ({
     id: recipe.id,
     title: recipe.title,
-    image: recipe.image || '', // Ensure image is always a string
+    image: recipe.image, // Image is now non-optional in Recipe
     time: recipe.time,
     rating: recipe.rating,
     isShared: recipe.isShared

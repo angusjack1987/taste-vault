@@ -1,3 +1,4 @@
+
 import { ArrowLeft, User, Settings, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ interface PageHeaderProps {
   showUserMenu?: boolean;
   action?: React.ReactNode;
   backgroundGradient?: string;
-  children?: React.ReactNode;
+  children?: React.ReactNode; // Make sure children is included as a prop
 }
 
 const PageHeader = ({

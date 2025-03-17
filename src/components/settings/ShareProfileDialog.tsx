@@ -228,8 +228,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
         toast.success(`Successfully connected with ${username}`);
         setConnectToken("");
         setActiveTab("connections");
-        // Sync immediately after connecting
-        await syncDataMutation.mutateAsync(tokenCheck.user_id);
+        await syncDataMutation.mutateAsync();
         refetchConnections();
       }
     } catch (error) {
@@ -259,7 +258,7 @@ const ShareProfileDialog = ({ open, onOpenChange }: ShareProfileDialogProps) => 
     setIsSyncing(prev => ({ ...prev, [userId]: true }));
     
     try {
-      const success = await syncDataMutation.mutateAsync(userId);
+      const success = await syncDataMutation.mutateAsync();
       
       if (success) {
         toast.success(`Successfully synchronized data with ${userName}`);

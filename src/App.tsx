@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useRoutes } from "react-router-dom";
+import { BrowserRouter, useRoutes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { router } from "./router";
@@ -16,18 +16,23 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
-  // Fix: Using router as routes array instead of directly
-  const Routes = useRoutes(router);
+// Create a Routes component that uses the router config
+const Routes = () => {
+  const routes = useRoutes(router);
+  return routes;
+};
 
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SyncProvider>
-        <div className="app">
-          {Routes}
-          <Toaster richColors />
-        </div>
-      </SyncProvider>
+      <BrowserRouter>
+        <SyncProvider>
+          <div className="app">
+            <Routes />
+            <Toaster richColors />
+          </div>
+        </SyncProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

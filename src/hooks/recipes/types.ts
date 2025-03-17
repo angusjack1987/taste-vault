@@ -27,8 +27,7 @@ export interface Recipe extends RecipeFormData {
   created_at: string;
   updated_at: string;
   isShared?: boolean;
-  // Ensure image is always provided for RecipeCardProps compatibility
-  image: string;
+  image: string; // Non-optional in Recipe interface
 }
 
 // Define a SharingPreferences type for use in useSync hook

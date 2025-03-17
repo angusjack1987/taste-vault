@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import useRecipes from './useRecipes';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { SharingPreferences } from './recipes/types';
 
 // Create context for sync state
@@ -10,26 +10,26 @@ interface SyncContextType {
   isSyncing: boolean;
   syncWithAllConnectedUsers: () => Promise<void>;
   // Add explicit types for the hooks
-  useConnectWithUser: () => ReturnType<typeof useConnectWithUserHook>;
-  useConnectedUsersQuery: () => ReturnType<typeof useConnectedUsersQueryHook>;
-  useRemoveConnection: () => ReturnType<typeof useRemoveConnectionHook>;
-  useSyncData: () => ReturnType<typeof useSyncDataHook>;
-  useSharingPreferencesQuery: () => ReturnType<typeof useSharingPreferencesQueryHook>;
-  useUpdateSharingPreferences: () => ReturnType<typeof useUpdateSharingPreferencesHook>;
-  useSyncWithAllUsers: () => ReturnType<typeof useSyncWithAllUsersHook>;
+  useConnectWithUser: () => UseMutationResult<boolean, Error, string, unknown>;
+  useConnectedUsersQuery: () => UseQueryResult<any[], Error>;
+  useRemoveConnection: () => UseMutationResult<boolean, Error, string, unknown>;
+  useSyncData: () => UseMutationResult<boolean, Error, void, unknown>;
+  useSharingPreferencesQuery: () => UseQueryResult<SharingPreferences | null, Error>;
+  useUpdateSharingPreferences: () => UseMutationResult<SharingPreferences, Error, SharingPreferences, unknown>;
+  useSyncWithAllUsers: () => UseMutationResult<boolean, Error, void, unknown>;
 }
 
 const SyncContext = createContext<SyncContextType>({
   isSyncing: false,
   syncWithAllConnectedUsers: async () => {},
-  // Add stubs for the hooks
-  useConnectWithUser: () => ({ mutateAsync: async () => true, isPending: false, isError: false }),
-  useConnectedUsersQuery: () => ({ data: [], isLoading: false }),
-  useRemoveConnection: () => ({ mutateAsync: async () => true, isPending: false }),
-  useSyncData: () => ({ mutateAsync: async () => true, isPending: false }),
-  useSharingPreferencesQuery: () => ({ data: null, isLoading: false }),
-  useUpdateSharingPreferences: () => ({ mutate: () => {}, isPending: false }),
-  useSyncWithAllUsers: () => ({ mutate: () => {}, isPending: false }),
+  // Initialize with empty functions that will be properly implemented
+  useConnectWithUser: () => ({} as UseMutationResult<boolean, Error, string, unknown>),
+  useConnectedUsersQuery: () => ({} as UseQueryResult<any[], Error>),
+  useRemoveConnection: () => ({} as UseMutationResult<boolean, Error, string, unknown>),
+  useSyncData: () => ({} as UseMutationResult<boolean, Error, void, unknown>),
+  useSharingPreferencesQuery: () => ({} as UseQueryResult<SharingPreferences | null, Error>),
+  useUpdateSharingPreferences: () => ({} as UseMutationResult<SharingPreferences, Error, SharingPreferences, unknown>),
+  useSyncWithAllUsers: () => ({} as UseMutationResult<boolean, Error, void, unknown>),
 });
 
 export const useSyncContext = () => useContext(SyncContext);
@@ -303,23 +303,23 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, recipes]);
 
-  // Create and memoize hook instances
-  const connectWithUserHook = useConnectWithUserHook();
-  const connectedUsersQueryHook = useConnectedUsersQueryHook();
-  const removeConnectionHook = useRemoveConnectionHook();
-  const syncDataHook = useSyncDataHook();
-  const sharingPreferencesQueryHook = useSharingPreferencesQueryHook();
-  const updateSharingPreferencesHook = useUpdateSharingPreferencesHook();
-  const syncWithAllUsersHook = useSyncWithAllUsersHook();
+  // Create hook instances for the context
+  const connectWithUser = useConnectWithUserHook();
+  const connectedUsersQuery = useConnectedUsersQueryHook();
+  const removeConnection = useRemoveConnectionHook();
+  const syncData = useSyncDataHook();
+  const sharingPreferencesQuery = useSharingPreferencesQueryHook();
+  const updateSharingPreferences = useUpdateSharingPreferencesHook();
+  const syncWithAllUsers = useSyncWithAllUsersHook();
   
-  // Provide the hook functions
-  const useConnectWithUser = () => connectWithUserHook;
-  const useConnectedUsersQuery = () => connectedUsersQueryHook;
-  const useRemoveConnection = () => removeConnectionHook;
-  const useSyncData = () => syncDataHook;
-  const useSharingPreferencesQuery = () => sharingPreferencesQueryHook;
-  const useUpdateSharingPreferences = () => updateSharingPreferencesHook;
-  const useSyncWithAllUsers = () => syncWithAllUsersHook;
+  // Create hook functions that return the instances
+  const useConnectWithUser = () => connectWithUser;
+  const useConnectedUsersQuery = () => connectedUsersQuery;
+  const useRemoveConnection = () => removeConnection;
+  const useSyncData = () => syncData;
+  const useSharingPreferencesQuery = () => sharingPreferencesQuery;
+  const useUpdateSharingPreferences = () => updateSharingPreferences;
+  const useSyncWithAllUsers = () => syncWithAllUsers;
   
   return (
     <SyncContext.Provider value={{ 
