@@ -43,27 +43,6 @@ const RecipeDetail = () => {
   const [additionalPreferences, setAdditionalPreferences] = useState("");
   const [parsingMealSuggestion, setParsingMealSuggestion] = useState(false);
 
-  // Helper function to safely convert any value to a string for display
-  const safeToString = (value: unknown): string => {
-    if (value === null || value === undefined) {
-      return '';
-    }
-    
-    if (typeof value === 'string') {
-      return value;
-    }
-    
-    if (typeof value === 'object') {
-      try {
-        return JSON.stringify(value, null, 2);
-      } catch (e) {
-        return 'Error formatting data';
-      }
-    }
-    
-    return String(value);
-  };
-
   useEffect(() => {
     if (recipe?.user_id) {
       const fetchCreator = async () => {
@@ -578,8 +557,7 @@ const RecipeDetail = () => {
                 </>
               ) : (
                 <div className="whitespace-pre-line">
-                  {/* Fix: Ensure we're safely converting the unknown value to a string */}
-                  {safeToString(suggestedMeal.rawResponse)}
+                  {formatRawResponse(suggestedMeal.rawResponse)}
                 </div>
               )}
               
