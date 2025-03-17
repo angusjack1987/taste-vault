@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy, Utensils } from 'lucide-react';
@@ -538,7 +539,7 @@ const RecipeDetail = () => {
                 <div className="whitespace-pre-line">
                   {typeof suggestedMeal.rawResponse === 'string' 
                     ? suggestedMeal.rawResponse 
-                    : 'No response data available'}
+                    : String(suggestedMeal.rawResponse || 'No response data available')}
                 </div>
               )}
               
