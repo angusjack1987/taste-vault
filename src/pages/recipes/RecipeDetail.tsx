@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Edit, Trash2, Share2, ShoppingBag, ChefHat, Plus, Copy, Utensils } from 'lucide-react';
@@ -222,6 +221,26 @@ const RecipeDetail = () => {
       default:
         break;
     }
+  };
+
+  const formatRawResponse = (rawResponse: unknown): string => {
+    if (rawResponse === null || rawResponse === undefined) {
+      return 'No response data available';
+    }
+    
+    if (typeof rawResponse === 'string') {
+      return rawResponse;
+    }
+    
+    if (typeof rawResponse === 'object') {
+      try {
+        return JSON.stringify(rawResponse, null, 2);
+      } catch (e) {
+        return 'Error formatting response data';
+      }
+    }
+    
+    return String(rawResponse);
   };
 
   if (isLoading) {
@@ -537,11 +556,7 @@ const RecipeDetail = () => {
                 </>
               ) : (
                 <div className="whitespace-pre-line">
-                  {typeof suggestedMeal.rawResponse === 'string' 
-                    ? suggestedMeal.rawResponse 
-                    : typeof suggestedMeal.rawResponse === 'object'
-                      ? JSON.stringify(suggestedMeal.rawResponse)
-                      : String(suggestedMeal.rawResponse || 'No response data available')}
+                  {formatRawResponse(suggestedMeal.rawResponse)}
                 </div>
               )}
               
