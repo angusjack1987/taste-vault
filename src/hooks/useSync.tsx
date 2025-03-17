@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +57,6 @@ export const useSync = () => {
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Run sync when user logs in
   useEffect(() => {
     if (user) {
       console.log("User logged in, syncing with connected users");
@@ -480,7 +480,25 @@ export const useSync = () => {
       
       let syncedCount = 0;
       
+      // Get the list of deleted recipe IDs for this user
+      const deletedRecipeIds: string[] = [];
+      try {
+        const storageKey = `deleted_recipes_${user?.id}`;
+        const storedIds = localStorage.getItem(storageKey);
+        if (storedIds) {
+          deletedRecipeIds.push(...JSON.parse(storedIds));
+        }
+      } catch (error) {
+        console.error("Error retrieving deleted recipes:", error);
+      }
+      
       for (const recipe of recipes) {
+        // Skip recipes that have been deleted by this user
+        if (deletedRecipeIds.includes(recipe.id)) {
+          console.log(`Skipping deleted recipe "${recipe.title}" with ID ${recipe.id}`);
+          continue;
+        }
+        
         const { data: existingRecipe } = await supabase
           .from('recipes')
           .select('id')

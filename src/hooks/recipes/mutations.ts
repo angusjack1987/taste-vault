@@ -6,6 +6,21 @@ import { Recipe, RecipeFormData } from "./types";
 import { User } from "@supabase/supabase-js";
 import useSync from "@/hooks/useSync";
 
+// Create a helper function to track deleted recipe IDs in localStorage
+const trackDeletedRecipe = (userId: string, recipeId: string) => {
+  try {
+    const storageKey = `deleted_recipes_${userId}`;
+    const deletedRecipes = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    
+    if (!deletedRecipes.includes(recipeId)) {
+      deletedRecipes.push(recipeId);
+      localStorage.setItem(storageKey, JSON.stringify(deletedRecipes));
+    }
+  } catch (error) {
+    console.error("Error tracking deleted recipe:", error);
+  }
+};
+
 export const createRecipe = async (recipeData: RecipeFormData, user: User | null): Promise<Recipe> => {
   if (!user) throw new Error("User not authenticated");
 
@@ -171,6 +186,11 @@ export const useDeleteRecipe = (user: User | null) => {
         throw error;
       }
       
+      // Track the deleted recipe ID to prevent re-syncing
+      if (user.id) {
+        trackDeletedRecipe(user.id, id);
+      }
+      
       toast.success("Recipe deleted successfully");
       return id;
     },
@@ -196,6 +216,11 @@ export const useBulkDeleteRecipes = (user: User | null) => {
       if (error) {
         toast.error("Failed to delete recipes");
         throw error;
+      }
+      
+      // Track all deleted recipe IDs to prevent re-syncing
+      if (user.id) {
+        ids.forEach(id => trackDeletedRecipe(user.id, id));
       }
       
       toast.success("Recipes deleted successfully");
