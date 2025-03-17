@@ -190,15 +190,34 @@ export const useDeleteRecipe = (user: User | null) => {
     mutationFn: async (id: string) => {
       if (!user) throw new Error("User not authenticated");
       
-      // Allow deleting any recipe the user has access to (including shared ones)
-      const { error } = await supabase
+      // First check if user owns the recipe
+      const { data: recipe, error: fetchError } = await supabase
+        .from("recipes")
+        .select("user_id")
+        .eq("id", id)
+        .single();
+        
+      if (fetchError) {
+        toast.error("Failed to verify recipe ownership");
+        throw fetchError;
+      }
+      
+      // Only allow deletion if user owns the recipe
+      if (recipe.user_id !== user.id) {
+        const error = new Error("You don't have permission to delete this recipe");
+        toast.error(error.message);
+        throw error;
+      }
+      
+      // If user owns the recipe, proceed with deletion
+      const { error: deleteError } = await supabase
         .from("recipes")
         .delete()
         .eq("id", id);
         
-      if (error) {
+      if (deleteError) {
         toast.error("Failed to delete recipe");
-        throw error;
+        throw deleteError;
       }
       
       // Track the deleted recipe ID to prevent re-syncing

@@ -19,6 +19,9 @@ import RecipeVariationsDialog from "@/components/recipes/RecipeVariationsDialog"
 import { useIsMobile } from "@/hooks/use-mobile";
 import ShareRecipeDialog from "@/components/recipes/ShareRecipeDialog";
 import SelectIngredientsDialog from "@/components/recipes/SelectIngredientsDialog";
+import { supabase } from "@/integrations/supabase/client";
+import useAuth from "@/hooks/useAuth";
+
 const RecipeDetail = () => {
   const {
     id
@@ -27,6 +30,7 @@ const RecipeDetail = () => {
   }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [isFavorited, setIsFavorited] = useState(false);
   const [addingToShoppingList, setAddingToShoppingList] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -38,6 +42,7 @@ const RecipeDetail = () => {
   const [suggestMealType, setSuggestMealType] = useState<"breakfast" | "lunch" | "dinner">("dinner");
   const [additionalPreferences, setAdditionalPreferences] = useState("");
   const [selectIngredientsDialogOpen, setSelectIngredientsDialogOpen] = useState(false);
+  const [creatorName, setCreatorName] = useState<string | null>(null);
   const {
     useRecipe,
     useDeleteRecipe
@@ -60,6 +65,33 @@ const RecipeDetail = () => {
   const {
     mutateAsync: deleteRecipe
   } = useDeleteRecipe();
+
+  useEffect(() => {
+    const fetchCreatorName = async () => {
+      if (recipe && recipe.user_id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', recipe.user_id)
+            .single();
+
+          if (data && !error) {
+            const fullName = [data.first_name, data.last_name].filter(Boolean).join(' ');
+            setCreatorName(fullName || 'Unknown User');
+          } else {
+            setCreatorName('Unknown User');
+          }
+        } catch (err) {
+          console.error('Error fetching creator info:', err);
+          setCreatorName('Unknown User');
+        }
+      }
+    };
+
+    fetchCreatorName();
+  }, [recipe]);
+
   const getIngredientIcon = (ingredientName: string) => {
     const lowerName = ingredientName.toLowerCase();
     if (/chicken|turkey|beef|meat|steak|pork|lamb|veal/i.test(lowerName)) {
@@ -78,6 +110,7 @@ const RecipeDetail = () => {
       return <Utensils className="h-4 w-4 text-sage-500" />;
     }
   };
+
   const handleAddToShoppingList = async (selectedIngredients: string[] = []) => {
     if (!recipe) return;
     setAddingToShoppingList(true);
@@ -100,6 +133,7 @@ const RecipeDetail = () => {
       setAddingToShoppingList(false);
     }
   };
+
   const handleDeleteRecipe = async () => {
     if (!recipe || !id) return;
     setIsDeleting(true);
@@ -114,18 +148,23 @@ const RecipeDetail = () => {
       setIsDeleting(false);
     }
   };
+
   const handleOpenSuggestDialog = () => {
     setSuggestDialogOpen(true);
   };
+
   const handleOpenVariationsDialog = () => {
     setVariationsDialogOpen(true);
   };
+
   const handleOpenShareDialog = () => {
     setShareDialogOpen(true);
   };
+
   const handleOpenSelectIngredientsDialog = () => {
     setSelectIngredientsDialogOpen(true);
   };
+
   const handleGenerateVariation = async (type: string, preferences?: string) => {
     if (!recipe) return;
     setParsingMealSuggestion(true);
@@ -167,6 +206,7 @@ const RecipeDetail = () => {
       setParsingMealSuggestion(false);
     }
   };
+
   const handleSuggestMeal = async () => {
     if (!recipe) return;
     setParsingMealSuggestion(true);
@@ -192,14 +232,17 @@ const RecipeDetail = () => {
       setParsingMealSuggestion(false);
     }
   };
+
   const handleSaveSuggestedRecipe = async (optionIndex: number) => {
     toast.success("Recipe variation saved to your collection");
     setSuggestDialogOpen(false);
     setSuggestedMeal(null);
   };
+
   const handleResetSuggestedMeal = () => {
     setSuggestedMeal(null);
   };
+
   const handleShareRecipe = (method: string) => {
     if (!recipe) return;
     const recipeUrl = window.location.href;
@@ -232,6 +275,7 @@ const RecipeDetail = () => {
         break;
     }
   };
+
   const getPastelColorForTag = (tag: string): string => {
     const tagLower = tag.toLowerCase();
     if (tagLower.includes('breakfast')) return 'bg-[#FEF7CD] text-black';
@@ -251,6 +295,9 @@ const RecipeDetail = () => {
     const index = Math.abs(hash) % colors.length;
     return colors[index];
   };
+
+  const isOwner = user && recipe && user.id === recipe.user_id;
+
   if (isLoading) {
     return <MainLayout title="Loading Recipe..." showBackButton={true}>
         <div className="flex justify-center items-center h-64">
@@ -258,6 +305,7 @@ const RecipeDetail = () => {
         </div>
       </MainLayout>;
   }
+
   if (error || !recipe) {
     toast.error("Failed to load recipe");
     return <MainLayout title="Recipe Not Found" showBackButton={true}>
@@ -271,7 +319,8 @@ const RecipeDetail = () => {
         </div>
       </MainLayout>;
   }
-  return <MainLayout title={recipe.title} showBackButton={true} action={<div className="flex gap-2">
+
+  return <MainLayout title={recipe.title} showBackButton={true} action={isOwner ? <div className="flex gap-2">
           <Button variant="ghost" size="icon" asChild>
             <a href={`/recipes/${id}/edit`}>
               <Edit className="h-5 w-5 text-primary" />
@@ -301,7 +350,7 @@ const RecipeDetail = () => {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>}>
+        </div> : null}>
       <div>
         <div className="relative">
           {recipe.image ? <img src={recipe.image} alt={recipe.title} className="w-full h-48 md:h-64 object-cover" /> : <div className="w-full h-48 md:h-64 bg-muted flex items-center justify-center">
@@ -342,6 +391,13 @@ const RecipeDetail = () => {
             </div>
           </div>
           
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">
+              Created by: <span className="font-medium">{creatorName || 'Unknown User'}</span>
+              {recipe.isShared && <span className="ml-2 text-xs bg-sage-100 text-sage-700 px-2 py-0.5 rounded-full">Shared</span>}
+            </p>
+          </div>
+          
           {recipe.description && <p className="text-muted-foreground mb-6">{recipe.description}</p>}
 
           <div className="mb-6">
@@ -357,7 +413,7 @@ const RecipeDetail = () => {
               <TabsTrigger value="instructions">Instructions</TabsTrigger>
             </TabsList>
             <TabsContent value="ingredients" className="mt-4">
-              <ScrollArea maxHeight="350px">
+              <ScrollArea className="max-h-[350px]">
                 <ul className="space-y-3">
                   {recipe.ingredients.map((ingredient, index) => {
                   const cleanedIngredient = cleanIngredientString(ingredient);
@@ -389,7 +445,7 @@ const RecipeDetail = () => {
               </ScrollArea>
             </TabsContent>
             <TabsContent value="instructions" className="mt-4">
-              <ScrollArea maxHeight="350px">
+              <ScrollArea className="max-h-[350px]">
                 <ol className="space-y-4">
                   {recipe.instructions.map((instruction, index) => <li key={index} className="flex gap-3 mb-4">
                       <span className="flex-shrink-0 bg-sage-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
@@ -411,7 +467,7 @@ const RecipeDetail = () => {
               </div>
             </div>}
           
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
             <Button variant="outline" className="w-full" onClick={handleOpenSelectIngredientsDialog} disabled={addingToShoppingList}>
               {addingToShoppingList ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShoppingBag className="h-4 w-4 mr-2" />}
               Add to Shopping List
@@ -432,4 +488,5 @@ const RecipeDetail = () => {
       <SelectIngredientsDialog open={selectIngredientsDialogOpen} onOpenChange={setSelectIngredientsDialogOpen} ingredients={recipe?.ingredients || []} onConfirm={handleAddToShoppingList} isLoading={addingToShoppingList} />
     </MainLayout>;
 };
+
 export default RecipeDetail;

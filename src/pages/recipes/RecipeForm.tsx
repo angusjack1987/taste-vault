@@ -6,16 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import MainLayout from "@/components/layout/MainLayout";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import useRecipes, { RecipeFormData } from "@/hooks/useRecipes";
 import IngredientInput from "@/components/recipes/IngredientInput";
 import { supabase } from "@/integrations/supabase/client";
+import useAuth from "@/hooks/useAuth";
 
 const RecipeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const isEditing = !!id;
   
   const { useRecipe, useCreateRecipe, useUpdateRecipe } = useRecipes();
@@ -39,8 +40,19 @@ const RecipeForm = () => {
   
   const [newTag, setNewTag] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isRecipeAccessible, setIsRecipeAccessible] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isSubmitting = isCreating || isUpdating;
+  
+  useEffect(() => {
+    if (isEditing && existingRecipe && user) {
+      if (existingRecipe.user_id !== user.id) {
+        setIsRecipeAccessible(false);
+        toast.error("You don't have permission to edit this recipe");
+        navigate(-1);
+      }
+    }
+  }, [existingRecipe, user, isEditing, navigate]);
   
   useEffect(() => {
     const extractedData = location.state?.recipeData;
@@ -66,7 +78,7 @@ const RecipeForm = () => {
   }, [location.state]);
   
   useEffect(() => {
-    if (isEditing && existingRecipe) {
+    if (isEditing && existingRecipe && isRecipeAccessible) {
       setFormData({
         title: existingRecipe.title,
         image: existingRecipe.image || "",
@@ -81,7 +93,7 @@ const RecipeForm = () => {
         rating: existingRecipe.rating
       });
     }
-  }, [isEditing, existingRecipe]);
+  }, [isEditing, existingRecipe, isRecipeAccessible]);
   
   const handleAddIngredient = () => {
     setFormData({
@@ -211,6 +223,11 @@ const RecipeForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!isRecipeAccessible) {
+      toast.error("You don't have permission to edit this recipe");
+      return;
+    }
+    
     const cleanedData = {
       ...formData,
       ingredients: formData.ingredients.filter(i => i.trim() !== ""),
@@ -223,6 +240,9 @@ const RecipeForm = () => {
         {
           onSuccess: () => {
             navigate(`/recipes/${id}`);
+          },
+          onError: (error) => {
+            toast.error(`Update failed: ${error.message || 'Unknown error'}`);
           }
         }
       );
@@ -232,6 +252,9 @@ const RecipeForm = () => {
         {
           onSuccess: (data) => {
             navigate(`/recipes/${data.id}`);
+          },
+          onError: (error) => {
+            toast.error(`Creation failed: ${error.message || 'Unknown error'}`);
           }
         }
       );
@@ -248,12 +271,23 @@ const RecipeForm = () => {
     );
   }
   
+  if (!isRecipeAccessible) {
+    return (
+      <MainLayout title="Access Denied" showBackButton={true}>
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-red-500 mb-4">You don't have permission to edit this recipe</p>
+          <Button onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
+      </MainLayout>
+    );
+  }
+  
   return (
     <MainLayout 
       title={isEditing ? "Edit Recipe" : "New Recipe"} 
       showBackButton={true}
     >
-      <div className="page-container">
+      <div className="page-container pb-24">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
             <Label htmlFor="title">Recipe Title</Label>
@@ -466,16 +500,21 @@ const RecipeForm = () => {
             </div>
           </div>
           
-          <div className="pt-4 flex gap-3 justify-end">
+          <div className="pt-4 flex gap-3 justify-end sticky bottom-20 bg-background py-4 shadow-md z-10">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate(-1)}
               disabled={isSubmitting}
+              className="min-w-24"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || isUploading}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || isUploading}
+              className="min-w-32"
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -66,7 +66,9 @@ const MainLayout = ({
         </div>
       )}
       
-      <BottomNav />
+      <div className="pb-20">
+        <BottomNav />
+      </div>
     </div>
   );
 };
