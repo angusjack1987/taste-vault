@@ -496,7 +496,13 @@ export const useSync = () => {
             rating: recipe.rating || null
           };
           
-          console.log(`Syncing recipe "${recipe.title}" with image: ${recipe.image}`);
+          console.log(`Syncing recipe "${recipe.title}" with:`, {
+            image: recipe.image,
+            imageType: typeof recipe.image,
+            images: recipe.images,
+            imagesType: Array.isArray(recipe.images) ? 'array' : typeof recipe.images,
+            imagesLength: Array.isArray(recipe.images) ? recipe.images.length : 'not an array'
+          });
           
           const { error: insertError } = await supabase
             .from('recipes')
@@ -909,3 +915,4 @@ export const useSync = () => {
 };
 
 export default useSync;
+
