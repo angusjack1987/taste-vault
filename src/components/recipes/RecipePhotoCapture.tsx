@@ -1,19 +1,28 @@
-
 import React, { useState } from 'react';
-import { Camera, Upload, X, Check } from 'lucide-react';
+import { Camera, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { RecipeFormData } from '@/hooks/recipes/types';
 
 export interface RecipePhotoCaptureProps {
   image?: string;
   onCapture: (imageUrl: string) => void;
+  open?: boolean;
+  onClose?: () => void;
+  onRecipeExtracted?: (recipeData: Partial<RecipeFormData>) => void;
 }
 
 const RecipePhotoCapture: React.FC<RecipePhotoCaptureProps> = ({ 
   image, 
-  onCapture 
+  onCapture,
+  open = false,
+  onClose,
+  onRecipeExtracted
 }) => {
   const [capturedImage, setCapturedImage] = useState<string | null>(image || null);
   const [showCamera, setShowCamera] = useState<boolean>(false);
+  
+  const isDialogMode = open !== undefined && onClose !== undefined;
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -23,6 +32,17 @@ const RecipePhotoCapture: React.FC<RecipePhotoCaptureProps> = ({
         const imageUrl = reader.result as string;
         setCapturedImage(imageUrl);
         onCapture(imageUrl);
+        
+        if (onRecipeExtracted) {
+          setTimeout(() => {
+            onRecipeExtracted({
+              title: '',
+              ingredients: [],
+              instructions: [],
+              image: imageUrl
+            });
+          }, 500);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -33,7 +53,7 @@ const RecipePhotoCapture: React.FC<RecipePhotoCaptureProps> = ({
     onCapture('');
   };
   
-  return (
+  const photoUploadContent = (
     <div className="space-y-2">
       {capturedImage ? (
         <div className="relative">
@@ -77,6 +97,21 @@ const RecipePhotoCapture: React.FC<RecipePhotoCaptureProps> = ({
       )}
     </div>
   );
+  
+  if (isDialogMode) {
+    return (
+      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose?.()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Capture Recipe Image</DialogTitle>
+          </DialogHeader>
+          {photoUploadContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  
+  return photoUploadContent;
 };
 
 export default RecipePhotoCapture;

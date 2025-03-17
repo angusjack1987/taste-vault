@@ -536,7 +536,9 @@ const RecipeDetail = () => {
                 </>
               ) : (
                 <div className="whitespace-pre-line">
-                  {typeof suggestedMeal.rawResponse === 'string' ? suggestedMeal.rawResponse : 'No response data available'}
+                  {typeof suggestedMeal.rawResponse === 'string' 
+                    ? suggestedMeal.rawResponse 
+                    : 'No response data available'}
                 </div>
               )}
               
