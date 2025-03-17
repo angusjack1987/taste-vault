@@ -70,8 +70,7 @@ const RecipeForm = () => {
       
       window.history.replaceState({}, document.title);
       
-      toast({
-        title: "Recipe extracted from image",
+      toast("Recipe extracted from image", {
         description: "Review and edit the details before saving.",
       });
     }
@@ -204,14 +203,12 @@ const RecipeForm = () => {
         images: [...(formData.images || []), data.publicUrl]
       });
       
-      toast({
-        title: "Image uploaded",
+      toast("Image uploaded", {
         description: "Your recipe image has been uploaded successfully.",
       });
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast({
-        title: "Upload failed",
+      toast("Upload failed", {
         description: "There was an error uploading your image. Please try again.",
         variant: "destructive"
       });

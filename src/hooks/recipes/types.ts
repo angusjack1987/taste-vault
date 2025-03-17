@@ -27,7 +27,8 @@ export interface Recipe extends RecipeFormData {
   created_at: string;
   updated_at: string;
   isShared?: boolean;
-  image: string; // Non-optional in Recipe interface
+  // Make image optional in Recipe interface to match reality
+  image?: string;
 }
 
 // Define a SharingPreferences type for use in useSync hook
