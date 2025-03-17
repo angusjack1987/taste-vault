@@ -11,7 +11,11 @@ verify_jwt = true
 
 [[functions]]
 name = "scrape-recipe"
-verify_jwt = true
+verify_jwt = false
+
+[[functions]]
+name = "ai-recipe-parser"
+verify_jwt = false
 
 [[functions]]
 name = "transcribe-voice"
@@ -20,3 +24,7 @@ verify_jwt = true
 [[functions]]
 name = "ai-memory-insights"
 verify_jwt = true
+
+[[functions]]
+name = "extract-recipe-from-image"
+verify_jwt = false

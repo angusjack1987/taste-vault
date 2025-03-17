@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { RecipeFormData } from "@/hooks/useRecipes";
+import { RecipeFormData } from "@/hooks/recipes/types";
 
 interface RecipePhotoCaptureProps {
   open: boolean;
@@ -102,16 +102,36 @@ const RecipePhotoCapture = ({ open, onClose, onRecipeExtracted }: RecipePhotoCap
     setNoTextDetected(false);
     
     try {
+      if (!navigator.onLine) {
+        throw new Error("You appear to be offline. Please check your internet connection and try again.");
+      }
+      
       // Convert data URL to base64
       const base64Data = imagePreview.split(',')[1];
       
-      // Call the edge function
-      const { data, error } = await supabase.functions.invoke("extract-recipe-from-image", {
+      console.log("Calling extract-recipe-from-image edge function");
+      
+      // Call the edge function with a timeout
+      const functionPromise = supabase.functions.invoke("extract-recipe-from-image", {
         body: { imageBase64: base64Data }
       });
       
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Request timed out. The image may be too large or the server is busy.")), 30000);
+      });
+      
+      // Race the function call against the timeout
+      const { data, error } = await Promise.race([
+        functionPromise,
+        timeoutPromise.then(() => {
+          throw new Error("Request timed out");
+        })
+      ]) as { data: any, error: any };
+      
       if (error) {
-        throw new Error(error.message);
+        console.error("Edge function error:", error);
+        throw new Error(`Error processing image: ${error.message}`);
       }
       
       // Ensure the data is not null or undefined

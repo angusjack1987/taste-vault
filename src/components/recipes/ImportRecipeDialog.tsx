@@ -1,9 +1,10 @@
 
 import { useState } from "react";
-import { X, Loader2, Link, Check, Save, Edit, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Loader2, Link, Check, Save, Edit, Sparkles, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import useScrapedRecipes from "@/hooks/useScrapedRecipes";
 import { Label } from "@/components/ui/label";
-import { RecipeFormData } from "@/hooks/useRecipes";
+import { RecipeFormData } from "@/hooks/recipes/types";
 import { cleanIngredientString, parsePreparation, parseIngredientAmount, extractPreparationInstructions } from "@/lib/ingredient-parser";
 import IngredientInput from "./IngredientInput";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
   const [editedRecipe, setEditedRecipe] = useState<Partial<RecipeFormData> | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [networkError, setNetworkError] = useState<string | null>(null);
   
   const { useScrapeRecipeMutation } = useScrapedRecipes();
   const { mutate: scrapeRecipe, isPending, isError, error } = useScrapeRecipeMutation();
@@ -39,6 +41,13 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
+    
+    setNetworkError(null);
+    
+    if (!navigator.onLine) {
+      setNetworkError("You appear to be offline. Please check your internet connection and try again.");
+      return;
+    }
     
     scrapeRecipe(
       url,
@@ -55,7 +64,9 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
           
           // Handle extracted images if any
           let extractedImages: string[] = [];
-          if (data.image) {
+          if (data.images && data.images.length > 0) {
+            extractedImages = data.images;
+          } else if (data.image) {
             extractedImages = [data.image];
           }
           
@@ -71,6 +82,15 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
           
           setScrapedRecipe(cleanedData);
           setEditedRecipe(cleanedData);
+        },
+        onError: (error: Error) => {
+          console.error("Recipe scraping error:", error);
+          
+          if (error.message.includes("Failed to fetch") || 
+              error.message.includes("Network") || 
+              error.message.includes("connect")) {
+            setNetworkError("Network error. Please check your internet connection and try again.");
+          }
         }
       }
     );
@@ -195,10 +215,20 @@ const ImportRecipeDialog = ({ open, onClose, onImport }: ImportRecipeDialogProps
         </div>
       </div>
       
-      {isError && (
-        <div className="mt-2 text-sm text-destructive">
-          {(error as Error)?.message || "Failed to import recipe. Please try again."}
-        </div>
+      {networkError && (
+        <Alert variant="destructive" className="mt-2">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{networkError}</AlertDescription>
+        </Alert>
+      )}
+      
+      {isError && !networkError && (
+        <Alert variant="destructive" className="mt-2">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {(error as Error)?.message || "Failed to import recipe. Please try again or enter recipe details manually."}
+          </AlertDescription>
+        </Alert>
       )}
       
       <DialogFooter className="mt-4">

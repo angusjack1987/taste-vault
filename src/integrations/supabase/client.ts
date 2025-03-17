@@ -30,6 +30,45 @@ export const supabase = createClient<Database>(
   }
 );
 
+// Extend the supabase functions object with a more robust invoke method
+const originalInvoke = supabase.functions.invoke;
+supabase.functions.invoke = async function(
+  functionName: string,
+  options?: { body?: unknown } & { headers?: Record<string, string> }
+) {
+  try {
+    console.log(`Invoking edge function: ${functionName}`);
+    
+    // Check for network connectivity
+    if (!navigator.onLine) {
+      console.error("Network is offline");
+      return { data: null, error: { message: "You are offline. Please check your internet connection." } };
+    }
+    
+    const response = await originalInvoke.call(this, functionName, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        'Cache-Control': 'no-cache',
+      }
+    });
+    
+    if (response.error) {
+      console.error(`Edge function ${functionName} error:`, response.error);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error(`Unexpected error in edge function ${functionName}:`, error);
+    return { 
+      data: null, 
+      error: { 
+        message: error instanceof Error ? error.message : "Failed to call edge function" 
+      } 
+    };
+  }
+};
+
 // Helper function to handle common Supabase errors
 export async function handleSupabaseRequest<T>(
   requestFn: () => Promise<{ data: T | null; error: any }>,
